@@ -8,7 +8,8 @@ namespace kOS.Safe.Compilation
 {
     public class ProgramBuilder
     {
-        private readonly Dictionary<Guid, ObjectFile> objectFiles = new Dictionary<Guid, ObjectFile>();
+        //private evandisoft
+        public readonly Dictionary<Guid, ObjectFile> objectFiles = new Dictionary<Guid, ObjectFile>();
         
         public static string BuiltInFakeVolumeId { get { return "[built-in]"; } }
 
@@ -20,6 +21,7 @@ namespace kOS.Safe.Compilation
         public Guid AddObjectFile(IEnumerable<CodePart> parts)
         {
             var objectFile = new ObjectFile(parts);
+            
             objectFiles.Add(objectFile.Id, objectFile);
             return objectFile.Id;
         }
@@ -294,14 +296,15 @@ namespace kOS.Safe.Compilation
                     objectFile.EntryPointAddress = labels[objectFile.EntryPointLabel];
             }
         }
-        
+
+        // private evandisoft
         public int GetObjectFileEntryPointAddress(Guid objectFileId)
         {
             return objectFiles.ContainsKey(objectFileId) ? objectFiles[objectFileId].EntryPointAddress : 0;
         }
 
-
-        private class ObjectFile
+        //private evandisoft
+       public class ObjectFile
         {
             public Guid Id { get; private set; }
             public List<CodePart> Parts { get; private set; }
@@ -311,7 +314,9 @@ namespace kOS.Safe.Compilation
             public ObjectFile(IEnumerable<CodePart> parts)
             {
                 Id = Guid.NewGuid();
+                
                 Parts = parts.ToList();
+
             }
         }
 

@@ -2,6 +2,7 @@ using kOS.Safe.Exceptions;
 using System.Collections.Generic;
 using kOS.Safe.Persistence;
 
+
 namespace kOS.Safe.Compilation.KS
 {
     public class KSScript : Script

@@ -8,7 +8,7 @@ namespace kOS.Safe.Execution
     public class ProgramContext : IProgramContext
     {
         private readonly Dictionary<string, bool> flyByWire;
-        private readonly ProgramBuilder builder;
+        public readonly ProgramBuilder builder;
         private readonly Dictionary<string, int> fileMap;
 
         public List<Opcode> Program { get; set; }
@@ -27,7 +27,7 @@ namespace kOS.Safe.Execution
         /// <summary>
         /// List of triggers that are currently active
         /// </summary>
-        private List<TriggerInfo> Triggers { get; set; }
+        public List<TriggerInfo> Triggers { get; set; } //was private evandisoft
 
         private int nextTriggerInstanceId = 1;
         public int NextTriggerInstanceId { get {return nextTriggerInstanceId++;} }
@@ -43,7 +43,7 @@ namespace kOS.Safe.Execution
         /// code from executing - they don't get re-inserted until back to the mainline
         /// code again.
         /// </summary>
-        private List<TriggerInfo> TriggersToInsert { get; set; }
+        public List<TriggerInfo> TriggersToInsert { get; set; } // was private evandisoft
         public bool Silent { get; set; }
   
         public ProgramContext(bool interpreterContext)
@@ -215,8 +215,14 @@ namespace kOS.Safe.Execution
         /// <param name="trigger"></param>
         public void RemoveTrigger(TriggerInfo trigger)
         {
-            Triggers.RemoveAll((item) => item.Equals(trigger)); // can ignore if it wasn't in the list.
-            TriggersToInsert.RemoveAll((item) => item.Equals(trigger)); // can ignore if it wasn't in the list.
+            //evandisoft
+            Deb.logopcode ("removing trigger", trigger);
+            int numRemoved=Triggers.RemoveAll((item) => item.Equals(trigger)); // can ignore if it wasn't in the list.
+            Deb.logopcode ("removed ", numRemoved);
+            numRemoved = TriggersToInsert.RemoveAll((item) => item.Equals(trigger)); // can ignore if it wasn't in the list.
+            Deb.logopcode ("removed ", numRemoved);
+            //numRemoved = triggers.RemoveAll ((item) => item.Equals (trigger));
+            //Deb.logopcode ("removed ", numRemoved);
         }
         
         /// <summary>

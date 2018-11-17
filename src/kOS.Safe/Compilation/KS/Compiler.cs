@@ -591,7 +591,8 @@ namespace kOS.Safe.Compilation.KS
             int expressionHash = ConcatenateNodes(bodyNode).GetHashCode();
             userFuncObject.GetUserFunctionOpcodes(expressionHash);
             userFuncObject.IsFunction = !isLock;
-            if (userFuncObject.IsSystemLock())
+
+            if (userFuncObject.IsSystemLock()) 
                 BuildSystemTrigger(userFuncObject);
         }
         
@@ -700,12 +701,19 @@ namespace kOS.Safe.Compilation.KS
             else
                 return; // Should only be the case when scanning elements for anonymous functions
 
+
+
+
             UserFunction userFuncObject = context.UserFunctions.GetUserFunction(
                 userFuncIdentifier,
                 (storageType == StorageModifier.GLOBAL ? (Int16)0 : GetContainingScopeId(node)),
                 node );
             int expressionHash = ConcatenateNodes(bodyNode).GetHashCode();
-
+            if (SafeHouse.Config.DebugEachOpcode) {
+                Deb.logopcode ("Storage type for", node, storageType,
+                               "userFuncInit:",userFuncObject.InitializationCode.Count,
+                               "userFunctMainCode:",userFuncObject.MainCode.Count); //evandisoft;//evandisoft
+            }
             needImplicitReturn = true; // Locks always need an implicit return.  Functions might not if all paths have an explicit one.
             
             // Both locks and functions also get an identifier storing their
@@ -723,12 +731,15 @@ namespace kOS.Safe.Compilation.KS
 
                 if (userFuncObject.IsSystemLock())
                 {
-                    AddOpcode(new OpcodePush(userFuncObject.ScopelessPointerIdentifier));
+
+                    AddOpcode (new OpcodePush(userFuncObject.ScopelessPointerIdentifier));
                     AddOpcode(new OpcodeExists());
                     var branch = new OpcodeBranchIfTrue();
                     branch.Distance = 3;
                     AddOpcode(branch);
                     AddOpcode(new OpcodePushRelocateLater(null), userFuncObject.DefaultLabel);
+                    //evandisoft seems like replacing opcodestore for opcodepop works
+                    //AddOpcode (new OpcodePop ());
                     AddOpcode(new OpcodeStore(userFuncObject.ScopelessPointerIdentifier));
                 }
                 else
@@ -797,7 +808,7 @@ namespace kOS.Safe.Compilation.KS
         {
             string triggerIdentifier = "lock-" + func.ScopelessIdentifier;
             Trigger triggerObject = context.Triggers.GetTrigger(triggerIdentifier);
-            
+
             if (triggerObject.IsInitialized())
                 return;
 
@@ -2501,6 +2512,7 @@ namespace kOS.Safe.Compilation.KS
 
             if (lockObject.IsSystemLock())
             {
+
                 // add update trigger
                 string triggerIdentifier = "lock-" + lockObject.ScopelessIdentifier;
                 if (context.Triggers.Contains(triggerIdentifier))

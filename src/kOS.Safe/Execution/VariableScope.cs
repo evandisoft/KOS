@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using kOS.Safe.Utilities;
 
 namespace kOS.Safe.Execution
 {
@@ -130,10 +131,22 @@ namespace kOS.Safe.Execution
         public Variable GetNested(string name)
         {
             Variable res;
+            if (SafeHouse.Config.DebugEachOpcode && false) {
+                Deb.logopcode ("Getting", name, ParentScope); //evandisoft
+                Deb.logopcode ("Variable scope", ScopeId); //evandisoft
+                if (SafeHouse.Config.DebugEachOpcode) {
+                    foreach (var v in Variables){
+                        Deb.logopcode (v.Key, v.Value.GetType());
+                    }
+
+                }
+            }
+
             if (!Variables.TryGetValue(name, out res) && ParentScope != null)
             {
                 res = ParentScope.GetNested(name);
             }
+
             return res;
         }
 

@@ -433,17 +433,33 @@ namespace kOS.Safe.Execution
 
             foreach (KeyValuePair<string, Variable> item in savedPointers.Locals)
             {
-                if (globalVariables.Contains(item.Key))
-                {
+                if (globalVariables.Contains (item.Key)) {
                     // if the pointer exists it means it was redefined from inside a program
                     // and it's going to be invalid outside of it, so we remove it
-                    globalVariables.Remove(item.Key);
+                    globalVariables.Remove (item.Key);
                     deletedPointers++;
                     // also remove the corresponding trigger if exists
-                    if (item.Value.Value is int)
-                        RemoveTrigger((int)item.Value.Value, 0);
+                    // evandisoft
+                    foreach (var trigger in currentContext.TriggersToInsert){
+                        Deb.logopcode ("the trigger is ", trigger);
+                    }
+                    Deb.logopcode ("value is int?", item.Value.Value is int,"Value is ",item.Value.Value);
+                    if (item.Value.Value is int){
+                        Deb.logopcode ("this is not even being reached");
+                        RemoveTrigger ((int)item.Value.Value, 0);
+                    } else{
+                        foreach(var objectItem in currentContext.builder.objectFiles){
+                            Deb.logopcode (objectItem.Value.EntryPointLabel);
+                            if(objectItem.Value.EntryPointLabel==item.Key){
+                                RemoveTrigger (objectItem.Value.EntryPointAddress, 0);
+                                Deb.logopcode ("removing", objectItem.Value.EntryPointLabel);
+                            } else{
+                                Deb.logopcode ("not removing", objectItem.Value.EntryPointLabel, item.Key, objectItem.Value.EntryPointAddress);
+                            }
+                        }
+                    }
                 }
-                else
+                else // evandisoft
                 {
                     globalVariables.Add(item.Key, item.Value);
                     restoredPointers++;
@@ -618,10 +634,18 @@ namespace kOS.Safe.Execution
         private Variable GetOrCreateVariable(string identifier)
         {
             Variable variable = GetVariable(identifier, false, true);
+            if (SafeHouse.Config.DebugEachOpcode && false) {
+                Deb.logopcode ("Get or create result is", variable);
+            }
             if (variable == null)
             {
                 variable = new Variable { Name = identifier };
                 AddVariable(variable, identifier, false);
+            }
+            if (SafeHouse.Config.DebugEachOpcode && false) {
+                foreach (var v in globalVariables.Locals) {
+                Deb.logopcode ("pointers", v.Key, v.Value.GetType ());
+            }
             }
             return variable;
         }
@@ -714,6 +738,17 @@ namespace kOS.Safe.Execution
         {
             identifier = identifier.ToLower();
             Variable value = GetCurrentScope().GetNested(identifier);
+            if (SafeHouse.Config.DebugEachOpcode && false) {
+                Deb.logopcode ("Get Variable", value == null ? null : value.GetType (),
+                               identifier, value, GetCurrentScope ().ScopeId); //evandisoft;//evandisoft
+                foreach (var v in globalVariables.Locals) {
+                    Deb.logopcode ("globos",v.Key, v.Value.GetType ());
+                }
+                foreach (var v in savedPointers.Locals) {
+                    Deb.logopcode ("pointers",v.Key, v.Value.GetType ());
+                }
+            }
+
             if (value != null)
             {
                 return value;
@@ -732,10 +767,12 @@ namespace kOS.Safe.Execution
             if (StringUtil.EndsWith(identifier, "*"))
             {
                 string trimmedTail = identifier.TrimEnd('*');
-                Variable retryVal = GetVariable(trimmedTail, barewordOkay, failOkay);
+                Variable retryVal = GetVariable(trimmedTail.ToUpper(), barewordOkay, failOkay);
                 string trimmedLeader = trimmedTail.TrimStart('$');
-                if (retryVal.Value is KOSDelegate)
+                if (retryVal.Value is KOSDelegate){
                     return retryVal;
+                }
+                    
                 throw new KOSNotInvokableException(trimmedLeader);
             }
             throw new KOSUndefinedIdentifierException(identifier.TrimStart('$'), "");
@@ -759,7 +796,9 @@ namespace kOS.Safe.Execution
             }
 
             VariableScope currentScope = local ? GetCurrentScope() : globalVariables;
-
+            if (SafeHouse.Config.DebugEachOpcode) {
+                Deb.logopcode ("adding variable", identifier, "at", currentScope.ScopeId);
+            }
             Variable existing = currentScope.GetLocal(identifier);
 
             if (existing != null)
@@ -897,7 +936,11 @@ namespace kOS.Safe.Execution
         /// <param name="value">value to put into it</param>
         public void SetValue(string identifier, object value)
         {
+
             Variable variable = GetOrCreateVariable(identifier);
+            if (SafeHouse.Config.DebugEachOpcode) {
+                Deb.logopcode ("Setting: ",identifier, value, variable,"at scope",GetCurrentScope().ScopeId);//evandisoft
+            }
             variable.Value = value;
         }
 
@@ -1104,7 +1147,9 @@ namespace kOS.Safe.Execution
         /// tp the caller in most circumstances where this is a fire-and-forget trigger.</returns>
         public TriggerInfo AddTrigger(int triggerFunctionPointer, InterruptPriority priority, int instanceId, bool immediate, List<VariableScope> closure)
         {
+
             TriggerInfo triggerRef = new TriggerInfo(currentContext, triggerFunctionPointer, priority, instanceId, closure);
+            Deb.logopcode ("adding trigger", triggerRef); // evandisoft
             if (immediate)
                 currentContext.AddImmediateTrigger(triggerRef);
             else
@@ -1495,10 +1540,15 @@ namespace kOS.Safe.Execution
         private bool ExecuteInstruction(ProgramContext context, bool doProfiling)
         {
             Opcode opcode = context.Program[context.InstructionPointer];
+
+
             if (SafeHouse.Config.DebugEachOpcode)
             {
-                executeLog.Append(string.Format("Executing Opcode {0:0000}/{1:0000} {2} {3}\n", context.InstructionPointer, context.Program.Count, opcode.Label, opcode));
-                executeLog.Append(string.Format("Prior to exeucting, stack looks like this:\n{0}\n", DumpStack()));
+                if (opcode.Code != ByteCode.EOF) {
+                    Deb.logopcode (opcode.Label, opcode); //evandisoft added
+                }
+                //executeLog.Append(string.Format("Executing Opcode {0:0000}/{1:0000} {2} {3}\n", context.InstructionPointer, context.Program.Count, opcode.Label, opcode));
+                //executeLog.Append(string.Format("Prior to exeucting, stack looks like this:\n{0}\n", DumpStack()));
             }
             try
             {
