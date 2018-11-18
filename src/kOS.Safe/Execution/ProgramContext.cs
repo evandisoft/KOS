@@ -216,13 +216,10 @@ namespace kOS.Safe.Execution
         public void RemoveTrigger(TriggerInfo trigger)
         {
             //evandisoft
-            Deb.logopcode ("removing trigger", trigger);
             int numRemoved=Triggers.RemoveAll((item) => item.Equals(trigger)); // can ignore if it wasn't in the list.
-            Deb.logopcode ("removed ", numRemoved);
+
             numRemoved = TriggersToInsert.RemoveAll((item) => item.Equals(trigger)); // can ignore if it wasn't in the list.
-            Deb.logopcode ("removed ", numRemoved);
-            //numRemoved = triggers.RemoveAll ((item) => item.Equals (trigger));
-            //Deb.logopcode ("removed ", numRemoved);
+
         }
         
         /// <summary>

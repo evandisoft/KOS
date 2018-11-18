@@ -709,11 +709,7 @@ namespace kOS.Safe.Compilation.KS
                 (storageType == StorageModifier.GLOBAL ? (Int16)0 : GetContainingScopeId(node)),
                 node );
             int expressionHash = ConcatenateNodes(bodyNode).GetHashCode();
-            if (SafeHouse.Config.DebugEachOpcode) {
-                Deb.logopcode ("Storage type for", node, storageType,
-                               "userFuncInit:",userFuncObject.InitializationCode.Count,
-                               "userFunctMainCode:",userFuncObject.MainCode.Count); //evandisoft;//evandisoft
-            }
+
             needImplicitReturn = true; // Locks always need an implicit return.  Functions might not if all paths have an explicit one.
             
             // Both locks and functions also get an identifier storing their

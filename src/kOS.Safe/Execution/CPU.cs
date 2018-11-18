@@ -19,6 +19,9 @@ namespace kOS.Safe.Execution
         private readonly IStack stack;
         private readonly VariableScope globalVariables;
 
+        static public int opcodeQueueLen = 10000;
+        static public Queue<Opcode> opcodes = new Queue<Opcode>(opcodeQueueLen); //evandisoft
+
 
         private class YieldFinishedWithPriority
         {
@@ -438,32 +441,13 @@ namespace kOS.Safe.Execution
                     // and it's going to be invalid outside of it, so we remove it
                     globalVariables.Remove (item.Key);
                     deletedPointers++;
-                    // also remove the corresponding trigger if exists
-                    // evandisoft
-                    foreach (var trigger in currentContext.TriggersToInsert){
-                        Deb.logopcode ("the trigger is ", trigger);
-                    }
-                    Deb.logopcode ("value is int?", item.Value.Value is int,"Value is ",item.Value.Value);
-                    if (item.Value.Value is int){
-                        Deb.logopcode ("this is not even being reached");
-                        RemoveTrigger ((int)item.Value.Value, 0);
-                    } else{
-                        foreach(var objectItem in currentContext.builder.objectFiles){
-                            Deb.logopcode (objectItem.Value.EntryPointLabel);
-                            if(objectItem.Value.EntryPointLabel==item.Key){
-                                RemoveTrigger (objectItem.Value.EntryPointAddress, 0);
-                                Deb.logopcode ("removing", objectItem.Value.EntryPointLabel);
-                            } else{
-                                Deb.logopcode ("not removing", objectItem.Value.EntryPointLabel, item.Key, objectItem.Value.EntryPointAddress);
-                            }
-                        }
-                    }
+
                 }
-                else // evandisoft
-                {
+                //else // evandisoft
+                //{
                     globalVariables.Add(item.Key, item.Value);
                     restoredPointers++;
-                }
+                //}
             }
 
             SafeHouse.Logger.Log(string.Format("Deleting {0} pointers and restoring {1} pointers", deletedPointers, restoredPointers));
@@ -634,19 +618,13 @@ namespace kOS.Safe.Execution
         private Variable GetOrCreateVariable(string identifier)
         {
             Variable variable = GetVariable(identifier, false, true);
-            if (SafeHouse.Config.DebugEachOpcode && false) {
-                Deb.logopcode ("Get or create result is", variable);
-            }
+
             if (variable == null)
             {
                 variable = new Variable { Name = identifier };
                 AddVariable(variable, identifier, false);
             }
-            if (SafeHouse.Config.DebugEachOpcode && false) {
-                foreach (var v in globalVariables.Locals) {
-                Deb.logopcode ("pointers", v.Key, v.Value.GetType ());
-            }
-            }
+
             return variable;
         }
 
@@ -738,16 +716,7 @@ namespace kOS.Safe.Execution
         {
             identifier = identifier.ToLower();
             Variable value = GetCurrentScope().GetNested(identifier);
-            if (SafeHouse.Config.DebugEachOpcode && false) {
-                Deb.logopcode ("Get Variable", value == null ? null : value.GetType (),
-                               identifier, value, GetCurrentScope ().ScopeId); //evandisoft;//evandisoft
-                foreach (var v in globalVariables.Locals) {
-                    Deb.logopcode ("globos",v.Key, v.Value.GetType ());
-                }
-                foreach (var v in savedPointers.Locals) {
-                    Deb.logopcode ("pointers",v.Key, v.Value.GetType ());
-                }
-            }
+
 
             if (value != null)
             {
@@ -796,9 +765,7 @@ namespace kOS.Safe.Execution
             }
 
             VariableScope currentScope = local ? GetCurrentScope() : globalVariables;
-            if (SafeHouse.Config.DebugEachOpcode) {
-                Deb.logopcode ("adding variable", identifier, "at", currentScope.ScopeId);
-            }
+
             Variable existing = currentScope.GetLocal(identifier);
 
             if (existing != null)
@@ -938,9 +905,7 @@ namespace kOS.Safe.Execution
         {
 
             Variable variable = GetOrCreateVariable(identifier);
-            if (SafeHouse.Config.DebugEachOpcode) {
-                Deb.logopcode ("Setting: ",identifier, value, variable,"at scope",GetCurrentScope().ScopeId);//evandisoft
-            }
+
             variable.Value = value;
         }
 
@@ -1149,7 +1114,7 @@ namespace kOS.Safe.Execution
         {
 
             TriggerInfo triggerRef = new TriggerInfo(currentContext, triggerFunctionPointer, priority, instanceId, closure);
-            Deb.logopcode ("adding trigger", triggerRef); // evandisoft
+
             if (immediate)
                 currentContext.AddImmediateTrigger(triggerRef);
             else
@@ -1542,20 +1507,19 @@ namespace kOS.Safe.Execution
             Opcode opcode = context.Program[context.InstructionPointer];
 
 
-            if (SafeHouse.Config.DebugEachOpcode)
-            {
-                if (opcode.Code != ByteCode.EOF) {
-                    Deb.logopcode (opcode.Label, opcode); //evandisoft added
-                }
-                //executeLog.Append(string.Format("Executing Opcode {0:0000}/{1:0000} {2} {3}\n", context.InstructionPointer, context.Program.Count, opcode.Label, opcode));
-                //executeLog.Append(string.Format("Prior to exeucting, stack looks like this:\n{0}\n", DumpStack()));
-            }
             try
             {
                 opcode.AbortContext = false;
                 opcode.AbortProgram = false;
 
                 opcode.Execute(this);
+                if(opcode.Code!=ByteCode.EOF){
+                    if(opcodes.Count>opcodeQueueLen){
+                        opcodes.Dequeue ();
+                    }
+                    opcodes.Enqueue (opcode);
+                }
+
 
                 // This will count *all* the time between the end of the prev instruction and now:
                 instructionWatch.Stop();

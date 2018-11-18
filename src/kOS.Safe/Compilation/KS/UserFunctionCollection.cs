@@ -58,10 +58,7 @@ namespace kOS.Safe.Compilation.KS
 
         private UserFunction GetUserFunction(string userFuncIdentifier, ParseNode declaredWith)
         {
-            if (SafeHouse.Config.DebugEachOpcode && false) {
-                Deb.logopcode ("Function identifier",userFuncIdentifier,declaredWith);
-                Deb.logopcode ("Function exists?", userFuncs.ContainsKey (userFuncIdentifier));
-            }
+
 
             if (userFuncs.ContainsKey(userFuncIdentifier))
             {

@@ -7,6 +7,7 @@ using kOS.Safe.Execution;
 using kOS.Safe.Screen;
 using kOS.Safe.UserIO;
 using kOS.Safe.Persistence;
+using kOS.Safe;
 
 namespace kOS.Screen
 {
@@ -125,6 +126,12 @@ namespace kOS.Screen
         protected virtual void ProcessCommand(string commandText)
         {
             CompileCommand(commandText);
+
+            Deb.clearOpcodeFile ();
+            foreach (var opcode in CPU.opcodes) {
+                Deb.logopcode (opcode.Label, opcode); // evandisoft
+            }
+            CPU.opcodes.Clear ();
         }
 
         protected void CompileCommand(string commandText)
@@ -143,6 +150,9 @@ namespace kOS.Screen
                 List<CodePart> commandParts = Shared.ScriptHandler.Compile(new InterpreterPath(this),
                     commandHistoryIndex, commandText, InterpreterName, options);
                 if (commandParts == null) return;
+
+
+
 
                 var interpreterContext = ((CPU)Shared.Cpu).GetInterpreterContext();
                 interpreterContext.AddParts(commandParts);

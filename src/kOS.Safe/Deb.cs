@@ -27,6 +27,9 @@ namespace kOS.Safe
         static public void logopcode(params object [] args){
             logall (opcodesfilename, args);
         }
+        static public void clearOpcodeFile(){
+            File.WriteAllText (opcodesfilename, "");
+        }
 
     }
 
