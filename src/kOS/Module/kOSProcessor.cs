@@ -434,7 +434,8 @@ namespace kOS.Module
             shared.ProcessorMgr = new ProcessorManager();
             shared.FunctionManager = new FunctionManager(shared);
             shared.TransferManager = new TransferManager(shared);
-            shared.Cpu = new CPU(shared);
+            shared.Cpu = new ProcessManager(shared);//new CPU(shared); //evandisoft
+
             shared.AddonManager = new AddOns.AddonManager(shared);
             shared.GameEventDispatchManager = new GameEventDispatchManager(shared);
 

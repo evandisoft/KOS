@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using kOS.Safe.Binding;
 using kOS.Safe.Compilation;
+using kOS.Safe.Exceptions;
 
 namespace kOS.Safe.Execution
 {
@@ -230,7 +231,52 @@ namespace kOS.Safe.Execution
         {
             return Triggers.Count;
         }
-        
+
+        public bool ExecuteInstruction (CPU cpu, bool doProfiling)
+        {
+            Opcode opcode = Program [InstructionPointer];
+
+
+            try {
+                opcode.AbortContext = false;
+                opcode.AbortProgram = false;
+
+                opcode.Execute (cpu);
+                if (opcode.Code != ByteCode.EOF) {
+                    if (CPU.OpcodeLogQueue.Count > CPU.OpcodeQueueLen) {
+                        CPU.OpcodeLogQueue.Dequeue ();
+                    }
+                    CPU.OpcodeLogQueue.Enqueue (opcode);
+                }
+
+
+
+                if (opcode.AbortProgram) {
+                    cpu.BreakExecution (false);
+                    Utilities.SafeHouse.Logger.Log ("Execution Broken");
+                    return false;
+                }
+
+                if (opcode.AbortContext) {
+                    return false;
+                }
+
+                int prevPointer = InstructionPointer;
+                InstructionPointer += opcode.DeltaInstructionPointer;
+                if (InstructionPointer < 0 || InstructionPointer >= Program.Count) {
+                    throw new KOSBadJumpException (
+                        InstructionPointer, string.Format ("after executing {0:0000} {1} {2}", prevPointer, opcode.Label, opcode));
+                }
+                return true;
+            } catch (Exception) {
+                // exception will skip the normal printing of the log buffer,
+                // so print what we have so far before throwing up the exception:
+                //if (cpu.executeLog.Length > 0)
+                  //  SafeHouse.Logger.Log (executeLog.ToString ());
+                throw;
+            }
+        }
+
         /// <summary>
         /// Return the active trigger at the given index.  Cannot be used
         /// to get pending insertion triggers.

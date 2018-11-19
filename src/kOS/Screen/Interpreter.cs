@@ -44,6 +44,11 @@ namespace kOS.Screen
             {
                 InsertChar('\n');
             }
+            Deb.clearOpcodeFile ();
+            foreach (var opcode in CPU.OpcodeLogQueue) {
+                Deb.logopcode (opcode.Label, opcode); // evandisoft
+            }
+            CPU.OpcodeLogQueue.Clear ();
         }
         
         /// <summary>
@@ -126,12 +131,6 @@ namespace kOS.Screen
         protected virtual void ProcessCommand(string commandText)
         {
             CompileCommand(commandText);
-
-            Deb.clearOpcodeFile ();
-            foreach (var opcode in CPU.opcodes) {
-                Deb.logopcode (opcode.Label, opcode); // evandisoft
-            }
-            CPU.opcodes.Clear ();
         }
 
         protected void CompileCommand(string commandText)
@@ -151,9 +150,6 @@ namespace kOS.Screen
                     commandHistoryIndex, commandText, InterpreterName, options);
                 if (commandParts == null) return;
 
-
-
-
                 var interpreterContext = ((CPU)Shared.Cpu).GetInterpreterContext();
                 interpreterContext.AddParts(commandParts);
             }
@@ -172,7 +168,7 @@ namespace kOS.Screen
             // If running from a boot script, there will be no interpreter instructions,
             // only a single OpcodeEOF.  So we check to see if the interpreter is locked,
             // which is a sign that a sub-program is running.
-            return !locked && context.Program[context.InstructionPointer] is OpcodeEOF;
+            return true;// evandisoft !locked && context.Program[context.InstructionPointer] is OpcodeEOF;
         }
 
         public void SetInputLock(bool isLocked)

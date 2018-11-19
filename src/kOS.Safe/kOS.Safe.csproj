@@ -39,6 +39,7 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <WarningLevel>4</WarningLevel>
     <Optimize>false</Optimize>
+    <IntermediateOutputPath></IntermediateOutputPath>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="ICSharpCode.SharpZipLib">
@@ -103,11 +104,6 @@
     <Compile Include="Encapsulation\BooleanValue.cs" />
     <Compile Include="Encapsulation\ConstantValue.cs" />
     <Compile Include="Encapsulation\Enumerator.cs" />
-    <Compile Include="Encapsulation\IConfig.cs" />
-    <Compile Include="Encapsulation\IIndexable.cs" />
-    <Compile Include="Encapsulation\ISetSuffix.cs" />
-    <Compile Include="Encapsulation\ISuffix.cs" />
-    <Compile Include="Encapsulation\ISuffixed.cs" />
     <Compile Include="Encapsulation\Lexicon.cs" />
     <Compile Include="Encapsulation\ListValue.cs" />
     <Compile Include="Encapsulation\Part\IModuleEngine.cs" />
@@ -168,11 +164,6 @@
     <Compile Include="Exceptions\KOSWrongControlValueTypeException.cs" />
     <Compile Include="Exceptions\KOSWrongCPUVesselException.cs" />
     <Compile Include="Execution\CPU.cs" />
-    <Compile Include="Execution\IKOSScopeObserver.cs" />
-    <Compile Include="Execution\ICpu.cs" />
-    <Compile Include="Execution\IProgramContext.cs" />
-    <Compile Include="Execution\IStack.cs" />
-    <Compile Include="Execution\IUserDelegate.cs" />
     <Compile Include="Execution\KOSArgMarkerType.cs" />
     <Compile Include="Execution\KOSPassThruReturn.cs" />
     <Compile Include="Execution\ProgramContext.cs" />
@@ -208,11 +199,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Screen\IInterpreter.cs" />
-    <Compile Include="Screen\IScreenBuffer.cs" />
-    <Compile Include="Screen\IScreenBufferLine.cs" />
-    <Compile Include="Screen\IScreenSnapshot.cs" />
-    <Compile Include="Screen\ITermWindow.cs" />
     <Compile Include="Screen\ScreenBuffer.cs" />
     <Compile Include="Screen\ScreenBufferLine.cs" />
     <Compile Include="Screen\ScreenSnapshot.cs" />
@@ -271,12 +257,10 @@
     <Compile Include="Serialization\IHasSafeSharedObjects.cs" />
     <Compile Include="SafeSharedObjects.cs" />
     <Compile Include="Persistence\PathValue.cs" />
-    <Compile Include="Execution\InternalPath.cs" />
     <Compile Include="Exceptions\KOSCannotCallException.cs" />
     <Compile Include="Encapsulation\NoDelegate.cs" />
     <Compile Include="Encapsulation\Suffixes\ThreeArgsSuffix.cs" />
     <Compile Include="Exceptions\KOSTermWidthObsoletionException.cs" />
-    <Compile Include="Execution\IPopContextNotifyee.cs" />
     <Compile Include="Exceptions\KOSStackOverflowException.cs" />
     <Compile Include="Function\Math.cs" />
     <Compile Include="Function\Misc.cs" />
@@ -284,10 +268,34 @@
     <Compile Include="Function\Suffixed.cs" />
     <Compile Include="Function\Trigonometry.cs" />
     <Compile Include="Utilities\StringUtil.cs" />
-    <Compile Include="Execution\InterruptPriority.cs" />
     <Compile Include="Execution\ExecutionStatBlock.cs" />
     <Compile Include="Encapsulation\Suffixes\OptionalArgsSuffix.cs" />
     <Compile Include="Deb.cs" />
+    <Compile Include="Execution\interfaces\ICpu.cs" />
+    <Compile Include="Execution\interfaces\IKOSScopeObserver.cs" />
+    <Compile Include="Execution\interfaces\InternalPath.cs" />
+    <Compile Include="Execution\interfaces\InterruptPriority.cs" />
+    <Compile Include="Execution\interfaces\IPopContextNotifyee.cs" />
+    <Compile Include="Execution\interfaces\IProgramContext.cs" />
+    <Compile Include="Execution\interfaces\IStack.cs" />
+    <Compile Include="Execution\interfaces\IUserDelegate.cs" />
+    <Compile Include="Screen\interfaces\IInterpreter.cs" />
+    <Compile Include="Screen\interfaces\IScreenBuffer.cs" />
+    <Compile Include="Screen\interfaces\IScreenBufferLine.cs" />
+    <Compile Include="Screen\interfaces\IScreenSnapshot.cs" />
+    <Compile Include="Screen\interfaces\ITermWindow.cs" />
+    <Compile Include="Encapsulation\interfaces\IConfig.cs" />
+    <Compile Include="Encapsulation\interfaces\IIndexable.cs" />
+    <Compile Include="Encapsulation\interfaces\ISetSuffix.cs" />
+    <Compile Include="Encapsulation\interfaces\ISuffix.cs" />
+    <Compile Include="Encapsulation\interfaces\ISuffixed.cs" />
+    <Compile Include="Execution\Procedure.cs" />
+    <Compile Include="Execution\Opcodes.cs" />
+    <Compile Include="Execution\KOSThread.cs" />
+    <Compile Include="Execution\ProcedureCall.cs" />
+    <Compile Include="Execution\ProcessManager.cs" />
+    <Compile Include="Execution\Process.cs" />
+    <Compile Include="Execution\Store.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Compilation\CompiledObject-doc.md" />
@@ -320,4 +328,25 @@
   -->
   <ItemGroup />
   <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Execution\interfaces\" />
+    <Folder Include="Screen\interfaces\" />
+    <Folder Include="Encapsulation\interfaces\" />
+  </ItemGroup>
+  <ProjectExtensions>
+    <MonoDevelop>
+      <Properties>
+        <Policies>
+          <TextStylePolicy TabWidth="4" IndentWidth="4" RemoveTrailingWhitespace="True" NoTabsAfterNonTabs="False" EolMarker="Native" FileWidth="80" TabsToSpaces="True" scope="text/plain" />
+          <DotNetNamingPolicy ResourceNamePolicy="FileFormatDefault" DirectoryNamespaceAssociation="PrefixedHierarchical" />
+          <TextStylePolicy FileWidth="120" TabWidth="4" IndentWidth="4" RemoveTrailingWhitespace="True" EolMarker="Native" TabsToSpaces="True" NoTabsAfterNonTabs="True" scope="text/x-fsharp" />
+          <FSharpFormattingPolicy scope="text/x-fsharp">
+            <DefaultFormat IndentOnTryWith="False" ReorderOpenDeclaration="False" SpaceAfterComma="True" SpaceAfterSemicolon="True" SpaceAroundDelimiter="True" SpaceBeforeArgument="True" SpaceBeforeColon="True" __added="0" />
+          </FSharpFormattingPolicy>
+          <TextStylePolicy TabWidth="4" IndentWidth="4" RemoveTrailingWhitespace="True" NoTabsAfterNonTabs="False" EolMarker="Native" FileWidth="80" TabsToSpaces="True" scope="text/x-csharp" />
+          <CSharpFormattingPolicy IndentBlock="True" IndentBraces="False" IndentSwitchCaseSection="True" LabelPositioning="OneLess" NewLinesForBracesInMethods="True" SpacingAfterMethodDeclarationName="False" SpaceWithinMethodDeclarationParenthesis="False" SpaceBetweenEmptyMethodDeclarationParentheses="False" SpaceAfterMethodCallName="False" SpaceWithinMethodCallParentheses="False" SpaceBetweenEmptyMethodCallParentheses="False" SpaceAfterControlFlowStatementKeyword="True" SpaceWithinExpressionParentheses="False" SpaceWithinCastParentheses="False" SpaceWithinOtherParentheses="False" SpaceAfterCast="False" SpacesIgnoreAroundVariableDeclaration="False" SpaceBeforeOpenSquareBracket="False" SpaceBetweenEmptySquareBrackets="False" SpaceWithinSquareBrackets="False" SpaceAfterColonInBaseTypeDeclaration="True" SpaceAfterComma="True" SpaceAfterDot="False" SpaceBeforeColonInBaseTypeDeclaration="True" SpaceBeforeComma="False" SpaceBeforeDot="False" SpaceBeforeSemicolonsInForStatement="False" WrappingPreserveSingleLine="True" WrappingKeepStatementsOnSingleLine="True" PlaceSystemDirectiveFirst="True" IndentSwitchSection="False" NewLinesForBracesInTypes="False" NewLinesForBracesInProperties="False" NewLinesForBracesInAccessors="False" NewLinesForBracesInAnonymousMethods="False" NewLinesForBracesInControlBlocks="False" NewLinesForBracesInAnonymousTypes="False" NewLinesForBracesInObjectCollectionArrayInitializers="False" NewLinesForBracesInLambdaExpressionBody="False" NewLineForElse="False" NewLineForCatch="False" NewLineForFinally="False" NewLineForMembersInObjectInit="False" NewLineForMembersInAnonymousTypes="False" NewLineForClausesInQuery="False" SpaceAfterSemicolonsInForStatement="False" SpacingAroundBinaryOperator="Ignore" scope="text/x-csharp" />
+        </Policies>
+      </Properties>
+    </MonoDevelop>
+  </ProjectExtensions>
 </Project>

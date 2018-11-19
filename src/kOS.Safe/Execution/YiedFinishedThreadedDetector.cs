@@ -9,7 +9,7 @@ namespace kOS.Safe.Execution
     public abstract class YiedFinishedThreadedDetector : YieldFinishedDetector
     {
         private ManualResetEvent childThreadEvent;
-        private Thread childThread;
+        private System.Threading.Thread childThread;
         private Exception childException;
 
         protected SafeSharedObjects shared;
@@ -25,7 +25,7 @@ namespace kOS.Safe.Execution
 
             ThreadInitialize(sharedObj);
 
-            childThread = new Thread(DoThread);
+            childThread = new System.Threading.Thread(this.DoThread);
             childThread.IsBackground = true;
             childThread.Start();
         }

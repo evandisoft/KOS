@@ -19,8 +19,8 @@ namespace kOS.Safe.Execution
         private readonly IStack stack;
         private readonly VariableScope globalVariables;
 
-        static public int opcodeQueueLen = 10000;
-        static public Queue<Opcode> opcodes = new Queue<Opcode>(opcodeQueueLen); //evandisoft
+        static public int OpcodeQueueLen = 10000;
+        static public Queue<Opcode> OpcodeLogQueue = new Queue<Opcode>(OpcodeQueueLen); //evandisoft
 
 
         private class YieldFinishedWithPriority
@@ -238,6 +238,7 @@ namespace kOS.Safe.Execution
                 }
             }
             IsPoppingContext = false;
+
         }
 
         /// <summary>
@@ -1442,7 +1443,7 @@ namespace kOS.Safe.Execution
             currentContext.InstructionPointer = currentInstructionPointer;
         }
 
-        private void ContinueExecution(bool doProfiling)
+        virtual internal void ContinueExecution(bool doProfiling)
         {
             var executeNext = true;
             int howManyNormalPriority = 0;
@@ -1466,7 +1467,6 @@ namespace kOS.Safe.Execution
                     ! currentContext.HasActiveTriggersAtLeastPriority(InterruptPriority.Recurring))
                 {
                     okayToActivatePendingTriggers = true;
-                    SafeHouse.Logger.Log("eraseme: okayToActivatePendingTriggers just became true.");
                 }
 
                 if (IsYielding())
@@ -1475,7 +1475,7 @@ namespace kOS.Safe.Execution
                 }
                 else
                 {
-                    executeNext = ExecuteInstruction(currentContext, doProfiling);
+                    executeNext = currentContext.ExecuteInstruction(this, doProfiling);
                     ++InstructionsThisUpdate;
                     if (CurrentPriority == InterruptPriority.Normal)
                         ++howManyNormalPriority;
@@ -1502,72 +1502,7 @@ namespace kOS.Safe.Execution
                 SafeHouse.Logger.Log(executeLog.ToString());
         }
 
-        private bool ExecuteInstruction(ProgramContext context, bool doProfiling)
-        {
-            Opcode opcode = context.Program[context.InstructionPointer];
 
-
-            try
-            {
-                opcode.AbortContext = false;
-                opcode.AbortProgram = false;
-
-                opcode.Execute(this);
-                if(opcode.Code!=ByteCode.EOF){
-                    if(opcodes.Count>opcodeQueueLen){
-                        opcodes.Dequeue ();
-                    }
-                    opcodes.Enqueue (opcode);
-                }
-
-
-                // This will count *all* the time between the end of the prev instruction and now:
-                instructionWatch.Stop();
-                if (doProfiling)
-                {
-                    opcode.ProfileTicksElapsed += instructionWatch.ElapsedTicks;
-                    opcode.ProfileExecutionCount++;
-                    
-                }
-                // Add the time this took to the exeuction stats for current priority level:
-                if (! executionStats.ContainsKey(CurrentPriority))
-                    executionStats[CurrentPriority] = new ExecutionStatBlock();
-                executionStats[CurrentPriority].LogOneInstruction(instructionWatch.ElapsedTicks);
-
-                // start the *next* instruction's timer right after this instruction ended
-                instructionWatch.Reset();
-                instructionWatch.Start();
-
-                if (opcode.AbortProgram)
-                {
-                    BreakExecution(false);
-                    SafeHouse.Logger.Log("Execution Broken");
-                    return false;
-                }
-
-                if (opcode.AbortContext)
-                {
-                    return false;
-                }
-
-                int prevPointer = context.InstructionPointer;
-                context.InstructionPointer += opcode.DeltaInstructionPointer;
-                if (context.InstructionPointer < 0 || context.InstructionPointer >= context.Program.Count)
-                {
-                    throw new KOSBadJumpException(
-                        context.InstructionPointer, string.Format("after executing {0:0000} {1} {2}", prevPointer, opcode.Label, opcode));
-                }
-                return true;
-            }
-            catch (Exception)
-            {
-                // exception will skip the normal printing of the log buffer,
-                // so print what we have so far before throwing up the exception:
-                if (executeLog.Length > 0)
-                    SafeHouse.Logger.Log(executeLog.ToString());
-                throw;
-            }
-        }
 
         private void SkipCurrentInstructionId()
         {

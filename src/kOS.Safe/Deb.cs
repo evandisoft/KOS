@@ -9,7 +9,7 @@ namespace kOS.Safe
         {
         }
         static public Boolean verbose = false;
-        static private void logall(string filename,params object [] args){
+        static public void logall(string filename,params object [] args){
             foreach (var arg in args) {
                 if(arg!=null){
                     File.AppendAllText (filename, arg.ToString ());
@@ -23,9 +23,12 @@ namespace kOS.Safe
             File.AppendAllText (filename, "\n");
         }
         static string opcodesfilename = "/home/developer/Sync/BigFiles/BigProjects/KOS/opcode.log";
-
+        static string generalLogname = "/home/developer/Sync/BigFiles/BigProjects/KOS/misc.log";
         static public void logopcode(params object [] args){
             logall (opcodesfilename, args);
+        }
+        static public void logmisc(params object [] args){
+            logall (generalLogname, args);
         }
         static public void clearOpcodeFile(){
             File.WriteAllText (opcodesfilename, "");

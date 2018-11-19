@@ -365,8 +365,10 @@ namespace kOS.Safe.Execution
         /// <param name="ScopeId">Scope identifier.</param>
         public VariableScope FindScope(Int16 ScopeId)
         {
+            Deb.logmisc ("Entering FindScope");
             for (int index = scopeCount - 1; index >= 0; --index)
             {
+                Deb.logmisc("index", index, "scopeCount", scopeCount,"ScopeId",ScopeId);
                 var scope = scopeStack[index] as VariableScope;
                 if (scope != null && scope.ScopeId == ScopeId)
                 {
@@ -378,8 +380,10 @@ namespace kOS.Safe.Execution
 
         public VariableScope GetCurrentScope()
         {
+            Deb.logmisc ("Entering GetCurrentScope");
             for (int index = scopeCount - 1; index >= 0; --index)
             {
+                Deb.logmisc ("index", index, "scopeCount", scopeCount);
                 var scope = scopeStack[index] as VariableScope;
                 if (scope != null)
                 {
