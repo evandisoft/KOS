@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using coll=System.Collections.Generic;
 
 namespace kOS.Safe.Function
 {
@@ -46,17 +47,28 @@ namespace kOS.Safe.Function
             }
         }
 
-        public void CallFunction(string functionName)
+        public object CallFunction(string functionName,coll.Stack<object> args)
         {
+            Deb.logmisc("In CallFunction for function",functionName,". args count",args.Count());
+
             if (!functions.ContainsKey(functionName))
             {
                 throw new Exception("Call to non-existent function " + functionName);
             }
 
             SafeFunctionBase function = functions[functionName];
-            function.Execute(shared);
-            if (function.UsesAutoReturn)
-                shared.Cpu.PushArgumentStack(function.ReturnValue);
+            Deb.logmisc("got function", function);
+            function.Execute(shared,args);
+            Deb.logmisc("function.UsesAutoReturn", function.UsesAutoReturn);
+            if (function.UsesAutoReturn){
+                return function.ReturnValue;
+            }
+            return null; 
+        }
+        public object CallFunction(string functionName)
+        {
+            throw new NotImplementedException(
+                "CallFunction with no args argument is deprecated");
         }
 
         /// <summary>
@@ -69,5 +81,7 @@ namespace kOS.Safe.Function
         {
             return functions.ContainsKey(functionName);
         }
+
+
     }
 }

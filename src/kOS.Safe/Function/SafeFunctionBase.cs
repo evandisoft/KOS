@@ -3,6 +3,7 @@ using kOS.Safe.Encapsulation;
 using kOS.Safe.Exceptions;
 using System;
 using System.Linq;
+using coll=System.Collections.Generic;
 
 namespace kOS.Safe.Function
 {
@@ -57,6 +58,9 @@ namespace kOS.Safe.Function
         }
 
         public abstract void Execute(SafeSharedObjects shared);
+        public virtual void Execute(SafeSharedObjects shared,coll.Stack<object> args){
+            throw new NotImplementedException("This builtin is not yet implemented.");
+        }
 
         protected double GetDouble(object argument)
         {

@@ -7,6 +7,7 @@ using kOS.Safe.Persistence;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using coll=System.Collections.Generic;
 
 namespace kOS.Safe.Function
 {
@@ -17,6 +18,13 @@ namespace kOS.Safe.Function
         {
             string textToPrint = PopValueAssert(shared).ToString();
             AssertArgBottomAndConsume(shared);
+            shared.Screen.Print(textToPrint);
+        }
+        public override void Execute(SafeSharedObjects shared,coll.Stack<object> args)
+        {
+            Deb.logmisc("in pring. Shared", shared, "args", args);
+            string textToPrint = args.Pop().ToString();
+            Deb.logmisc("arg is", textToPrint);
             shared.Screen.Print(textToPrint);
         }
     }

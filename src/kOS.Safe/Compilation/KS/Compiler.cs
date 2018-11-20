@@ -2849,7 +2849,9 @@ namespace kOS.Safe.Compilation.KS
             {
                 AddOpcode(new OpcodePush(new KOSArgMarkerType()));
                 VisitNode(node.Nodes[1]);
-                AddOpcode(new OpcodeCall("print()"));
+                var opcode = new OpcodeCall("print()");
+                opcode.isBuiltin=true; //evandisoft
+                AddOpcode(opcode);
                 AddOpcode(new OpcodePop()); // all functions now return a value even if it's a dummy we ignore.
             }
             else

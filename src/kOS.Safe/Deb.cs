@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using kOS.Safe.Utilities;
 // file added by evandisoft
 namespace kOS.Safe
 {
@@ -27,8 +28,12 @@ namespace kOS.Safe
         static public void logopcode(params object [] args){
             logall (opcodesfilename, args);
         }
+        static public Boolean setlogmisc = false;
         static public void logmisc(params object [] args){
-            logall (generalLogname, args);
+            if(SafeHouse.Config.DebugEachOpcode && setlogmisc){
+                logall(generalLogname, args);
+            }
+
         }
         static public void clearOpcodeFile(){
             File.WriteAllText (opcodesfilename, "");

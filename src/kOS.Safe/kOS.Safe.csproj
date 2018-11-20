@@ -294,7 +294,7 @@
     <Compile Include="Execution\KOSThread.cs" />
     <Compile Include="Execution\ProcedureCall.cs" />
     <Compile Include="Execution\ProcessManager.cs" />
-    <Compile Include="Execution\Process.cs" />
+    <Compile Include="Execution\KOSProcess.cs" />
     <Compile Include="Execution\Store.cs" />
   </ItemGroup>
   <ItemGroup>

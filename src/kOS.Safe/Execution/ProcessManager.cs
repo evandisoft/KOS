@@ -1,5 +1,6 @@
 ﻿using System;
 using kOS.Safe.Execution;
+using kOS.Safe.Compilation;
 using coll = System.Collections.Generic;
 using System.Collections.Generic;
 
@@ -7,36 +8,56 @@ namespace kOS.Safe
 {
     public class ProcessManager:CPU
     {
-        List<Process> processes = new List<Process> ();
+        List<KOSProcess> processes = new List<KOSProcess> ();
 
         public ProcessManager(SafeSharedObjects safeSharedObjects):base(safeSharedObjects)
         {
             
         }
 
+        Boolean running = false;
         override internal void ContinueExecution(bool doProfiling){
+            Deb.logmisc ("ContinueExecution","Processes",processes.Count,
+                         "Program", GetCurrentContext().Program.Count,
+                         "Program pointer",GetCurrentContext().InstructionPointer);
+
             // TODO: this is just "getting started" code
             // it will be replaced later.
-            if (processes.Count==0){
-                Process process = new Process();
+            if (!running && processes.Count==0 && GetCurrentContext().Program.Count>1
+               ){
+                Deb.setlogmisc=true;
+                Deb.logmisc("Creating Dummy processes");
+                KOSProcess process = new KOSProcess(this);
                 processes.Add(process);
-                KOSThread kOSThread = new KOSThread();
-                process.AddThread(kOSThread);
-                ProcedureCall procedureCall = new ProcedureCall(GetCurrentContext().Program);
-                kOSThread.AddProcedureCall (procedureCall);
+                KOSThread thread = new KOSThread(process);
+                process.AddThread(thread);
+                ProcedureCall procedureCall = new ProcedureCall(thread, GetCurrentContext().Program);
+                thread.AddProcedureCall(procedureCall);
+                running=true;
+            } else if(running && processes.Count==0 && GetCurrentContext().Program.Count>1) {
+                Deb.setlogmisc=false;
+                Opcode opcode = new OpcodeEOF();
+                GetCurrentContext().Program=new List<Opcode> { opcode };
+                GetCurrentContext().InstructionPointer=0;
+                running=false;
             }
 
-            for (int i = processes.Count;i>= 0;i--) {
+            for (int i = processes.Count-1;i>= 0;i--) {
+                Deb.logmisc ("i", i, "total", processes.Count);
                 var status = processes[i].Execute();
+                Deb.logmisc ("From Process Execute. status", status);
 
                 switch (status) {
 
                 case ProcessStatus.Finished:
+                    Deb.logmisc ("Removing process", i);
                     processes.RemoveAt(i);
                     break;
 
                 }
             }
+
+
         }
     }
 }

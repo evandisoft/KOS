@@ -9,30 +9,37 @@ namespace kOS.Safe
         Finished
     }
 
-    public class Process
+    public class KOSProcess
     {
+        internal ProcessManager processManager;
         List<KOSThread> threads=new List<KOSThread>();
 
-        public Process()
+        public KOSProcess(ProcessManager processManager)
         {
+            this.processManager=processManager;
         }
 
-        public void AddThread(KOSThread kOSThread){
-            threads.Add(kOSThread);
+        public void AddThread(KOSThread thread){
+            threads.Add(thread);
         }
 
         public ProcessStatus Execute()
 		{
+            Deb.logmisc ("Process Execute. Threads", threads.Count);
+
             if(threads.Count==0){
                 return ProcessStatus.Finished;
             }
 
-            for (int i = threads.Count; i>= 0;i--) {
+            for (int i = threads.Count-1; i>= 0;i--) {
+                Deb.logmisc ("i", i, "total", threads.Count);
                 var status = threads[i].Execute();
+                Deb.logmisc("From thread execute. Status", status);
 
                 switch (status) {
 
                 case ThreadStatus.FINISHED:
+                    Deb.logmisc("Removing Thread", i);
                     threads.RemoveAt(i);
                     break;
 

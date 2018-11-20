@@ -17,7 +17,7 @@ namespace kOS.Safe.Execution
     public class CPU : ICpu
     {
         private readonly IStack stack;
-        private readonly VariableScope globalVariables;
+        internal readonly VariableScope globalVariables;
 
         static public int OpcodeQueueLen = 10000;
         static public Queue<Opcode> OpcodeLogQueue = new Queue<Opcode>(OpcodeQueueLen); //evandisoft
@@ -31,7 +31,7 @@ namespace kOS.Safe.Execution
         private List<YieldFinishedWithPriority> yields;
 
         private double currentTime;
-        private readonly SafeSharedObjects shared;
+        internal readonly SafeSharedObjects shared;
         private readonly List<ProgramContext> contexts;
         private ProgramContext currentContext;
         private VariableScope savedPointers;

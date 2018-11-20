@@ -17,8 +17,8 @@ namespace kOS.Safe
             this.Opcodes = Opcodes;
         }
 
-        public ProcedureCall Call(){
-            return new ProcedureCall(Opcodes);
-        }
+        //public ProcedureCall Call(){
+        //    return new ProcedureCall(Opcodes);
+        //}
     }
 }

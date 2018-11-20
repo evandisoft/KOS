@@ -47,7 +47,7 @@ namespace kOS.Safe.Execution
         /// </summary>
         public bool IsClosure {get;set;}
 
-        private Dictionary<string, Variable>  Variables;
+        internal Dictionary<string, Variable>  Variables;
         
         public VariableScope(Int16 scopeId, VariableScope parentScope)
         {
