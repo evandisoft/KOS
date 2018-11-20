@@ -57,7 +57,7 @@ namespace kOS.Safe
                 CPU.OpcodeLogQueue.Enqueue(opcode);
             }
 
-            Deb.logmisc ("Current Opcode", opcode.Label,opcode);
+            Deb.logmisc("Current Opcode", opcode.Label,opcode);
             try{
                 opcode.Execute(this);
             }catch(Exception e){
@@ -66,7 +66,7 @@ namespace kOS.Safe
             }
             int delta = opcode.DeltaInstructionPointer;
             instructionPointer += delta;
-            Deb.logmisc ("delta was", delta, 
+            Deb.logmisc("delta was", delta, 
                          ". New instruction pointer", instructionPointer);
 
             if (instructionPointer==Opcodes.Count){
@@ -76,7 +76,7 @@ namespace kOS.Safe
 		        return ExecStatus.OK;
             }
 
-            throw new Exception ("Instruction way out of bounds!");
+            throw new Exception("Instruction way out of bounds!");
         }
 
 

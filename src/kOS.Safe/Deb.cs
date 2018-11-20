@@ -6,9 +6,6 @@ namespace kOS.Safe
 {
     public class Deb
     {
-        public Deb ()
-        {
-        }
         static public Boolean verbose = false;
         static public void logall(string filename,params object [] args){
             foreach (var arg in args) {

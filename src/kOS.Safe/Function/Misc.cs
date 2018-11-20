@@ -39,6 +39,8 @@ namespace kOS.Safe.Function
             string textToPrint = PopValueAssert(shared).ToString();
             AssertArgBottomAndConsume(shared);
             shared.Screen.PrintAt(textToPrint, row, column);
+            //shared.Screen.GetType().GetMethod("PrintAt");
+            //var p = shared.Screen.PrintAt;
         }
     }
 
