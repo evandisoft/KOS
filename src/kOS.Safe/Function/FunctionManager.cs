@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using coll=System.Collections.Generic;
+using kOS.Safe.Execution;
 
 namespace kOS.Safe.Function
 {
@@ -47,9 +48,9 @@ namespace kOS.Safe.Function
             }
         }
 
-        public object CallFunction(string functionName,coll.Stack<object> args)
+        public object CallFunction(string functionName,ArgumentStack arguments)
         {
-            Deb.logmisc("In CallFunction for function",functionName,". args count",args.Count());
+            Deb.logmisc("In CallFunction for function",functionName,". args count",arguments.Count);
 
             if (!functions.ContainsKey(functionName))
             {
@@ -58,7 +59,7 @@ namespace kOS.Safe.Function
 
             SafeFunctionBase function = functions[functionName];
             Deb.logmisc("got function", function);
-            function.Execute(shared,args);
+            function.Execute(shared,arguments);
             Deb.logmisc("function.UsesAutoReturn", function.UsesAutoReturn);
             if (function.UsesAutoReturn){
                 return function.ReturnValue;

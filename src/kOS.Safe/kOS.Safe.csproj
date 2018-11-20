@@ -292,10 +292,11 @@
     <Compile Include="Execution\Procedure.cs" />
     <Compile Include="Execution\Opcodes.cs" />
     <Compile Include="Execution\KOSThread.cs" />
-    <Compile Include="Execution\ProcedureCall.cs" />
+    <Compile Include="Execution\ProcedureExec.cs" />
     <Compile Include="Execution\ProcessManager.cs" />
     <Compile Include="Execution\KOSProcess.cs" />
     <Compile Include="Execution\Store.cs" />
+    <Compile Include="Execution\ArgumentStack.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Compilation\CompiledObject-doc.md" />

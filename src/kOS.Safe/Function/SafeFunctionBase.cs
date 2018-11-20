@@ -4,6 +4,7 @@ using kOS.Safe.Exceptions;
 using System;
 using System.Linq;
 using coll=System.Collections.Generic;
+using kOS.Safe.Execution;
 
 namespace kOS.Safe.Function
 {
@@ -58,7 +59,7 @@ namespace kOS.Safe.Function
         }
 
         public abstract void Execute(SafeSharedObjects shared);
-        public virtual void Execute(SafeSharedObjects shared,coll.Stack<object> args){
+        public virtual void Execute(SafeSharedObjects shared,ArgumentStack arguments){
             throw new NotImplementedException("This builtin is not yet implemented.");
         }
 

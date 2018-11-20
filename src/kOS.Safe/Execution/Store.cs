@@ -12,10 +12,12 @@ namespace kOS.Safe.Execution {
     // function to get a reference to this.
 	public class Store {
         class Mapping : coll.Dictionary<string, object> {}
+
         readonly VariableScope globalScope;
-        coll.Stack<Mapping> scopeStack = new coll.Stack<Mapping>();
+        readonly coll.Stack<Mapping> scopeStack = new coll.Stack<Mapping>();
 
         public Store(VariableScope globalScope){
+            Deb.logmisc("Storing reference to globalScope", globalScope);
             this.globalScope=globalScope;
         }
 
@@ -37,7 +39,7 @@ namespace kOS.Safe.Execution {
         internal void SetNewLocal(string identifier, object value)
         {
             var lower_identifier = identifier.ToLower();
-            Deb.logmisc("Setting new local", lower_identifier);
+            Deb.logmisc("Setting new local", lower_identifier,"to",value);
             scopeStack.Peek().Add(lower_identifier, value);
         }
 
@@ -68,14 +70,17 @@ namespace kOS.Safe.Execution {
 
         internal Variable GetVariable(string identifier, bool barewordOkay)
         {
+            Deb.logmisc("GetVariable called for", identifier, "barewordOkay", barewordOkay);
             identifier = identifier.ToLower();
-
+            
             foreach (var level in scopeStack) {
+                Deb.logmisc("Checking level", level);
                 object value;
                 if (level.TryGetValue(identifier, out value)) {
                     return new Variable { Name=identifier, Value=value };
                 }
             }
+            Deb.logmisc("Attempting to get it in global scope");
             Variable var;
             if (globalScope.Variables.TryGetValue(identifier, out var)) {
                 return var;

@@ -252,7 +252,7 @@ namespace kOS.Safe.Compilation
         public virtual void Execute(ICpu cpu)
         {
         }
-        public virtual void Execute(ProcedureCall procedureCall)
+        public virtual void Execute(ProcedureExec exec)
         {
             throw new NotImplementedException();
         }
@@ -452,9 +452,9 @@ namespace kOS.Safe.Compilation
                 throw new KOSArgumentMismatchException("Called with not enough arguments.");
             return returnValue;
         }
-        protected object PopValueAssert(ProcedureCall procedureCall, bool barewordOkay = false)
+        protected object PopValueAssert(ProcedureExec exec, bool barewordOkay = false)
         {
-            object returnValue = procedureCall.PopValueArgument(barewordOkay);
+            object returnValue = exec.ArgumentStack.PopValue(barewordOkay);
             if (returnValue != null && returnValue.GetType() == OpcodeCall.ArgMarkerType)
                 throw new KOSArgumentMismatchException("Called with not enough arguments.");
             return returnValue;
@@ -479,9 +479,9 @@ namespace kOS.Safe.Compilation
         {
             return Structure.FromPrimitiveWithAssert(PopValueAssert(cpu, barewordOkay));
         }
-        protected Structure PopStructureAssertEncapsulated(ProcedureCall procedureCall, bool barewordOkay = false)
+        protected Structure PopStructureAssertEncapsulated(ProcedureExec exec, bool barewordOkay = false)
         {
-            return Structure.FromPrimitiveWithAssert(PopValueAssert(procedureCall, barewordOkay));
+            return Structure.FromPrimitiveWithAssert(PopValueAssert(exec, barewordOkay));
         }
 
     }
@@ -675,10 +675,10 @@ namespace kOS.Safe.Compilation
             cpu.SetNewLocal(Identifier, value);
         }
 
-        public override void Execute(ProcedureCall procedureCall)
+        public override void Execute(ProcedureExec exec)
         {
-            Structure value = PopStructureAssertEncapsulated(procedureCall);
-            procedureCall.store.SetNewLocal(Identifier, value);
+            Structure value = PopStructureAssertEncapsulated(exec);
+            exec.Store.SetNewLocal(Identifier, value);
         }
     }
 
@@ -980,7 +980,7 @@ namespace kOS.Safe.Compilation
         {
             AbortContext = true;
         }
-        public override void Execute(ProcedureCall procedureCall)
+        public override void Execute(ProcedureExec exec)
         {
             AbortContext = true;
         }
@@ -1127,7 +1127,7 @@ namespace kOS.Safe.Compilation
         {
             DeltaInstructionPointer = Distance;
         }
-        public override void Execute(ProcedureCall procedureCall)
+        public override void Execute(ProcedureExec exec)
         {
             DeltaInstructionPointer = Distance;
         }
@@ -1671,26 +1671,13 @@ namespace kOS.Safe.Compilation
             if (absoluteJumpTo >= 0)
                 DeltaInstructionPointer = absoluteJumpTo - cpu.InstructionPointer;
         }
-        public override void Execute(ProcedureCall procedureCall)
+        public override void Execute(ProcedureExec exec)
         {
-            // so that the arguments can be easily popped off and be in the 
-            // right order.
-            coll.Stack<object> args = new coll.Stack<object>();
-
-            // I'm assuming arguments to calls are allways marked by an "ArgMarker".
-            // There's no reason we cannot handle gathering the args this way, 
-            // right here for all calls. Then we pass the args to the function
-            // rather than having it pop off it's own args.
-            object arg = null;
-            while((arg=procedureCall.PopValueArgument()).GetType()!=OpcodeCall.ArgMarkerType){
-                args.Push(arg);
-            }
-
             if(isBuiltin){
                 Deb.logmisc("isbuiltin");
-                var shared = procedureCall.thread.process.processManager.shared;
+                var shared = exec.Thread.Process.ProcessManager.shared;
                 Deb.logmisc("shared", shared);
-                object functionPointer= procedureCall.store.GetValue(Destination);
+                object functionPointer= exec.Store.GetValue(Destination);
                 Deb.logmisc("functionPointer", functionPointer);
                 var name = functionPointer as string;
                 Deb.logmisc("name",name);
@@ -1699,10 +1686,10 @@ namespace kOS.Safe.Compilation
                     functionName = functionName.Substring(0, functionName.Length - 2);
                 Deb.logmisc("functionName", functionName);
 
-                var retval=shared.FunctionManager.CallFunction(functionName,args);
+                var retval=shared.FunctionManager.CallFunction(functionName,exec.ArgumentStack);
                 Deb.logmisc("retval was", retval);
                 if(retval!=null){
-                    procedureCall.PushArgument(retval);
+                    exec.ArgumentStack.Push(retval);
                 }
             } else{
                 throw new NotImplementedException("Non-Direct Calls are not implemented!");
@@ -2079,9 +2066,9 @@ namespace kOS.Safe.Compilation
             cpu.PushArgumentStack(Argument);
         }
 
-        public override void Execute(ProcedureCall procedureCall)
+        public override void Execute(ProcedureExec exec)
         {
-            procedureCall.PushArgument(Argument);
+            exec.ArgumentStack.Push(Argument);
         }
 
         public override string ToString()
@@ -2181,7 +2168,7 @@ namespace kOS.Safe.Compilation
 
             cpu.PopValueArgument();
         }
-        public override void Execute(ProcedureCall procedureCall)
+        public override void Execute(ProcedureExec exec)
         {
             // Even though this value is being thrown away it's still important to attempt to
             // process it (with cpu.PopValueArgument()) rather than ignore it (with cpu.PopArgumentStack()).  This
@@ -2192,7 +2179,7 @@ namespace kOS.Safe.Compilation
             // for new variables that they are going to create.)
             // TODO: popvalueargument is potentially expensive? Not sure in this case
             // Seems like this might just slow us down.
-            procedureCall.PopValueArgument();
+            exec.ArgumentStack.PopValue();
         }
     }
 
@@ -2415,9 +2402,9 @@ namespace kOS.Safe.Compilation
         {
             cpu.PushNewScope(ScopeId,ParentScopeId);
         }
-        public override void Execute(ProcedureCall procedureCall)
+        public override void Execute(ProcedureExec exec)
         {
-            procedureCall.store.PushNewScope();
+            exec.Store.PushNewScope();
         }
 
         public override string ToString()
@@ -2467,9 +2454,9 @@ namespace kOS.Safe.Compilation
         {
             DoPopScope(cpu, NumLevels);
         }
-        public override void Execute(ProcedureCall procedureCall)
+        public override void Execute(ProcedureExec exec)
         {
-            procedureCall.store.PopScope(NumLevels);
+            exec.Store.PopScope(NumLevels);
         }
 
         /// <summary>

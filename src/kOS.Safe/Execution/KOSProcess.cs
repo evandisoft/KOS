@@ -11,12 +11,12 @@ namespace kOS.Safe
 
     public class KOSProcess
     {
-        internal ProcessManager processManager;
-        List<KOSThread> threads=new List<KOSThread>();
+        internal ProcessManager ProcessManager { get; }
+        readonly List<KOSThread> threads=new List<KOSThread>();
 
         public KOSProcess(ProcessManager processManager)
         {
-            this.processManager=processManager;
+            ProcessManager=processManager;
         }
 
         public void AddThread(KOSThread thread){
@@ -41,6 +41,9 @@ namespace kOS.Safe
                 case ThreadStatus.FINISHED:
                     Deb.logmisc("Removing Thread", i);
                     threads.RemoveAt(i);
+                    if(threads.Count==0){
+                        return ProcessStatus.Finished;
+                    }
                     break;
 
                 }

@@ -8,7 +8,7 @@ namespace kOS.Safe
 {
     public class ProcessManager:CPU
     {
-        List<KOSProcess> processes = new List<KOSProcess> ();
+        readonly List<KOSProcess> processes = new List<KOSProcess> ();
 
         public ProcessManager(SafeSharedObjects safeSharedObjects):base(safeSharedObjects)
         {
@@ -31,15 +31,17 @@ namespace kOS.Safe
                 processes.Add(process);
                 KOSThread thread = new KOSThread(process);
                 process.AddThread(thread);
-                ProcedureCall procedureCall = new ProcedureCall(thread, GetCurrentContext().Program);
-                thread.AddProcedureCall(procedureCall);
+                ProcedureExec exec = new ProcedureExec(thread, GetCurrentContext().Program);
+                thread.AddProcedureExec(exec);
                 running=true;
             } else if(running && processes.Count==0 && GetCurrentContext().Program.Count>1) {
-                Deb.setlogmisc=false;
+                Deb.logmisc("Resetting program");
+
                 Opcode opcode = new OpcodeEOF();
                 GetCurrentContext().Program=new List<Opcode> { opcode };
                 GetCurrentContext().InstructionPointer=0;
                 running=false;
+                Deb.setlogmisc=false;
             }
 
             for (int i = processes.Count-1;i>= 0;i--) {

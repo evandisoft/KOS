@@ -23,8 +23,8 @@ namespace kOS.Safe
 
             File.AppendAllText (filename, "\n");
         }
-        static string opcodesfilename = "/home/developer/Sync/BigFiles/BigProjects/KOS/opcode.log";
-        static string generalLogname = "/home/developer/Sync/BigFiles/BigProjects/KOS/misc.log";
+        static string opcodesfilename = "Logs/kOS/opcode.log";
+        static string generalLogname = "Logs/kOS/misc.log";
         static public void logopcode(params object [] args){
             logall (opcodesfilename, args);
         }

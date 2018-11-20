@@ -14,14 +14,13 @@ namespace kOS.Safe
 
     public class KOSThread
     {
-        internal KOSProcess process;
+        internal KOSProcess Process { get; }
 
-        coll.Stack<ProcedureCall> callStack = new coll.Stack<ProcedureCall>();
+        readonly coll.Stack<ProcedureExec> callStack = new coll.Stack<ProcedureExec>();
 
         public KOSThread(KOSProcess process){
-            this.process=process;
+            Process=process;
         }
-
 
         public ThreadStatus Execute(){
             Deb.logmisc ("Thread Execute. ProcedureCalls", callStack.Count);
@@ -35,9 +34,12 @@ namespace kOS.Safe
 
             switch(status){
 
-            case ProcedureCallStatus.FINISHED:
+            case ExecStatus.FINISHED:
                 Deb.logmisc ("Removing ProcedureCall");
                 callStack.Pop();
+                if(callStack.Count==0){
+                    return ThreadStatus.FINISHED;
+                }
                 return ThreadStatus.OK;
 
             default:
@@ -46,10 +48,9 @@ namespace kOS.Safe
             }
         }
 
-
-        public void AddProcedureCall(ProcedureCall procedureCall)
+        public void AddProcedureExec(ProcedureExec exec)
         {
-            callStack.Push(procedureCall);
+            callStack.Push(exec);
         }
     }
 }

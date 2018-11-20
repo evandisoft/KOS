@@ -20,10 +20,10 @@ namespace kOS.Safe.Function
             AssertArgBottomAndConsume(shared);
             shared.Screen.Print(textToPrint);
         }
-        public override void Execute(SafeSharedObjects shared,coll.Stack<object> args)
+        public override void Execute(SafeSharedObjects shared,ArgumentStack arguments)
         {
-            Deb.logmisc("in pring. Shared", shared, "args", args);
-            string textToPrint = args.Pop().ToString();
+            Deb.logmisc("in print. Shared", shared, "args", arguments.Count);
+            string textToPrint = arguments.Pop().ToString();
             Deb.logmisc("arg is", textToPrint);
             shared.Screen.Print(textToPrint);
         }

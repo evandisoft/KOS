@@ -8,7 +8,7 @@ using coll = System.Collections.Generic;
 namespace kOS.Safe
 {
 
-    public enum ProcedureCallStatus
+    public enum ExecStatus
     {
         OK,
         FINISHED
@@ -16,33 +16,34 @@ namespace kOS.Safe
 
     // Almost every single call made by an opcode does not have to be made
     // at the top-level. This class passes itself to rewritten opcode
-    // "Execute" functions that now take a ProcedureCall, whereas
+    // "Execute" functions that now take a Call, whereas
     // before they took an "ICpu". The opcode's "Execute" can now access
     // different parts of the program for different calls.
     // This class contains references to a 'Store' that does the work of 
     // storing and retrieving things (other than pushing and popping
-    // stack arguments, which is something this class does).
+    // stack arguments, which is something ArgumentStack does).
     // It also contains a reference to its thread, which in turn contains
     // a reference to it's process. (Some opcodes like "addTrigger" will
     // need to make calls at the level of the process.)
     // Store holds a reference to the global scope
-    public class ProcedureCall
-    {
-        internal readonly KOSThread thread;
+    public class ProcedureExec {
+        internal KOSThread Thread { get; }
 
-        List<Opcode> Opcodes;
+        internal Store Store { get; } // manages variable storing and retrieval
+        internal ArgumentStack ArgumentStack { get; } // manages the argument stack
+
+        readonly List<Opcode> Opcodes;
         int instructionPointer = 0;
-        internal Store store; // stores all the variables in proper scope
-        coll.Stack<object> argumentStack = new coll.Stack<object>();
 
-	    public ProcedureCall(KOSThread thread,List<Opcode> Opcodes)
+	    public ProcedureExec(KOSThread thread,List<Opcode> Opcodes)
         {
-            this.thread = thread;
-            store = new Store(thread.process.processManager.globalVariables);
+            Thread = thread;
+            Store = new Store(thread.Process.ProcessManager.globalVariables);
+            ArgumentStack=new ArgumentStack(Store);
             this.Opcodes = Opcodes;
         }
 
-        public ProcedureCallStatus Execute()
+        public ExecStatus Execute()
         {
             Deb.logmisc("ProcedureCall Execute. instructionPointer", instructionPointer,
                         "total opcodes",Opcodes.Count);
@@ -57,42 +58,27 @@ namespace kOS.Safe
             }
 
             Deb.logmisc ("Current Opcode", opcode.Label,opcode);
-            opcode.Execute(this);
+            try{
+                opcode.Execute(this);
+            }catch(Exception e){
+                Deb.logmisc(e);
+                return ExecStatus.FINISHED;
+            }
             int delta = opcode.DeltaInstructionPointer;
             instructionPointer += delta;
             Deb.logmisc ("delta was", delta, 
                          ". New instruction pointer", instructionPointer);
 
             if (instructionPointer==Opcodes.Count){
-                return ProcedureCallStatus.FINISHED;
+                return ExecStatus.FINISHED;
             }
             if(instructionPointer<Opcodes.Count){
-		        return ProcedureCallStatus.OK;
+		        return ExecStatus.OK;
             }
 
             throw new Exception ("Instruction way out of bounds!");
         }
 
-        public void PushArgument(object item)
-        {
-            Deb.logmisc("pushing item", item, "to the stack");
-            argumentStack.Push(item);
-        }
 
-        public object PopArgument()
-        {
-            var retval= argumentStack.Pop();
-            Deb.logmisc("popping", retval, "from the stack");
-            return retval;
-        }
-
-        public object PopValueArgument(bool barewordOkay = false)
-        {
-            var retval = PopArgument();
-            Deb.logmisc("Getting value of", retval);
-            var retval2=store.GetValue(retval, barewordOkay);
-            Deb.logmisc("Got value of", retval2);
-            return retval2;
-        }
     }
 }
