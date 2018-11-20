@@ -16,7 +16,7 @@ namespace kOS.Safe
 
     // Almost every single call made by an opcode does not have to be made
     // at the top-level. This class passes itself to rewritten opcode
-    // "Execute" functions that now take a Call, whereas
+    // "Execute" functions that now take a ProcedureExec, whereas
     // before they took an "ICpu". The opcode's "Execute" can now access
     // different parts of the program for different calls.
     // This class contains references to a 'Store' that does the work of 
@@ -45,7 +45,7 @@ namespace kOS.Safe
 
         public ExecStatus Execute()
         {
-            Deb.logmisc("ProcedureCall Execute. instructionPointer", instructionPointer,
+            Deb.logmisc("ProcedureExec Execute. instructionPointer", instructionPointer,
                         "total opcodes",Opcodes.Count);
 
             Opcode opcode = Opcodes[instructionPointer];

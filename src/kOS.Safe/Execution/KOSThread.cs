@@ -30,12 +30,12 @@ namespace kOS.Safe
             }
 
             var status = callStack.Peek().Execute();
-            Deb.logmisc ("From ProcedureCall Execute. status", status);
+            Deb.logmisc ("From ProcedureExec.Execute. status", status);
 
             switch(status){
 
             case ExecStatus.FINISHED:
-                Deb.logmisc ("Removing ProcedureCall");
+                Deb.logmisc ("Removing ProcedureExec");
                 callStack.Pop();
                 if(callStack.Count==0){
                     return ThreadStatus.FINISHED;
