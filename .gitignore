@@ -35,6 +35,8 @@ packages/
 
 # Symlink to KSP directory
 KSPdirlink
+KSPdirlink.develop
+KSPdirlink.experimental
 
 # OS Specific
 .DS_STORE*
