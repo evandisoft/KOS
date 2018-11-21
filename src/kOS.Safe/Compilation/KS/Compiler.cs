@@ -2850,7 +2850,7 @@ namespace kOS.Safe.Compilation.KS
                 AddOpcode(new OpcodePush(new KOSArgMarkerType()));
                 VisitNode(node.Nodes[1]);
                 var opcode = new OpcodeCall("print()");
-                opcode.isBuiltin=true; //evandisoft
+                opcode.isBuiltin=true; //evandisoft. Warning: "isBuiltin" will not be regenerated from a compiled file
                 AddOpcode(opcode);
                 AddOpcode(new OpcodePop()); // all functions now return a value even if it's a dummy we ignore.
             }

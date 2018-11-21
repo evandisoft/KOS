@@ -25,7 +25,8 @@ namespace kOS.Safe
             // it will be replaced later.
             if (!running && processes.Count==0 && GetCurrentContext().Program.Count>1
                ){
-                Deb.setlogmisc=true;
+                Deb.clearMiscLog();
+                Deb.miscIsLogging=true;
                 Deb.logmisc("Creating Dummy processes");
                 KOSProcess process = new KOSProcess(this);
                 processes.Add(process);
@@ -41,7 +42,7 @@ namespace kOS.Safe
                 GetCurrentContext().Program=new List<Opcode> { opcode };
                 GetCurrentContext().InstructionPointer=0;
                 running=false;
-                Deb.setlogmisc=false;
+                Deb.miscIsLogging=false;
             }
 
             for (int i = processes.Count-1;i>= 0;i--) {
