@@ -137,6 +137,7 @@ namespace kOS.Safe.Encapsulation
         public UserDelegate(ICpu cpu, IProgramContext context, int entryPoint, bool useClosure) :
             base(cpu)
         {
+            cpu?.GetHashCode();
             ProgContext = context;
             EntryPoint = entryPoint;
             if (useClosure)

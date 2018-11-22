@@ -1579,7 +1579,7 @@ namespace kOS.Safe.Compilation
     /// </summary>
     public class OpcodeCall : Opcode
     {
-        internal Boolean isBuiltin = false; //evandisoft
+        internal Boolean isBuiltin = false; //evandisoft: will probably break ksm
 
         [MLField(0,true)]
         public override string DestinationLabel { get; set; } // masks Opcode.DestinationLabel - so it can be saved as an MLField.
@@ -1677,20 +1677,10 @@ namespace kOS.Safe.Compilation
                 Deb.logmisc("isbuiltin");
                 var shared = exec.Thread.Process.ProcessManager.shared;
                 Deb.logmisc("shared", shared);
-                object functionPointer= exec.Store.GetValue(Destination);
-                Deb.logmisc("functionPointer", functionPointer);
-                var name = functionPointer as string;
-                Deb.logmisc("name",name);
-                string functionName = name;
-                if (StringUtil.EndsWith(functionName, "()"))
-                    functionName = functionName.Substring(0, functionName.Length - 2);
-                Deb.logmisc("functionName", functionName);
+                //object functionPointer= exec.Store.GetValue(Destination);
+                Deb.logmisc("destination", Destination);
 
-                var retval=shared.FunctionManager.CallFunction(functionName,exec.ArgumentStack);
-                Deb.logmisc("retval was", retval);
-                if(retval!=null){
-                    exec.ArgumentStack.Push(retval);
-                }
+                shared.FunctionManager.CallFunction(Destination as string,exec.ArgumentStack);
             } else{
                 throw new NotImplementedException("Non-Direct Calls are not implemented!");
             }

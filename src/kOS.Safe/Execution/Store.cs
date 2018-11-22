@@ -81,8 +81,8 @@ namespace kOS.Safe.Execution {
                 }
             }
             Deb.logmisc("Attempting to get it in global scope");
-            Variable var;
-            if (globalScope.Variables.TryGetValue(identifier, out var)) {
+            //Variable var;
+            if (globalScope.Variables.TryGetValue(identifier, out Variable var)) {
                 return var;
             }
             throw new KOSUndefinedIdentifierException(identifier.TrimStart('$'), "");

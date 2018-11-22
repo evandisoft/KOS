@@ -1,6 +1,7 @@
 ﻿using System;
 using kOS.Safe.Encapsulation;
 using kOS.Safe.Utilities;
+using kOS.Safe.Execution;
 
 namespace kOS.Safe.Function
 {
@@ -24,6 +25,15 @@ namespace kOS.Safe.Function
         {
             double degrees = GetDouble(PopValueAssert(shared));
             AssertArgBottomAndConsume(shared);
+            double radians = DegreesToRadians(degrees);
+            double result = Math.Cos(radians);
+            ReturnValue = result;
+        }
+        public override void Execute(SafeSharedObjects shared,ArgumentStack arguments)
+        {
+            double degrees = GetDouble(arguments.Pop());
+            arguments.Pop();
+            //AssertArgBottomAndConsume(shared);
             double radians = DegreesToRadians(degrees);
             double result = Math.Cos(radians);
             ReturnValue = result;

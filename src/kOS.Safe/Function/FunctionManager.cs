@@ -48,7 +48,7 @@ namespace kOS.Safe.Function
             }
         }
 
-        public object CallFunction(string functionName,ArgumentStack arguments)
+        public void CallFunction(string functionName,ArgumentStack arguments)
         {
             Deb.logmisc("In CallFunction for function",functionName,". args count",arguments.Count);
 
@@ -62,11 +62,10 @@ namespace kOS.Safe.Function
             function.Execute(shared,arguments);
             Deb.logmisc("function.UsesAutoReturn", function.UsesAutoReturn);
             if (function.UsesAutoReturn){
-                return function.ReturnValue;
+                arguments.Push(function.ReturnValue);
             }
-            return null; 
         }
-        public object CallFunction(string functionName)
+        public void CallFunction(string functionName)
         {
             throw new NotImplementedException(
                 "CallFunction with no args argument is deprecated");

@@ -7,10 +7,10 @@ namespace kOS.Safe.Function
     public interface IFunctionManager
     {
         void Load();
-        object CallFunction(string functionName,ArgumentStack argumentStack);
+        void CallFunction(string functionName,ArgumentStack argumentStack);
 
         [Obsolete("Calling functions without args is being phased out.")]
-        object CallFunction(string functionName);
+        void CallFunction(string functionName);
         bool Exists(string functionName);
     }
 }

@@ -23,23 +23,33 @@ namespace kOS.Safe
             
 
         }
-        static string opcodesfilename = "Logs/kOS/opcode.log";
-        static string generalLogname = "Logs/kOS/misc.log";
+        static string opcodesLogname = "Logs/kOS/opcode.log";
+        static string miscLogname = "Logs/kOS/misc.log";
+        static string compileLogname = "Logs/kOS/compile.log";
         static public void logopcode(params object [] args){
-            logall (opcodesfilename, args);
+            logall (opcodesLogname, args);
         }
         static public Boolean miscIsLogging = false;
         static public void logmisc(params object [] args){
             if(SafeHouse.Config.DebugEachOpcode && miscIsLogging){
-                logall(generalLogname, args);
+                logall(miscLogname, args);
             }
-
+        }
+        static public Boolean compileIsLogging = true;
+        static public void logcompile(params object[] args)
+        {
+            if (SafeHouse.Config.DebugEachOpcode && compileIsLogging) {
+                logall(compileLogname, args);
+            }
+        }
+        static public void clearCompileLog(){
+            File.WriteAllText(compileLogname, String.Empty);
         }
         static public void clearMiscLog(){
-            File.WriteAllText(generalLogname, String.Empty);
+            File.WriteAllText(miscLogname, String.Empty);
         }
         static public void clearOpcodeFile(){
-            File.WriteAllText (opcodesfilename, String.Empty);
+            File.WriteAllText (opcodesLogname, String.Empty);
         }
 
     }

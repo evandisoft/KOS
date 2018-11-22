@@ -58,8 +58,6 @@ namespace kOS.Safe.Compilation.KS
 
         private UserFunction GetUserFunction(string userFuncIdentifier, ParseNode declaredWith)
         {
-
-
             if (userFuncs.ContainsKey(userFuncIdentifier))
             {
                 return userFuncs[userFuncIdentifier];

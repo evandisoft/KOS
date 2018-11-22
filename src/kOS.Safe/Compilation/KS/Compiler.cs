@@ -84,6 +84,7 @@ namespace kOS.Safe.Compilation.KS
 
         public CodePart Compile(int startLineNum, ParseTree tree, Context context, CompilerOptions options)
         {
+            Deb.clearCompileLog();
             InitCompileFlags();
 
             part = new CodePart();
@@ -103,6 +104,7 @@ namespace kOS.Safe.Compilation.KS
 
         private void CompileProgram(ParseTree tree)
         {
+            Deb.clearCompileLog();
             currentCodeSection = part.MainCode;
             
             VisitNode(tree.Nodes[0]);
@@ -1618,9 +1620,19 @@ namespace kOS.Safe.Compilation.KS
 
             if (isDirect)
             {
-                if (options.FuncManager.Exists(directName)) // if the name is a built-in, then add the "()" after it.
-                    directName += "()";
-                AddOpcode(new OpcodeCall(directName));
+                if (options.FuncManager.Exists(directName)){
+                    Deb.logcompile("IsDirect found the function");
+                    directName=directName.ToLower();
+                    var opcode = new OpcodeCall(directName) {
+                        isBuiltin=true // evandisoft
+                    };
+                    AddOpcode(opcode); 
+                } 
+                else{
+                    Deb.logcompile("IsDirect didn't find the function");
+                    AddOpcode(new OpcodeCall(directName));
+                }   
+
             }
             else
             {
@@ -2849,7 +2861,7 @@ namespace kOS.Safe.Compilation.KS
             {
                 AddOpcode(new OpcodePush(new KOSArgMarkerType()));
                 VisitNode(node.Nodes[1]);
-                var opcode = new OpcodeCall("print()");
+                var opcode = new OpcodeCall("print"); // changed this to remove parens
                 opcode.isBuiltin=true; //evandisoft. Warning: "isBuiltin" will not be regenerated from a compiled file
                 AddOpcode(opcode);
                 AddOpcode(new OpcodePop()); // all functions now return a value even if it's a dummy we ignore.
