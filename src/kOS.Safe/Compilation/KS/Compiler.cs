@@ -1621,7 +1621,6 @@ namespace kOS.Safe.Compilation.KS
             if (isDirect)
             {
                 if (options.FuncManager.Exists(directName)){
-                    Deb.logcompile("IsDirect found the function");
                     directName=directName.ToLower();
                     var opcode = new OpcodeCall(directName) {
                         isBuiltin=true // evandisoft
@@ -1629,7 +1628,6 @@ namespace kOS.Safe.Compilation.KS
                     AddOpcode(opcode); 
                 } 
                 else{
-                    Deb.logcompile("IsDirect didn't find the function");
                     AddOpcode(new OpcodeCall(directName));
                 }   
 

@@ -290,7 +290,6 @@
     <Compile Include="Encapsulation\interfaces\ISuffix.cs" />
     <Compile Include="Encapsulation\interfaces\ISuffixed.cs" />
     <Compile Include="Execution\Procedure.cs" />
-    <Compile Include="Execution\Opcodes.cs" />
     <Compile Include="Execution\KOSThread.cs" />
     <Compile Include="Execution\ProcedureExec.cs" />
     <Compile Include="Execution\ProcessManager.cs" />

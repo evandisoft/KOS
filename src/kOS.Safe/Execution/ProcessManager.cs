@@ -25,6 +25,9 @@ namespace kOS.Safe
             // it will be replaced later.
             if (!running && processes.Count==0 && GetCurrentContext().Program.Count>1
                ){
+                foreach(var opcode in GetCurrentContext().Program){
+                    Deb.logcompile(opcode.Label, opcode);
+                }
                 Deb.clearMiscLog();
                 Deb.miscIsLogging=true;
                 Deb.logmisc("Creating Dummy processes");

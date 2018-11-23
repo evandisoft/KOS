@@ -90,7 +90,6 @@
     <Compile Include="Control\WheelSteeringManager.cs" />
     <Compile Include="Control\WheelThrottleManager.cs" />
     <Compile Include="Function\BuildList.cs" />
-    <Compile Include="Function\HighlightStructure.cs" />
     <Compile Include="Function\Math.cs" />
     <Compile Include="Function\Misc.cs" />
     <Compile Include="Function\Persistence.cs" />
@@ -145,7 +144,6 @@
     <Compile Include="Suffixed\RgbaColor.cs" />
     <Compile Include="Suffixed\Config.cs" />
     <Compile Include="Function\PrintList.cs" />
-    <Compile Include="Core.cs" />
     <Compile Include="Suffixed\ElementValue.cs" />
     <Compile Include="Suffixed\FlightControl.cs" />
     <Compile Include="Suffixed\GeoCoordinates.cs" />
@@ -245,6 +243,8 @@
     <Compile Include="Module\AssetManager.cs" />
     <Compile Include="Screen\ListPickerDialog.cs" />
     <Compile Include="Suffixed\HsvaColor.cs" />
+    <Compile Include="Function\HighlightStructure.cs" />
+    <Compile Include="Core.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\kOS.Safe\kOS.Safe.csproj">
