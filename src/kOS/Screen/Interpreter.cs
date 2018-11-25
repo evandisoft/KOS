@@ -8,6 +8,7 @@ using kOS.Safe.Screen;
 using kOS.Safe.UserIO;
 using kOS.Safe.Persistence;
 using kOS.Safe;
+using kOS.Safe.Encapsulation;
 
 namespace kOS.Screen
 {
@@ -44,11 +45,7 @@ namespace kOS.Screen
             {
                 InsertChar('\n');
             }
-            Deb.clearOpcodeFile ();
-            foreach (var opcode in CPU.OpcodeLogQueue) {
-                Deb.logopcode (opcode.Label, opcode); // evandisoft
-            }
-            CPU.OpcodeLogQueue.Clear ();
+            
         }
         
         /// <summary>
@@ -150,9 +147,27 @@ namespace kOS.Screen
                     commandHistoryIndex, commandText, InterpreterName, options);
                 if (commandParts == null) return;
 
-                var interpreterContext = ((CPU)Shared.Cpu).GetInterpreterContext();
-                interpreterContext.AddParts(commandParts);
-            }
+
+
+				// If the cpu is really a "ProcessManager", we'll handle it
+				// the "new" way. If it's just a CPU, do it the old way.
+				ProcessManager pm = Shared.Cpu as ProcessManager;
+				if (pm!=null){
+					Deb.miscIsLogging=true;
+					Deb.logmisc("creating new builder");
+					ProgramBuilder builder = new ProgramBuilder();
+					Deb.logmisc("adding parts");
+					builder.AddRange(commandParts);
+					Deb.logmisc("building program");
+					List<Opcode> newProgram = builder.BuildProgram();
+					Deb.logmisc("running program");
+					Deb.miscIsLogging=false;
+					((ProcessManager)Shared.Cpu).RunProgram(new Procedure(newProgram));
+				} else{
+					var interpreterContext = ((CPU)Shared.Cpu).GetInterpreterContext();
+					interpreterContext.AddParts(commandParts);
+				}
+			}
             catch (Exception e)
             {
                 if (Shared.Logger != null)

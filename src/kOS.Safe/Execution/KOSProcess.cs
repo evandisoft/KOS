@@ -1,5 +1,4 @@
-﻿using System;
-using kOS.Safe.Compilation;
+﻿using kOS.Safe.Compilation;
 using System.Collections.Generic;
 
 namespace kOS.Safe

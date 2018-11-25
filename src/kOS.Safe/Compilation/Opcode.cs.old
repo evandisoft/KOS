@@ -481,7 +481,7 @@ namespace kOS.Safe.Compilation
         }
         protected Structure PopStructureAssertEncapsulated(ProcedureExec exec, bool barewordOkay = false)
         {
-            return Structure.FromPrimitiveWithAssert(PopValueAssert(exec,barewordOkay));
+            return Structure.FromPrimitiveWithAssert(PopValueAssert(exec, barewordOkay));
         }
 
     }
@@ -575,11 +575,6 @@ namespace kOS.Safe.Compilation
         {
             Structure value = PopStructureAssertEncapsulated(cpu);
             cpu.SetValue(Identifier, value);
-        }
-        public override void Execute(ProcedureExec exec)
-        {
-            Structure value = PopStructureAssertEncapsulated(exec);
-            exec.Store.SetValue(Identifier, value);
         }
     }
 
@@ -1093,12 +1088,6 @@ namespace kOS.Safe.Compilation
 
             DeltaInstructionPointer = !condition ? Distance : 1;
         }
-        public override void Execute(ProcedureExec exec)
-        {
-            bool condition = Convert.ToBoolean(exec.PopValue());
-
-            DeltaInstructionPointer = !condition ? Distance : 1;
-        }
     }
 
     /// <summary>
@@ -1117,12 +1106,6 @@ namespace kOS.Safe.Compilation
         public override void Execute(ICpu cpu)
         {
             bool condition = Convert.ToBoolean(cpu.PopValueArgument());
-            DeltaInstructionPointer = condition ? Distance : 1;
-        }
-        public override void Execute(ProcedureExec exec)
-        {
-            bool condition = Convert.ToBoolean(exec.PopValue());
-
             DeltaInstructionPointer = condition ? Distance : 1;
         }
     }
@@ -1690,25 +1673,16 @@ namespace kOS.Safe.Compilation
         }
         public override void Execute(ProcedureExec exec)
         {
-
             if(isBuiltin){
                 Deb.logmisc("isbuiltin");
+                var shared = exec.Thread.Process.ProcessManager.shared;
+                Deb.logmisc("shared", shared);
                 //object functionPointer= exec.Store.GetValue(Destination);
                 Deb.logmisc("destination", Destination);
 
-                exec.Shared.FunctionManager.CallFunction(Destination as string,exec);
-            } else if(Direct){
-                if(!(Destination as string).StartsWith("$")){
-                    Destination="$"+Destination;
-                }
-                Procedure procedure = exec.Store.GetValue(Destination) as Procedure;
-                if (procedure==null)
-                    throw new Exception("The stored value was not a procedure! It was a "+Destination.GetType());
-                Deb.logmisc("Calling procedure", procedure);
-                exec.Thread.Call(procedure);
-            }
-            else{
-                throw new NotImplementedException("This type of call is not implemented.");
+                shared.FunctionManager.CallFunction(Destination as string,exec.ArgumentStack);
+            } else{
+                throw new NotImplementedException("Non-Direct Calls are not implemented!");
             }
         }
 
@@ -2033,10 +2007,6 @@ namespace kOS.Safe.Compilation
             int currentPointer = cpu.InstructionPointer;
             DeltaInstructionPointer = destinationPointer - currentPointer;
         }
-        public override void Execute(ProcedureExec exec)
-        {
-            exec.Thread.Return(exec.PopValue());
-        }
 
         public override string ToString()
         {
@@ -2088,7 +2058,7 @@ namespace kOS.Safe.Compilation
 
         public override void Execute(ProcedureExec exec)
         {
-            exec.Stack.Push(Argument);
+            exec.ArgumentStack.Push(Argument);
         }
 
         public override string ToString()
@@ -2197,9 +2167,9 @@ namespace kOS.Safe.Compilation
             // of the value, not the pushing of it.  (This is necessary because SET and DECLARE
             // statements have to be allowed to push undefined variable references onto the stack
             // for new variables that they are going to create.)
-            // evandisoft TODO: popvalueargument is potentially expensive? Not sure in this case
+            // TODO: popvalueargument is potentially expensive? Not sure in this case
             // Seems like this might just slow us down.
-            exec.PopValue();
+            exec.ArgumentStack.PopValue();
         }
     }
 
@@ -2229,13 +2199,6 @@ namespace kOS.Safe.Compilation
             {
                 throw new KOSArgumentMismatchException("Called with too many arguments.");
             }
-        }
-        public override void Execute(ProcedureExec exec)
-        {
-            bool worked;
-            worked=exec.Stack.Count>0;
-
-            //evandisoft TODO: I dont know what this does and I'm going to ignore it atm.
         }
     }
 
@@ -2525,28 +2488,16 @@ namespace kOS.Safe.Compilation
 
 
 
-        Procedure procedure;
-        // Create a new Procedure containing all the Opcodes in the Program
-        // that this delegate consists of.
-        public void EncapsulateProcedure(List<Opcode> Program){
-
-
+        private Procedure procedure=null;
+        // Create a new Procedure containing all the Opcodes associated with
+        // this delegate.
+        public void CreateProcedure(List<Opcode> Program){
             List<Opcode> procedureOpcodes = new List<Opcode>();
-
-            // Add the opcodes from EntryPoint till after we've seen an 
-            // OpcodeReturn. Include the Return.
-            // evandisoft TODO: ensure that this works for all cases of
-            // return. Maybe optional returns in if statements will throw this
-            // off. I don't know how returns are implemented.
-            // I assume that only returns that have a 0 "pop scope" are the end
             int i = EntryPoint;
-            do {
+            do { // Add the opcodes till after we've seen an OpcodeReturn
                 procedureOpcodes.Add(Program[i]);
-            } while (!isEndReturn(Program[i++]));
+            } while (Program[i++].GetType()!=typeof(OpcodeReturn));
             procedure=new Procedure(procedureOpcodes);
-        }
-        Boolean isEndReturn(Opcode opcode){
-            return opcode.GetType()==typeof(OpcodeReturn)&&((OpcodeReturn)opcode).Depth==0;
         }
 
         protected override string Name { get { return "pushdelegate"; } }
@@ -2580,7 +2531,7 @@ namespace kOS.Safe.Compilation
 
         public override void Execute(ProcedureExec exec)
         {
-            exec.Stack.Push(procedure);
+            exec.ArgumentStack.Push(procedure);
         }
 
         public override string ToString()

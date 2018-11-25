@@ -3,6 +3,7 @@ using kOS.Safe.Compilation;
 
 namespace kOS.Communication
 {
+	// I don't think this is actually being used by anyone
     public class RunCommand : InterProcCommand
     {
         public List<Opcode> Program;

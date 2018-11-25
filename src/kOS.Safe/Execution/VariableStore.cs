@@ -1,6 +1,7 @@
 ﻿using System;
 using coll = System.Collections.Generic;
 using kOS.Safe.Exceptions;
+using kOS.Safe.Encapsulation;
 
 namespace kOS.Safe.Execution {
 
@@ -10,13 +11,13 @@ namespace kOS.Safe.Execution {
 	// This manages all lookups, and all storage, even up to Global Scope.
     // Opcodes use their ProcedureCall reference in their Execute
     // function to get a reference to this.
-	public class Store {
-        class Mapping : coll.Dictionary<string, object> {}
+	public class VariableStore {
+        class Mapping : coll.Dictionary<string, Variable> {}
 
         readonly VariableScope globalScope;
         readonly coll.Stack<Mapping> scopeStack = new coll.Stack<Mapping>();
 
-        public Store(VariableScope globalScope){
+        public VariableStore(VariableScope globalScope){
             Deb.logmisc("Storing reference to globalScope", globalScope);
             this.globalScope=globalScope;
         }
@@ -40,7 +41,7 @@ namespace kOS.Safe.Execution {
         {
             var lower_identifier = identifier.ToLower();
             Deb.logmisc("Setting new local", lower_identifier,"to",value);
-            scopeStack.Peek().Add(lower_identifier, value);
+            scopeStack.Peek().Add(lower_identifier, new Variable { Name=lower_identifier, Value=value });
         }
 
 
@@ -55,11 +56,15 @@ namespace kOS.Safe.Execution {
             // does NOT have a value like $<.....>, which are special
             // flags used internally:
             var identifier = testValue as string;
-            if (identifier == null ||
-                identifier.Length <= 1 ||
-                identifier[0] != '$' ||
-                identifier[1] == '<') {
+            if (identifier == null){
                 return testValue;
+            }
+            //evandisoft TODO: just hardwiring this in there to get it to not
+            // treat the Procedure as an identifier
+            Deb.logmisc("the type of testvalue is", testValue.GetType());
+            if (testValue.GetType()==typeof(Procedure)){
+                Deb.logmisc("returning the procedure");
+                return testValue; 
             }
 
 
@@ -75,9 +80,8 @@ namespace kOS.Safe.Execution {
             
             foreach (var level in scopeStack) {
                 Deb.logmisc("Checking level", level);
-                object value;
-                if (level.TryGetValue(identifier, out value)) {
-                    return new Variable { Name=identifier, Value=value };
+                if (level.TryGetValue(identifier, out Variable variable)) {
+                    return variable;
                 }
             }
             Deb.logmisc("Attempting to get it in global scope");
@@ -87,6 +91,30 @@ namespace kOS.Safe.Execution {
             }
             throw new KOSUndefinedIdentifierException(identifier.TrimStart('$'), "");
         }
+        public void SetGlobal(string identifier, object value){
+            identifier = identifier.ToLower();
+            globalScope.Variables.Add(identifier, new Variable { Name=identifier, Value=value });
+        }
+        public void SetValue(string identifier, object value)
+        {
+            Variable variable;
+            Deb.logmisc("value is of type", value.GetType());
+            identifier = identifier.ToLower();
+            Deb.logmisc("Attempting to find a place to set it in local scope");
+            foreach (var level in scopeStack){
+                if (level.TryGetValue(identifier, out variable)) {
+                    variable.Value=value; 
+                    return;
+                }
+            }
+            Deb.logmisc("Attempting to find a place to set it in global scope");
+            if (globalScope.Variables.TryGetValue(identifier, out variable)) {
+                variable.Value=value; 
+                return;
+            }
 
+            Deb.logmisc("Setting it in new global variable");
+            SetGlobal(identifier, value);
+        }
     }
 }

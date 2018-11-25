@@ -4,12 +4,11 @@ using kOS.Safe.Compilation;
 using kOS.Safe.Encapsulation;
 using kOS.Safe.Execution;
 using coll = System.Collections.Generic;
+using kOS.Safe.Exceptions;
 
 namespace kOS.Safe
 {
-
-    public enum ExecStatus
-    {
+    public enum ExecStatus {
         OK,
         FINISHED
     }
@@ -29,8 +28,9 @@ namespace kOS.Safe
     public class ProcedureExec {
         internal KOSThread Thread { get; }
 
-        internal Store Store { get; } // manages variable storing and retrieval
-        internal ArgumentStack ArgumentStack { get; } // manages the argument stack
+        internal ArgumentStack Stack { get; } // manages the argument stack
+        internal VariableStore Store { get; } // manages variable storing and retrieval
+        internal SafeSharedObjects Shared { get; }
 
         readonly List<Opcode> Opcodes;
         int instructionPointer = 0;
@@ -38,8 +38,10 @@ namespace kOS.Safe
 	    public ProcedureExec(KOSThread thread,List<Opcode> Opcodes)
         {
             Thread = thread;
-            Store = new Store(thread.Process.ProcessManager.globalVariables);
-            ArgumentStack=new ArgumentStack(Store);
+            Store = new VariableStore(Thread.Process.ProcessManager.globalVariables);
+            Stack=new ArgumentStack();
+            Shared=Thread.Process.ProcessManager.shared;
+
             this.Opcodes = Opcodes;
         }
 
@@ -50,12 +52,7 @@ namespace kOS.Safe
 
             Opcode opcode = Opcodes[instructionPointer];
 
-            if (opcode.Code != ByteCode.EOF) { // Log the opcodes to the opcode queue
-                if (CPU.OpcodeLogQueue.Count > CPU.OpcodeQueueLen) {
-                    CPU.OpcodeLogQueue.Dequeue();
-                }
-                CPU.OpcodeLogQueue.Enqueue(opcode);
-            }
+            Deb.storeOpcode(opcode);
 
             Deb.logmisc("Current Opcode", opcode.Label,opcode);
             try{
@@ -64,12 +61,14 @@ namespace kOS.Safe
                 Deb.logmisc(e);
                 return ExecStatus.FINISHED;
             }
+
             int delta = opcode.DeltaInstructionPointer;
             instructionPointer += delta;
             Deb.logmisc("delta was", delta, 
                          ". New instruction pointer", instructionPointer);
 
-            if (instructionPointer==Opcodes.Count){
+            if (instructionPointer==Opcodes.Count || opcode.GetType()==typeof(OpcodeReturn)){
+                Deb.logmisc("Reached the end of the procedure.");
                 return ExecStatus.FINISHED;
             }
             if(instructionPointer<Opcodes.Count){
@@ -79,6 +78,13 @@ namespace kOS.Safe
             throw new Exception("Instruction way out of bounds!");
         }
 
-
+        internal object PopValue(bool barewordOkay = false)
+        {
+            var retval = Stack.Pop();
+            Deb.logmisc("Getting value of", retval);
+            var retval2 = Store.GetValue(retval, barewordOkay);
+            Deb.logmisc("Got value of", retval2);
+            return retval2;
+        }
     }
 }

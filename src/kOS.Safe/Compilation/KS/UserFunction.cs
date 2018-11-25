@@ -97,7 +97,6 @@ namespace kOS.Safe.Compilation.KS
             DefaultLabel = Identifier + "-default";
         }
 
-        public int blah => 1;
 
         public bool IsInitialized()
         {

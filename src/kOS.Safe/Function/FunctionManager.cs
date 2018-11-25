@@ -48,9 +48,9 @@ namespace kOS.Safe.Function
             }
         }
 
-        public void CallFunction(string functionName,ArgumentStack arguments)
+        public void CallFunction(string functionName,ProcedureExec exec)
         {
-            Deb.logmisc("In CallFunction for function",functionName,". args count",arguments.Count);
+            Deb.logmisc("In CallFunction for function",functionName);
 
             if (!functions.ContainsKey(functionName))
             {
@@ -59,10 +59,10 @@ namespace kOS.Safe.Function
 
             SafeFunctionBase function = functions[functionName];
             Deb.logmisc("got function", function);
-            function.Execute(shared,arguments);
+            function.Execute(exec);
             Deb.logmisc("function.UsesAutoReturn", function.UsesAutoReturn);
             if (function.UsesAutoReturn){
-                arguments.Push(function.ReturnValue);
+                exec.Stack.Push(function.ReturnValue);
             }
         }
         public void CallFunction(string functionName)

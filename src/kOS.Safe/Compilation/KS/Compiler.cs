@@ -1748,7 +1748,7 @@ namespace kOS.Safe.Compilation.KS
                 {
                     firstIdentifier = GetIdentifierText(suffixTerm);
                     UserFunction userFuncObject = GetUserFunctionWithScopeWalk(firstIdentifier, node);
-                    if (userFuncObject != null && !compilingSetDestination)
+                     if (userFuncObject != null && !compilingSetDestination)
                     {
                         firstIdentifier = userFuncObject.ScopelessPointerIdentifier;
                         isUserFunc = true;

@@ -3,6 +3,7 @@ using kOS.Safe.Execution;
 using kOS.Safe.Compilation;
 using coll = System.Collections.Generic;
 using System.Collections.Generic;
+using kOS.Safe.Encapsulation;
 
 namespace kOS.Safe
 {
@@ -15,6 +16,29 @@ namespace kOS.Safe
             
         }
 
+        // Encapsulate a compiled program, then create a process and thread for
+        // it, and run it.
+        public void RunProgram(Procedure Program){
+            // log all the opcodes that were created into the compile.log
+
+            foreach (var opcode in Program.Opcodes) {
+                Deb.logcompile(opcode.Label, opcode);
+            }
+            // Instantiate the Procedures in all the OpcodePushDelegate's
+            foreach (var opcode in Program.Opcodes) {
+                (opcode as OpcodePushDelegate)?.EncapsulateProcedure(Program.Opcodes);
+            }
+            Deb.clearMiscLog();
+            Deb.miscIsLogging=true;
+            Deb.logmisc("Creating Dummy processes");
+            KOSProcess process = new KOSProcess(this);
+            processes.Add(process);
+            KOSThread thread = new KOSThread(process);
+            process.AddThread(thread);
+            thread.Call(Program);
+            running=true;
+        }
+
         Boolean running = false;
         override internal void ContinueExecution(bool doProfiling){
             Deb.logmisc ("ContinueExecution","Processes",processes.Count,
@@ -23,29 +47,18 @@ namespace kOS.Safe
 
             // TODO: this is just "getting started" code
             // it will be replaced later.
-            if (!running && processes.Count==0 && GetCurrentContext().Program.Count>1
-               ){
-                foreach(var opcode in GetCurrentContext().Program){
-                    Deb.logcompile(opcode.Label, opcode);
-                }
-                Deb.clearMiscLog();
-                Deb.miscIsLogging=true;
-                Deb.logmisc("Creating Dummy processes");
-                KOSProcess process = new KOSProcess(this);
-                processes.Add(process);
-                KOSThread thread = new KOSThread(process);
-                process.AddThread(thread);
-                ProcedureExec exec = new ProcedureExec(thread, GetCurrentContext().Program);
-                thread.AddProcedureExec(exec);
-                running=true;
-            } else if(running && processes.Count==0 && GetCurrentContext().Program.Count>1) {
+            // If we're running but have no processes, we must be done running.
+            if(running && processes.Count==0) {
                 Deb.logmisc("Resetting program");
 
                 Opcode opcode = new OpcodeEOF();
-                GetCurrentContext().Program=new List<Opcode> { opcode };
-                GetCurrentContext().InstructionPointer=0;
                 running=false;
                 Deb.miscIsLogging=false;
+                Deb.clearOpcodeFile();
+                foreach (var currentOpcode in CPU.OpcodeLogQueue) {
+                    Deb.logopcode(currentOpcode.Label, currentOpcode); // evandisoft
+                }
+                CPU.OpcodeLogQueue.Clear();
             }
 
             for (int i = processes.Count-1;i>= 0;i--) {
@@ -62,8 +75,6 @@ namespace kOS.Safe
 
                 }
             }
-
-
         }
     }
 }

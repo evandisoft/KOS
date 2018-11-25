@@ -29,11 +29,10 @@ namespace kOS.Safe.Function
             double result = Math.Cos(radians);
             ReturnValue = result;
         }
-        public override void Execute(SafeSharedObjects shared,ArgumentStack arguments)
+        public override void Execute(ProcedureExec exec)
         {
-            double degrees = GetDouble(arguments.Pop());
-            arguments.Pop();
-            //AssertArgBottomAndConsume(shared);
+            double degrees = GetDouble(PopValueAssert(exec));
+            AssertArgBottomAndConsume(exec);
             double radians = DegreesToRadians(degrees);
             double result = Math.Cos(radians);
             ReturnValue = result;

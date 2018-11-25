@@ -59,7 +59,7 @@ namespace kOS.Safe.Function
         }
 
         public abstract void Execute(SafeSharedObjects shared);
-        public virtual void Execute(SafeSharedObjects shared,ArgumentStack arguments){
+        public virtual void Execute(ProcedureExec exec){
             throw new NotImplementedException("This builtin is not yet implemented.");
         }
 
@@ -114,6 +114,14 @@ namespace kOS.Safe.Function
 
             throw new KOSArgumentMismatchException("Too many arguments were passed to " + GetFuncName());
         }
+        protected void AssertArgBottomAndConsume(ProcedureExec exec)
+        {
+            object shouldBeBottom = exec.Stack.Pop();
+            if (shouldBeBottom != null && shouldBeBottom.GetType() == OpcodeCall.ArgMarkerType)
+                return; // Assert passed.
+
+            throw new KOSArgumentMismatchException("Too many arguments were passed to " + GetFuncName());
+        }
 
         /// <summary>
         /// A utility function that a function's Execute() may use if it wishes to, to get a count of
@@ -149,6 +157,13 @@ namespace kOS.Safe.Function
         protected object PopValueAssert(SafeSharedObjects shared, bool barewordOkay = false)
         {
             object returnValue = shared.Cpu.PopValueArgument(barewordOkay);
+            if (returnValue != null && returnValue.GetType() == OpcodeCall.ArgMarkerType)
+                throw new KOSArgumentMismatchException("Too few arguments were passed to " + GetFuncName());
+            return returnValue;
+        }
+        protected object PopValueAssert(ProcedureExec exec, bool barewordOkay = false)
+        {
+            object returnValue = exec.PopValue(barewordOkay);
             if (returnValue != null && returnValue.GetType() == OpcodeCall.ArgMarkerType)
                 throw new KOSArgumentMismatchException("Too few arguments were passed to " + GetFuncName());
             return returnValue;

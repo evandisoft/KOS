@@ -21,7 +21,7 @@ namespace kOS.Safe.Compilation
         public Guid AddObjectFile(IEnumerable<CodePart> parts)
         {
             var objectFile = new ObjectFile(parts);
-            
+
             objectFiles.Add(objectFile.Id, objectFile);
             return objectFile.Id;
         }

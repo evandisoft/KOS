@@ -20,12 +20,16 @@ namespace kOS.Safe.Function
             AssertArgBottomAndConsume(shared);
             shared.Screen.Print(textToPrint);
         }
-        public override void Execute(SafeSharedObjects shared,ArgumentStack arguments)
+        public override void Execute(ProcedureExec exec)
         {
-            Deb.logmisc("in print. Shared", shared, "args", arguments.Count);
-            string textToPrint = arguments.Pop().ToString();
+            // evandisoft TODO: must make a rewrite of SafeFunctionBase's 
+            // PopValueAssert that takes an "exec" and use that one here the 
+            // one in here because it can produce the function name in an error
+            Deb.logmisc("in print."); 
+            string textToPrint = PopValueAssert(exec).ToString();
+            AssertArgBottomAndConsume(exec);
             Deb.logmisc("arg is", textToPrint);
-            shared.Screen.Print(textToPrint);
+            exec.Shared.Screen.Print(textToPrint);
         }
     }
 

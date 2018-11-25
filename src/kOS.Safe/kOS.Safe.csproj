@@ -20,6 +20,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -28,6 +29,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Shell|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
@@ -40,6 +42,7 @@
     <WarningLevel>4</WarningLevel>
     <Optimize>false</Optimize>
     <IntermediateOutputPath></IntermediateOutputPath>
+    <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="ICSharpCode.SharpZipLib">
@@ -289,18 +292,19 @@
     <Compile Include="Encapsulation\interfaces\ISetSuffix.cs" />
     <Compile Include="Encapsulation\interfaces\ISuffix.cs" />
     <Compile Include="Encapsulation\interfaces\ISuffixed.cs" />
-    <Compile Include="Execution\Procedure.cs" />
     <Compile Include="Execution\KOSThread.cs" />
     <Compile Include="Execution\ProcedureExec.cs" />
     <Compile Include="Execution\ProcessManager.cs" />
     <Compile Include="Execution\KOSProcess.cs" />
-    <Compile Include="Execution\Store.cs" />
+    <Compile Include="Execution\VariableStore.cs" />
     <Compile Include="Execution\ArgumentStack.cs" />
+    <Compile Include="Encapsulation\Procedure.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Compilation\CompiledObject-doc.md" />
     <None Include="Compilation\KS\kRISC.tpg" />
     <None Include="packages.config" />
+    <None Include="Compilation\Opcode.cs.old" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
