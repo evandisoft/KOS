@@ -25,7 +25,7 @@ namespace kOS.Safe
         }
 
         public void Call(Procedure procedure){
-            ProcedureExec exec = new ProcedureExec(this,procedure.Opcodes);
+            ProcedureExec exec = new ProcedureExec(this,procedure);
             callStack.Push(exec);
         }
 

@@ -35,14 +35,17 @@ namespace kOS.Safe
         readonly List<Opcode> Opcodes;
         int instructionPointer = 0;
 
-	    public ProcedureExec(KOSThread thread,List<Opcode> Opcodes)
+
+	    public ProcedureExec(KOSThread thread,Procedure procedure)
         {
             Thread = thread;
             Store = new VariableStore(Thread.Process.ProcessManager.globalVariables);
             Stack=new ArgumentStack();
             Shared=Thread.Process.ProcessManager.shared;
+            Store.AddClosure(procedure.closure);
+            this.Opcodes = procedure.Opcodes;
+            Deb.logmisc("after ProcedureExec closure added, store is", Store);
 
-            this.Opcodes = Opcodes;
         }
 
         public ExecStatus Execute()
@@ -57,6 +60,7 @@ namespace kOS.Safe
             Deb.logmisc("Current Opcode", opcode.Label,opcode);
             try{
                 opcode.Execute(this);
+                Deb.logmisc("Current store is", Store);
             }catch(Exception e){
                 Deb.logmisc(e);
                 return ExecStatus.FINISHED;

@@ -2524,14 +2524,11 @@ namespace kOS.Safe.Compilation
         private bool WithClosure { get; set; }
 
 
-
-        Procedure procedure;
-        // Create a new Procedure containing all the Opcodes in the Program
-        // that this delegate consists of.
+        List<Opcode> procedureOpcodes;
+        // Put all the opcodes associated with this delegate into
+        // "procedureOpcodes".
         public void EncapsulateProcedure(List<Opcode> Program){
-
-
-            List<Opcode> procedureOpcodes = new List<Opcode>();
+            procedureOpcodes = new List<Opcode>();
 
             // Add the opcodes from EntryPoint till after we've seen an 
             // OpcodeReturn. Include the Return.
@@ -2543,7 +2540,6 @@ namespace kOS.Safe.Compilation
             do {
                 procedureOpcodes.Add(Program[i]);
             } while (!isEndReturn(Program[i++]));
-            procedure=new Procedure(procedureOpcodes);
         }
         Boolean isEndReturn(Opcode opcode){
             return opcode.GetType()==typeof(OpcodeReturn)&&((OpcodeReturn)opcode).Depth==0;
@@ -2580,7 +2576,9 @@ namespace kOS.Safe.Compilation
 
         public override void Execute(ProcedureExec exec)
         {
-            exec.Stack.Push(procedure);
+            Deb.logmisc("Creating new procedure",exec.Store);
+            Procedure newProcedure = new Procedure(procedureOpcodes, exec.Store);
+            exec.Stack.Push(newProcedure);
         }
 
         public override string ToString()

@@ -4,22 +4,33 @@ using kOS.Safe.Exceptions;
 using kOS.Safe.Encapsulation;
 
 namespace kOS.Safe.Execution {
-
-	// The purpose of this is to manage variable lookup and storage calls
+    public class Mapping : coll.Dictionary<string, Variable> { }
+    // The purpose of this is to manage variable lookup and storage calls
     // that are made in the running of a ProcedureCall.
     //
-	// This manages all lookups, and all storage, even up to Global Scope.
+    // This manages all lookups, and all storage, even up to Global Scope.
     // Opcodes use their ProcedureCall reference in their Execute
     // function to get a reference to this.
-	public class VariableStore {
-        class Mapping : coll.Dictionary<string, Variable> {}
+    public class VariableStore {
+
 
         readonly VariableScope globalScope;
-        readonly coll.Stack<Mapping> scopeStack = new coll.Stack<Mapping>();
+        internal readonly coll.Stack<Mapping> scopeStack = new coll.Stack<Mapping>();
 
         public VariableStore(VariableScope globalScope){
             Deb.logmisc("Storing reference to globalScope", globalScope);
             this.globalScope=globalScope;
+        }
+
+        public void AddClosure(coll.List<Mapping> closure){
+            if (closure==null) return;
+            coll.Stack<Mapping> reverser = new coll.Stack<Mapping>();
+            foreach(var level in closure){
+                reverser.Push(level);
+            }
+            foreach(var level in reverser){
+                scopeStack.Push(level);
+            }
         }
 
         public void PushNewScope()
@@ -115,6 +126,17 @@ namespace kOS.Safe.Execution {
 
             Deb.logmisc("Setting it in new global variable");
             SetGlobal(identifier, value);
+        }
+
+        public override string ToString(){
+            string retval = "";
+            foreach(var level in scopeStack){
+                foreach(var item in level){
+                    retval+=item.Key+","+item.Value.Value+";";
+                }
+                retval+="\n";
+            }
+            return retval;
         }
     }
 }
