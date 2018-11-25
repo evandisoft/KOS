@@ -55,7 +55,7 @@ namespace kOS.Safe
 
                 switch (status) {
 
-                case ProcessStatus.Finished:
+                case ProcessStatus.FINISHED:
                     Deb.logmisc("Removing process", i);
                     processes.RemoveAt(i);
                     break;
