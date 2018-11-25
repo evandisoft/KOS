@@ -10,7 +10,11 @@ namespace kOS.Safe
 {
     public enum ExecStatus {
         OK,
-        FINISHED
+        FINISHED,
+        LIMIT_EXCEEDED,
+        RETURN,
+        CALL,
+        ERROR
     }
 
     // Almost every single call made by an opcode does not have to be made
@@ -34,6 +38,7 @@ namespace kOS.Safe
 
         readonly List<Opcode> Opcodes;
         int instructionPointer = 0;
+        internal ExecutionControl instructionCounter;
 
 
 	    public ProcedureExec(KOSThread thread,Procedure procedure)
@@ -42,44 +47,50 @@ namespace kOS.Safe
             Store = new VariableStore(Thread.Process.ProcessManager.globalVariables);
             Stack=new ArgumentStack();
             Shared=Thread.Process.ProcessManager.shared;
-            Store.AddClosure(procedure.closure);
-            this.Opcodes = procedure.Opcodes;
-            Deb.logmisc("after ProcedureExec closure added, store is", Store);
+            Store.AddClosure(procedure.Closure);
+            Opcodes = procedure.Opcodes;
+            instructionCounter=Thread.Process.ProcessManager.instructionCounter;
 
         }
 
         public ExecStatus Execute()
         {
-            Deb.logmisc("ProcedureExec Execute. instructionPointer", instructionPointer,
-                        "total opcodes",Opcodes.Count);
+            while(instructionCounter.CanContinue()) {
+                Deb.logmisc("ProcedureExec Execute. instructionPointer", instructionPointer,
+                        "total opcodes", Opcodes.Count);
 
-            Opcode opcode = Opcodes[instructionPointer];
+                Opcode opcode = Opcodes[instructionPointer];
 
-            Deb.storeOpcode(opcode);
+                Deb.storeOpcode(opcode);
 
-            Deb.logmisc("Current Opcode", opcode.Label,opcode);
-            try{
-                opcode.Execute(this);
-                Deb.logmisc("Current store is", Store);
-            }catch(Exception e){
-                Deb.logmisc(e);
-                return ExecStatus.FINISHED;
+                Deb.logmisc("Current Opcode", opcode.Label, opcode);
+                try {
+                    opcode.Execute(this);
+                } catch (Exception e) {
+                    Deb.logmisc(e);
+                    return ExecStatus.ERROR;
+                }
+
+                instructionPointer += opcode.DeltaInstructionPointer;
+
+                switch (opcode.Code) {
+
+                case (ByteCode.RETURN):
+                    return ExecStatus.RETURN;
+                case (ByteCode.CALL):
+                    return ExecStatus.CALL;
+                }
+
+                if (instructionPointer==Opcodes.Count || opcode.GetType()==typeof(OpcodeReturn)) {
+                    Deb.logmisc("Reached the end of the procedure.");
+                    Thread.SetReturnValueCallback(0);
+                    return ExecStatus.FINISHED;
+                } 
+                if (instructionPointer>Opcodes.Count){
+                    throw new Exception("Instruction way out of bounds!");
+                }
             }
-
-            int delta = opcode.DeltaInstructionPointer;
-            instructionPointer += delta;
-            Deb.logmisc("delta was", delta, 
-                         ". New instruction pointer", instructionPointer);
-
-            if (instructionPointer==Opcodes.Count || opcode.GetType()==typeof(OpcodeReturn)){
-                Deb.logmisc("Reached the end of the procedure.");
-                return ExecStatus.FINISHED;
-            }
-            if(instructionPointer<Opcodes.Count){
-		        return ExecStatus.OK;
-            }
-
-            throw new Exception("Instruction way out of bounds!");
+            return ExecStatus.LIMIT_EXCEEDED;
         }
 
         internal object PopValue(bool barewordOkay = false)

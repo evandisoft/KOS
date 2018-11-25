@@ -242,7 +242,7 @@ namespace kOS.Safe.Execution
                 opcode.AbortProgram = false;
 
                 opcode.Execute (cpu);
-                if (opcode.Code != ByteCode.EOF) {
+                if (opcode.Code != Compilation.ByteCode.EOF) {
                     if (CPU.OpcodeLogQueue.Count > CPU.OpcodeQueueLen) {
                         CPU.OpcodeLogQueue.Dequeue ();
                     }

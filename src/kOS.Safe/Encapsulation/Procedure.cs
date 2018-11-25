@@ -14,14 +14,14 @@ namespace kOS.Safe.Encapsulation
         internal List<Opcode> Opcodes { get;}
         // TODO: need to also store a closure here that is then passed
         // into the ProcedureCall 
-        internal List<Mapping> closure { get; } = new List<Mapping>();
+        internal List<Mapping> Closure { get; } = new List<Mapping>();
 
         public Procedure(List<Opcode> Opcodes,VariableStore closure=null)
         {
             this.Opcodes = Opcodes;
             if(closure!=null){
                 foreach(var level in closure.scopeStack){
-                    this.closure.Add(level);
+                    Closure.Add(level);
                 }
             }
             Deb.logmisc("closure in Procedure constructor is", closure);

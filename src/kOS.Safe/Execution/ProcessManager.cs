@@ -4,16 +4,64 @@ using kOS.Safe.Compilation;
 using coll = System.Collections.Generic;
 using System.Collections.Generic;
 using kOS.Safe.Encapsulation;
+using kOS.Safe.Utilities;
 
 namespace kOS.Safe
 {
+    public class ExecutionControl {
+        public int executionCounter;
+        public int instructionsPerUpdate;
+
+        public void Reset(){
+            executionCounter=0;
+            instructionsPerUpdate=SafeHouse.Config.InstructionsPerUpdate;
+        }
+
+        public Boolean CanContinue(){
+            return instructionsPerUpdate>executionCounter++;
+        }
+    }
+
+
     public class ProcessManager:CPU
     {
         readonly List<KOSProcess> processes = new List<KOSProcess> ();
+        internal ExecutionControl instructionCounter = new ExecutionControl();
 
         public ProcessManager(SafeSharedObjects safeSharedObjects):base(safeSharedObjects)
         {
             
+        }
+
+        Boolean running = false;
+        override internal void ContinueExecution(bool doProfiling)
+        {
+            Deb.logmisc("ContinueExecution", "Processes", processes.Count,
+                         "Program", GetCurrentContext().Program.Count,
+                         "Program pointer", GetCurrentContext().InstructionPointer);
+
+            // TODO: this is just "getting started" code
+            // it will be replaced later.
+            // If we're running but have no processes, we must be done running.
+            IfNotActiveStopDebugging();
+            // Reset the instructionsPerUpdate counter
+            instructionCounter.Reset();
+
+
+            for (int i = processes.Count-1;i>= 0;i--) {
+                Deb.logmisc("i", i, "total", processes.Count);
+                var status = processes[i].Execute();
+                Deb.logmisc("From Process Execute. status", status);
+
+                switch (status) {
+
+                case ProcessStatus.Finished:
+                    Deb.logmisc("Removing process", i);
+                    processes.RemoveAt(i);
+                    break;
+
+                }
+            }
         }
 
         // Encapsulate a compiled program, then create a process and thread for
@@ -39,16 +87,8 @@ namespace kOS.Safe
             running=true;
         }
 
-        Boolean running = false;
-        override internal void ContinueExecution(bool doProfiling){
-            Deb.logmisc ("ContinueExecution","Processes",processes.Count,
-                         "Program", GetCurrentContext().Program.Count,
-                         "Program pointer",GetCurrentContext().InstructionPointer);
-
-            // TODO: this is just "getting started" code
-            // it will be replaced later.
-            // If we're running but have no processes, we must be done running.
-            if(running && processes.Count==0) {
+        public void IfNotActiveStopDebugging(){
+            if (running && processes.Count==0) {
                 Deb.logmisc("Resetting program");
 
                 Opcode opcode = new OpcodeEOF();
@@ -59,21 +99,6 @@ namespace kOS.Safe
                     Deb.logopcode(currentOpcode.Label, currentOpcode); // evandisoft
                 }
                 CPU.OpcodeLogQueue.Clear();
-            }
-
-            for (int i = processes.Count-1;i>= 0;i--) {
-                Deb.logmisc ("i", i, "total", processes.Count);
-                var status = processes[i].Execute();
-                Deb.logmisc ("From Process Execute. status", status);
-
-                switch (status) {
-
-                case ProcessStatus.Finished:
-                    Deb.logmisc ("Removing process", i);
-                    processes.RemoveAt(i);
-                    break;
-
-                }
             }
         }
     }

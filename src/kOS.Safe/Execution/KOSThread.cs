@@ -10,7 +10,9 @@ namespace kOS.Safe
     public enum ThreadStatus
     {
         OK,
-        FINISHED
+        FINISHED,
+        ERROR,
+        LIMIT_EXCEEDED
     }
 
     public class KOSThread
@@ -19,48 +21,55 @@ namespace kOS.Safe
 
         readonly coll.Stack<ProcedureExec> callStack = new coll.Stack<ProcedureExec>();
 
-
         public KOSThread(KOSProcess process){
             Process=process;
         }
 
+        public ThreadStatus Execute()
+        {
+            Deb.logmisc("Thread Execute. ProcedureExecs", callStack.Count);
+
+            if (callStack.Count == 0) { return ThreadStatus.FINISHED; }
+
+            // run the procedure.
+            var status = callStack.Peek().Execute();
+            Deb.logmisc("From ProcedureExec.Execute. status", status);
+
+            return HandleExecStatus(status);
+        }
+
+        ThreadStatus HandleExecStatus(ExecStatus status){
+            switch (status) {
+
+            case ExecStatus.LIMIT_EXCEEDED:
+                return ThreadStatus.LIMIT_EXCEEDED;
+            case ExecStatus.ERROR:
+                return ThreadStatus.ERROR;
+            case ExecStatus.RETURN:
+            case ExecStatus.FINISHED:
+                Deb.logmisc("Removing ProcedureExec");
+                callStack.Pop();
+                if (callStack.Count==0) {
+                    return ThreadStatus.FINISHED;
+                }
+                callStack.Peek().Stack.Push(this.retval);
+                return ThreadStatus.OK;
+            default:
+                return ThreadStatus.OK;
+            }
+        }
+
+        // creates a new ProcedureExec, and adds it to the stack, 
+        // to be executed next time this thread runs.
         public void Call(Procedure procedure){
             ProcedureExec exec = new ProcedureExec(this,procedure);
             callStack.Push(exec);
         }
 
         object retval;
-        public void Return(object retval){
+        // OpcodeReturn calls this to set the return value
+        public void SetReturnValueCallback(object retval){
             this.retval=retval;
         }
-
-        public ThreadStatus Execute(){
-            Deb.logmisc("Thread Execute. ProcedureExecs", callStack.Count);
-
-            if (callStack.Count == 0) {
-                return ThreadStatus.FINISHED;
-            }
-
-            var status = callStack.Peek().Execute();
-            Deb.logmisc("From ProcedureExec.Execute. status", status);
-
-            switch(status){
-
-            case ExecStatus.FINISHED:
-                Deb.logmisc("Removing ProcedureExec");
-                callStack.Pop();
-                if(callStack.Count==0){
-                    return ThreadStatus.FINISHED;
-                } 
-                callStack.Peek().Stack.Push(retval);
-                return ThreadStatus.OK;
-
-            default:
-                return ThreadStatus.OK;
-
-            }
-        }
-
-
     }
 }

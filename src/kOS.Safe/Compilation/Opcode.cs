@@ -2035,7 +2035,7 @@ namespace kOS.Safe.Compilation
         }
         public override void Execute(ProcedureExec exec)
         {
-            exec.Thread.Return(exec.PopValue());
+            exec.Thread.SetReturnValueCallback(exec.PopValue());
         }
 
         public override string ToString()

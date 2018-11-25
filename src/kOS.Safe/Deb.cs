@@ -38,7 +38,7 @@ namespace kOS.Safe
         [Conditional("DEBUG")]
         static public void storeOpcode(Opcode opcode)
         {
-            if (opcode.Code != ByteCode.EOF) { // Log the opcodes to the opcode queue
+            if (opcode.Code != Compilation.ByteCode.EOF) { // Log the opcodes to the opcode queue
                 if (CPU.OpcodeLogQueue.Count > CPU.OpcodeQueueLen) {
                     CPU.OpcodeLogQueue.Dequeue();
                 }
