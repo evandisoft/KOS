@@ -20,7 +20,9 @@ namespace kOS.Safe
         readonly HashSet<KOSThread> threadSet = new HashSet<KOSThread>();
         readonly HashSet<KOSThread> triggerSet = new HashSet<KOSThread>();
 
-        readonly coll.Stack<KOSThread> runStack= new coll.Stack<KOSThread>();
+        readonly coll.Stack<KOSThread> threadStack= new coll.Stack<KOSThread>();
+        readonly coll.Stack<KOSThread> triggerStack = new coll.Stack<KOSThread>();
+
 
         public KOSProcess(ProcessManager processManager)
         {
@@ -32,60 +34,79 @@ namespace kOS.Safe
             Deb.logmisc("Process Execute. Threads", threadSet.Count);
             Deb.logmisc("Process Execute. Triggers", triggerSet.Count);
             if (threadSet.Count==0){ return ProcessStatus.FINISHED; }
+            ProcessStatus status;
 
-            // if the stack is empty add all the threads and triggers again
-            if(runStack.Count==0){
-                foreach (var thread in threadSet) {
-                    runStack.Push(thread);
-                }
-                foreach (var trigger in triggerSet) {
-                    runStack.Push(trigger);
-                }
+            FillTriggerStackIfEmpty();
+            status = ExecuteThreads(triggerStack);
+
+            switch(status){
+            case ProcessStatus.OK:
+                break;
+            default:
+                return status;
             }
 
-            var status = ProcessStatus.OK;
+            // execute all threads until GLOBAL_INSTRUCTION_LIMIT
+            // exceeded
             while(status==ProcessStatus.OK){
-                status = ExecuteThread(runStack.Peek());
+                FillThreadStackIfEmpty();
+                status = ExecuteThreads(threadStack);
             }
 
             return status;
         }
 
+        ProcessStatus ExecuteThreads(coll.Stack<KOSThread> stack){
+            while (stack.Count>0) {
+                var status = stack.Peek().Execute();
 
-        ProcessStatus ExecuteThread(KOSThread thread){
-            var status = thread.Execute();
-            switch (status) {
+                switch (status) {
 
-            // If the thread limit was reached, start executing the next
-            // thread.
-            case ThreadStatus.THREAD_INSTRUCTION_LIMIT:
-                break;
-            // If the global limit was reached, return to the current
-            // thread after the update is over. (Don't pop the current
-            // thread from the runStack)
-            case ThreadStatus.GLOBAL_INSTRUCTION_LIMIT:
-                return ProcessStatus.GLOBAL_INSTRUCTION_LIMIT;
-            // if this thread has an error, or is finished, remove
-            // it
-            case ThreadStatus.TERMINATED:
-            case ThreadStatus.ERROR:
-            case ThreadStatus.FINISHED:
-                RemoveThread(thread);
-                // If all normal threads are done, then end
-                // this process
-                if (threadSet.Count==0) {
-                    return ProcessStatus.FINISHED;
+                // If the thread limit was reached, start executing the next
+                // thread.
+                case ThreadStatus.THREAD_INSTRUCTION_LIMIT:
+                    break;
+                // If the global limit was reached, return to the current
+                // thread after the update is over. (Don't pop the current
+                // thread/trigger from its stack)
+                case ThreadStatus.GLOBAL_INSTRUCTION_LIMIT:
+                    return ProcessStatus.GLOBAL_INSTRUCTION_LIMIT;
+                // if this thread has an error, or is finished, remove
+                // it
+                case ThreadStatus.TERMINATED:
+                case ThreadStatus.ERROR:
+                case ThreadStatus.FINISHED:
+                    RemoveThread(stack.Peek());
+                    // If all normal threads are done, then end
+                    // this process
+                    if (threadSet.Count==0) {
+                        return ProcessStatus.FINISHED;
+                    }
+                    break;
                 }
-                break;
-            }
 
-            // stop executing this thread until the next time
-            // the runStack is repopulated
-            runStack.Pop();
-            if(runStack.Count==0){
-                return ProcessStatus.STACK_EMPTY;
+                // stop executing this thread until the next time
+                // the stack is repopulated
+                stack.Pop();
+                return ProcessStatus.OK;
             }
             return ProcessStatus.OK;
+        }
+
+        public void FillTriggerStackIfEmpty(){
+            if (triggerStack.Count==0) {
+                foreach (var trigger in triggerSet) {
+                    triggerStack.Push(trigger);
+                }
+            }
+        }
+
+        public void FillThreadStackIfEmpty(){
+            if (threadStack.Count==0) {
+                foreach (var thread in threadSet) {
+                    threadStack.Push(thread);
+                }
+            }
         }
 
         public void RemoveThread(KOSThread thread){

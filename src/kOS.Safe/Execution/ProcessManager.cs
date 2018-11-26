@@ -33,7 +33,7 @@ namespace kOS.Safe
             
         }
 
-        Boolean running = false;
+        Boolean debugging = false;
         override internal void ContinueExecution(bool doProfiling)
         {
             Deb.logmisc("ContinueExecution", "Processes", processes.Count,
@@ -42,6 +42,7 @@ namespace kOS.Safe
 
             // TODO: this is just "getting started" code
             // it will be replaced later.
+
             // If there are no processes being ran, stop displaying debug
             // information.
             IfNotActiveStopDebugging();
@@ -82,15 +83,15 @@ namespace kOS.Safe
             KOSThread thread = new KOSThread(process);
             process.AddThread(thread);
             thread.Call(Program);
-            running=true;
+            debugging=true;
         }
 
         public void IfNotActiveStopDebugging(){
-            if (running && processes.Count==0) {
+            if (debugging && processes.Count==0) {
                 Deb.logmisc("Resetting program");
 
                 Opcode opcode = new OpcodeEOF();
-                running=false;
+                debugging=false;
                 Deb.miscIsLogging=false;
                 Deb.clearOpcodeFile();
                 foreach (var currentOpcode in CPU.OpcodeLogQueue) {

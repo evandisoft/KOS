@@ -38,7 +38,6 @@ namespace kOS.Safe
 
         }
 
-
         public ThreadStatus Execute()
         {
             Deb.logmisc("Executing thread",ID,"ProcedureExecs", callStack.Count);

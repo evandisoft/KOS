@@ -12,8 +12,6 @@ namespace kOS.Safe.Execution {
     // Opcodes use their ProcedureCall reference in their Execute
     // function to get a reference to this.
     public class VariableStore {
-
-
         readonly VariableScope globalScope;
         internal readonly coll.Stack<Mapping> scopeStack = new coll.Stack<Mapping>();
 
