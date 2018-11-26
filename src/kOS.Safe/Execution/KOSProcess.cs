@@ -10,7 +10,6 @@ namespace kOS.Safe
     public enum ProcessStatus{
         OK,
         FINISHED,
-        QUEUE_FINISHED
     }
 
 
@@ -21,18 +20,17 @@ namespace kOS.Safe
 
         readonly coll.Stack<KOSThread> runStack= new coll.Stack<KOSThread>();
 
-
         public KOSProcess(ProcessManager processManager)
         {
             ProcessManager=processManager;
         }
-
 
         public ProcessStatus Execute()
 		{
             Deb.logmisc("Process Execute. Threads", threadSet.Count);
             Deb.logmisc("Process Execute. Triggers", triggerSet.Count);
             if (threadSet.Count==0){ return ProcessStatus.FINISHED; }
+
             if(runStack.Count==0){
                 foreach (var thread in threadSet) {
                     runStack.Push(thread);
@@ -61,8 +59,8 @@ namespace kOS.Safe
                 runStack.Pop();
                 break;
             // If the global limit is reached, return to the current
-            // thread after the update is over. (do not cycle this 
-            // queue this time.)
+            // thread after the update is over. (Don't pop the current
+            // thread from the runStack
             case ThreadStatus.GLOBAL_INSTRUCTION_LIMIT:
                 return ProcessStatus.OK;
             // if this thread has an error, or is finished, remove
@@ -71,7 +69,8 @@ namespace kOS.Safe
             case ThreadStatus.ERROR:
             case ThreadStatus.FINISHED:
                 RemoveThread(thread);
-                if(threadSet.Count==0){
+                // If all normal threads are done, then finish
+                if (threadSet.Count==0) {
                     return ProcessStatus.FINISHED;
                 }
                 runStack.Pop();
@@ -80,8 +79,7 @@ namespace kOS.Safe
                 runStack.Pop();
                 break;
             }
-            // tell the main loop that this queue has been fully traversed
-            return ProcessStatus.QUEUE_FINISHED;
+            return ProcessStatus.OK;
         }
 
         public void RemoveThread(KOSThread thread){

@@ -15,7 +15,7 @@ namespace kOS.Safe
         THREAD_INSTRUCTION_LIMIT,
         RETURN,
         CALL,
-        ERROR
+        ERROR,
     }
 
     // Almost every single call made by an opcode does not have to be made

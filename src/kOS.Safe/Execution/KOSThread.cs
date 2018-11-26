@@ -14,7 +14,7 @@ namespace kOS.Safe
         ERROR,
         GLOBAL_INSTRUCTION_LIMIT,
         THREAD_INSTRUCTION_LIMIT,
-        TERMINATED
+        TERMINATED,
     }
 
 
