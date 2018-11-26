@@ -34,7 +34,6 @@ namespace kOS.Safe
         public KOSThread(KOSProcess process){
             Process=process;
             GlobalInstructionCounter=Process.ProcessManager.GlobalInstructionCounter;
-
         }
 
         public ThreadStatus Execute()

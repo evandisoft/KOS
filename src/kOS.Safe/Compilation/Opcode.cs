@@ -1691,21 +1691,24 @@ namespace kOS.Safe.Compilation
         public override void Execute(ProcedureExec exec)
         {
 
-            if(isBuiltin){
-                Deb.logmisc("isbuiltin");
-                //object functionPointer= exec.Store.GetValue(Destination);
-                Deb.logmisc("destination", Destination);
+            if(Direct){
+                string dest = Destination as string;
+                if (isBuiltin) {
+                    Deb.logmisc("isbuiltin");
+                    //object functionPointer= exec.Store.GetValue(Destination);
+                    Deb.logmisc("destination", Destination);
 
-                exec.Shared.FunctionManager.CallFunction(Destination as string,exec);
-            } else if(Direct){
-                if(!(Destination as string).StartsWith("$")){
-                    Destination="$"+Destination;
+                    exec.Shared.FunctionManager.CallFunction(dest, exec);
+                } else{
+                    if (!dest.StartsWith("$")) {
+                        dest="$"+dest;
+                    }
+                    Procedure procedure = exec.Store.GetValue(dest) as Procedure;
+                    if (procedure==null)
+                        throw new Exception("The stored value was not a procedure! It was a "+dest.GetType());
+                    Deb.logmisc("Calling procedure", procedure);
+                    exec.Thread.Call(procedure);
                 }
-                Procedure procedure = exec.Store.GetValue(Destination) as Procedure;
-                if (procedure==null)
-                    throw new Exception("The stored value was not a procedure! It was a "+Destination.GetType());
-                Deb.logmisc("Calling procedure", procedure);
-                exec.Thread.Call(procedure);
             }
             else{
                 throw new NotImplementedException("This type of call is not implemented.");
