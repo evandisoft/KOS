@@ -17,8 +17,6 @@ namespace kOS.Safe
         TERMINATED,
     }
 
-
-
     public class KOSThread
     {
         static long IDCounter = 0;
@@ -28,6 +26,7 @@ namespace kOS.Safe
         internal KOSProcess Process { get; }
 
         readonly coll.Stack<ProcedureExec> callStack = new coll.Stack<ProcedureExec>();
+        // This counter keeps track of the threads own execution limit
         internal InstructionCounter ThreadInstructionCounter = new InstructionCounter();
         // This counter keeps track of the total limit on
         // instructions per update.

@@ -11,7 +11,6 @@ namespace kOS.Safe
     public class Deb
     {
         static public Boolean verbose = false;
-        [Conditional("DEBUG")]
         static public void logall(string filename,params object [] args){
                 foreach (var arg in args) {
                     if (arg!=null) {
@@ -31,11 +30,10 @@ namespace kOS.Safe
         static string miscLogname = "Logs/kOS/misc.log";
         static string compileLogname = "Logs/kOS/compile.log";
 
-        [Conditional("DEBUG")]
+
         static public void logopcode(params object [] args){
             logall (opcodesLogname, args);
         }
-        [Conditional("DEBUG")]
         static public void storeOpcode(Opcode opcode)
         {
             if (opcode.Code != Compilation.ByteCode.EOF) { // Log the opcodes to the opcode queue
@@ -45,6 +43,11 @@ namespace kOS.Safe
                 CPU.OpcodeLogQueue.Enqueue(opcode);
             }
         }
+        static public void clearOpcodeFile()
+        {
+            File.WriteAllText(opcodesLogname, String.Empty);
+        }
+
         static public Boolean miscIsLogging = false;
         [Conditional("DEBUG")]
         static public void logmisc(params object [] args){
@@ -69,10 +72,8 @@ namespace kOS.Safe
         static public void clearMiscLog(){
             File.WriteAllText(miscLogname, String.Empty);
         }
-        [Conditional("DEBUG")]
-        static public void clearOpcodeFile(){
-            File.WriteAllText (opcodesLogname, String.Empty);
-        }
+
+
 
     }
 

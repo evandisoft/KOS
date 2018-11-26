@@ -67,7 +67,6 @@ namespace kOS.Safe
         // it, and run it.
         public void RunProgram(Procedure Program){
             // log all the opcodes that were created into the compile.log
-
             foreach (var opcode in Program.Opcodes) {
                 Deb.logcompile(opcode.Label, opcode);
             }

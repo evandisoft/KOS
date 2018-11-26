@@ -46,11 +46,16 @@ namespace kOS.Safe
                 return status;
             }
 
-            // execute all threads until GLOBAL_INSTRUCTION_LIMIT
+            // execute all threads until GLOBAL_INSTRUCTION_LIMIT is
             // exceeded
             while(status==ProcessStatus.OK){
                 FillThreadStackIfEmpty();
                 status = ExecuteThreads(threadStack);
+                // If there are no normal threads left, then end
+                // this process
+                if (threadSet.Count==0) {
+                    return ProcessStatus.FINISHED;
+                }
             }
 
             return status;
@@ -77,11 +82,7 @@ namespace kOS.Safe
                 case ThreadStatus.ERROR:
                 case ThreadStatus.FINISHED:
                     RemoveThread(stack.Peek());
-                    // If all normal threads are done, then end
-                    // this process
-                    if (threadSet.Count==0) {
-                        return ProcessStatus.FINISHED;
-                    }
+
                     break;
                 }
 
