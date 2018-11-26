@@ -12,7 +12,8 @@ namespace kOS.Safe
         OK,
         FINISHED,
         ERROR,
-        LIMIT_EXCEEDED
+        GLOBAL_INSTRUCTION_LIMIT,
+        THREAD_INSTRUCTION_LIMIT
     }
 
     public class KOSThread
@@ -20,6 +21,7 @@ namespace kOS.Safe
         internal KOSProcess Process { get; }
 
         readonly coll.Stack<ProcedureExec> callStack = new coll.Stack<ProcedureExec>();
+        internal InstructionCounter ThreadInstructionCounter = new InstructionCounter();
 
         public KOSThread(KOSProcess process){
             Process=process;
@@ -41,8 +43,10 @@ namespace kOS.Safe
         ThreadStatus HandleExecStatus(ExecStatus status){
             switch (status) {
 
-            case ExecStatus.LIMIT_EXCEEDED:
-                return ThreadStatus.LIMIT_EXCEEDED;
+            case ExecStatus.THREAD_INSTRUCTION_LIMIT:
+                return ThreadStatus.THREAD_INSTRUCTION_LIMIT;
+            case ExecStatus.GLOBAL_INSTRUCTION_LIMIT:
+                return ThreadStatus.GLOBAL_INSTRUCTION_LIMIT;
             case ExecStatus.ERROR:
                 return ThreadStatus.ERROR;
             case ExecStatus.RETURN:

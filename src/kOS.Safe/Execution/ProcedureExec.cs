@@ -11,7 +11,8 @@ namespace kOS.Safe
     public enum ExecStatus {
         OK,
         FINISHED,
-        LIMIT_EXCEEDED,
+        GLOBAL_INSTRUCTION_LIMIT,
+        THREAD_INSTRUCTION_LIMIT,
         RETURN,
         CALL,
         ERROR
@@ -38,8 +39,8 @@ namespace kOS.Safe
 
         readonly List<Opcode> Opcodes;
         int instructionPointer = 0;
-        internal ExecutionControl instructionCounter;
-
+        internal InstructionCounter GlobalInstructionCounter;
+        internal InstructionCounter ThreadInstructionCounter;
 
 	    public ProcedureExec(KOSThread thread,Procedure procedure)
         {
@@ -49,13 +50,24 @@ namespace kOS.Safe
             Shared=Thread.Process.ProcessManager.shared;
             Store.AddClosure(procedure.Closure);
             Opcodes = procedure.Opcodes;
-            instructionCounter=Thread.Process.ProcessManager.instructionCounter;
-
+            // This counter keeps track of the total limit on
+            // instructions per update.
+            GlobalInstructionCounter=Thread.Process.ProcessManager.GlobalInstructionCounter;
+            // This counter ensures that a thread eventually is stopped
+            // after the thread instruction limit is reached.
+            // Currently this counter uses the exact same value as
+            // the global counter.
+            // (SafeHouse.Config.InstructionsPerUpdate)
+            ThreadInstructionCounter=Thread.ThreadInstructionCounter;
         }
 
         public ExecStatus Execute()
         {
-            while(instructionCounter.CanContinue()) {
+            while(GlobalInstructionCounter.CanContinue()) {
+                if(!ThreadInstructionCounter.CanContinue()){
+                    ThreadInstructionCounter.Reset();
+                    return ExecStatus.THREAD_INSTRUCTION_LIMIT;
+                }
                 Deb.logmisc("ProcedureExec Execute. instructionPointer", instructionPointer,
                         "total opcodes", Opcodes.Count);
 
@@ -90,7 +102,8 @@ namespace kOS.Safe
                     throw new Exception("Instruction way out of bounds!");
                 }
             }
-            return ExecStatus.LIMIT_EXCEEDED;
+            GlobalInstructionCounter.Reset();
+            return ExecStatus.GLOBAL_INSTRUCTION_LIMIT;
         }
 
         internal object PopValue(bool barewordOkay = false)

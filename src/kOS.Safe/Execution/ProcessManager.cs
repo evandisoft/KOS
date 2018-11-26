@@ -8,7 +8,7 @@ using kOS.Safe.Utilities;
 
 namespace kOS.Safe
 {
-    public class ExecutionControl {
+    public class InstructionCounter {
         public int executionCounter;
         public int instructionsPerUpdate;
 
@@ -26,7 +26,7 @@ namespace kOS.Safe
     public class ProcessManager:CPU
     {
         readonly List<KOSProcess> processes = new List<KOSProcess> ();
-        internal ExecutionControl instructionCounter = new ExecutionControl();
+        internal InstructionCounter GlobalInstructionCounter = new InstructionCounter();
 
         public ProcessManager(SafeSharedObjects safeSharedObjects):base(safeSharedObjects)
         {
@@ -42,11 +42,9 @@ namespace kOS.Safe
 
             // TODO: this is just "getting started" code
             // it will be replaced later.
-            // If we're running but have no processes, we must be done running.
+            // If there are no processes being ran, stop displaying debug
+            // information.
             IfNotActiveStopDebugging();
-            // Reset the instructionsPerUpdate counter
-            instructionCounter.Reset();
-
 
             for (int i = processes.Count-1;i>= 0;i--) {
                 Deb.logmisc("i", i, "total", processes.Count);
