@@ -305,6 +305,7 @@
     <None Include="Compilation\KS\kRISC.tpg" />
     <None Include="packages.config" />
     <None Include="Compilation\Opcode.cs.old" />
+    <None Include="Execution\KOSProcess.cs.old" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">

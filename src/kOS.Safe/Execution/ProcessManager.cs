@@ -17,7 +17,7 @@ namespace kOS.Safe
             instructionsPerUpdate=SafeHouse.Config.InstructionsPerUpdate;
         }
 
-        public Boolean CanContinue(){
+        public Boolean Continue(){
             return instructionsPerUpdate>executionCounter++;
         }
     }

@@ -63,8 +63,8 @@ namespace kOS.Safe
 
         public ExecStatus Execute()
         {
-            while(GlobalInstructionCounter.CanContinue()) {
-                if(!ThreadInstructionCounter.CanContinue()){
+            while(GlobalInstructionCounter.Continue()) {
+                if(!ThreadInstructionCounter.Continue()){
                     ThreadInstructionCounter.Reset();
                     return ExecStatus.THREAD_INSTRUCTION_LIMIT;
                 }
@@ -95,7 +95,7 @@ namespace kOS.Safe
 
                 if (instructionPointer==Opcodes.Count || opcode.GetType()==typeof(OpcodeReturn)) {
                     Deb.logmisc("Reached the end of the procedure.");
-                    Thread.SetReturnValueCallback(0);
+                    Thread.SetReturnValue(0);
                     return ExecStatus.FINISHED;
                 } 
                 if (instructionPointer>Opcodes.Count){
