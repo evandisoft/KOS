@@ -153,6 +153,7 @@ namespace kOS.Screen
 				// the "new" way. If it's just a CPU, do it the old way.
 				ProcessManager pm = Shared.Cpu as ProcessManager;
 				if (pm!=null){
+					Deb.clearMiscLog();
 					Deb.miscIsLogging=true;
 					Deb.logmisc("creating new builder");
 					ProgramBuilder builder = new ProgramBuilder();

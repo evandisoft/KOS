@@ -10,6 +10,8 @@ namespace kOS.Safe
     public enum ProcessStatus{
         OK,
         FINISHED,
+        GLOBAL_INSTRUCTION_LIMIT,
+        STACK_EMPTY,
     }
 
 
@@ -31,12 +33,13 @@ namespace kOS.Safe
             Deb.logmisc("Process Execute. Triggers", triggerSet.Count);
             if (threadSet.Count==0){ return ProcessStatus.FINISHED; }
 
+            // if the stack is empty add all the threads and triggers again
             if(runStack.Count==0){
                 foreach (var thread in threadSet) {
                     runStack.Push(thread);
                 }
-                foreach (var thread in triggerSet) {
-                    runStack.Push(thread);
+                foreach (var trigger in triggerSet) {
+                    runStack.Push(trigger);
                 }
             }
 
@@ -45,7 +48,7 @@ namespace kOS.Safe
                 status = ExecuteThread(runStack.Peek());
             }
 
-            return ProcessStatus.OK;
+            return status;
         }
 
 
@@ -53,31 +56,34 @@ namespace kOS.Safe
             var status = thread.Execute();
             switch (status) {
 
-            // If the thread limit is reached, start executing the next
+            // If the thread limit was reached, start executing the next
             // thread.
             case ThreadStatus.THREAD_INSTRUCTION_LIMIT:
-                runStack.Pop();
                 break;
-            // If the global limit is reached, return to the current
+            // If the global limit was reached, return to the current
             // thread after the update is over. (Don't pop the current
-            // thread from the runStack
+            // thread from the runStack)
             case ThreadStatus.GLOBAL_INSTRUCTION_LIMIT:
-                return ProcessStatus.OK;
+                return ProcessStatus.GLOBAL_INSTRUCTION_LIMIT;
             // if this thread has an error, or is finished, remove
             // it
             case ThreadStatus.TERMINATED:
             case ThreadStatus.ERROR:
             case ThreadStatus.FINISHED:
                 RemoveThread(thread);
-                // If all normal threads are done, then finish
+                // If all normal threads are done, then end
+                // this process
                 if (threadSet.Count==0) {
                     return ProcessStatus.FINISHED;
                 }
-                runStack.Pop();
                 break;
-            default:
-                runStack.Pop();
-                break;
+            }
+
+            // stop executing this thread until the next time
+            // the runStack is repopulated
+            runStack.Pop();
+            if(runStack.Count==0){
+                return ProcessStatus.STACK_EMPTY;
             }
             return ProcessStatus.OK;
         }

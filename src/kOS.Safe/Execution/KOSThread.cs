@@ -29,33 +29,47 @@ namespace kOS.Safe
 
         readonly coll.Stack<ProcedureExec> callStack = new coll.Stack<ProcedureExec>();
         internal InstructionCounter ThreadInstructionCounter = new InstructionCounter();
-
-
+        // This counter keeps track of the total limit on
+        // instructions per update.
+        internal InstructionCounter GlobalInstructionCounter;
         public KOSThread(KOSProcess process){
             Process=process;
+            GlobalInstructionCounter=Process.ProcessManager.GlobalInstructionCounter;
+
         }
+
 
         public ThreadStatus Execute()
         {
-            Deb.logmisc("Thread Execute. ProcedureExecs", callStack.Count);
+            Deb.logmisc("Executing thread",ID,"ProcedureExecs", callStack.Count);
 
             if (callStack.Count == 0) { return ThreadStatus.FINISHED; }
             if (isTerminated) { return ThreadStatus.TERMINATED; }
 
             // run the procedure.
-            var status = callStack.Peek().Execute();
-            Deb.logmisc("From ProcedureExec.Execute. status", status);
+            var status = ThreadStatus.OK;
+            while(status==ThreadStatus.OK){
+                status=ExecuteProcedure(callStack.Peek());
+            }
+            Deb.logmisc("Exiting thread",ID,"with status", status);
 
-            return HandleExecStatus(status);
+            return status;
         }
 
-        ThreadStatus HandleExecStatus(ExecStatus status){
+        ThreadStatus ExecuteProcedure(ProcedureExec procedureExec){
+            if (!GlobalInstructionCounter.Continue()){
+                GlobalInstructionCounter.Reset();
+                return ThreadStatus.GLOBAL_INSTRUCTION_LIMIT;
+            }
+            if (!ThreadInstructionCounter.Continue()){
+                ThreadInstructionCounter.Reset();
+                return ThreadStatus.THREAD_INSTRUCTION_LIMIT;
+            }
+
+            var status=procedureExec.Execute();
+
             switch (status) {
 
-            case ExecStatus.THREAD_INSTRUCTION_LIMIT:
-                return ThreadStatus.THREAD_INSTRUCTION_LIMIT;
-            case ExecStatus.GLOBAL_INSTRUCTION_LIMIT:
-                return ThreadStatus.GLOBAL_INSTRUCTION_LIMIT;
             case ExecStatus.ERROR:
                 return ThreadStatus.ERROR;
             case ExecStatus.RETURN:

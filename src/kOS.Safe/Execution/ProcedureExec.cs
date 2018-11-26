@@ -39,8 +39,6 @@ namespace kOS.Safe
 
         readonly List<Opcode> Opcodes;
         int instructionPointer = 0;
-        internal InstructionCounter GlobalInstructionCounter;
-        internal InstructionCounter ThreadInstructionCounter;
 
 	    public ProcedureExec(KOSThread thread,Procedure procedure)
         {
@@ -50,60 +48,46 @@ namespace kOS.Safe
             Shared=Thread.Process.ProcessManager.shared;
             Store.AddClosure(procedure.Closure);
             Opcodes = procedure.Opcodes;
-            // This counter keeps track of the total limit on
-            // instructions per update.
-            GlobalInstructionCounter=Thread.Process.ProcessManager.GlobalInstructionCounter;
-            // This counter ensures that a thread eventually is stopped
-            // after the thread instruction limit is reached.
-            // Currently this counter uses the exact same value as
-            // the global counter.
-            // (SafeHouse.Config.InstructionsPerUpdate)
-            ThreadInstructionCounter=Thread.ThreadInstructionCounter;
+
         }
 
         public ExecStatus Execute()
         {
-            while(GlobalInstructionCounter.Continue()) {
-                if(!ThreadInstructionCounter.Continue()){
-                    ThreadInstructionCounter.Reset();
-                    return ExecStatus.THREAD_INSTRUCTION_LIMIT;
-                }
-                Deb.logmisc("ProcedureExec Execute. instructionPointer", instructionPointer,
-                        "total opcodes", Opcodes.Count);
+            Deb.logmisc("ProcedureExec Execute. instructionPointer", instructionPointer,
+                    "total opcodes", Opcodes.Count);
 
-                Opcode opcode = Opcodes[instructionPointer];
+            Opcode opcode = Opcodes[instructionPointer];
 
-                Deb.storeOpcode(opcode);
+            Deb.storeOpcode(opcode);
 
-                Deb.logmisc("Current Opcode", opcode.Label, opcode);
-                try {
-                    opcode.Execute(this);
-                } catch (Exception e) {
-                    Deb.logmisc(e);
-                    return ExecStatus.ERROR;
-                }
-
-                instructionPointer += opcode.DeltaInstructionPointer;
-
-                switch (opcode.Code) {
-
-                case (ByteCode.RETURN):
-                    return ExecStatus.RETURN;
-                case (ByteCode.CALL):
-                    return ExecStatus.CALL;
-                }
-
-                if (instructionPointer==Opcodes.Count || opcode.GetType()==typeof(OpcodeReturn)) {
-                    Deb.logmisc("Reached the end of the procedure.");
-                    Thread.SetReturnValue(0);
-                    return ExecStatus.FINISHED;
-                } 
-                if (instructionPointer>Opcodes.Count){
-                    throw new Exception("Instruction way out of bounds!");
-                }
+            Deb.logmisc("Current Opcode", opcode.Label, opcode);
+            try {
+                opcode.Execute(this);
+            } catch (Exception e) {
+                Deb.logmisc(e);
+                return ExecStatus.ERROR;
             }
-            GlobalInstructionCounter.Reset();
-            return ExecStatus.GLOBAL_INSTRUCTION_LIMIT;
+
+            instructionPointer += opcode.DeltaInstructionPointer;
+
+            switch (opcode.Code) {
+
+            case (ByteCode.RETURN):
+                return ExecStatus.RETURN;
+            case (ByteCode.CALL):
+                return ExecStatus.CALL;
+            }
+
+            if (instructionPointer==Opcodes.Count || opcode.GetType()==typeof(OpcodeReturn)) {
+                Deb.logmisc("Reached the end of the procedure.");
+                Thread.SetReturnValue(0);
+                return ExecStatus.FINISHED;
+            } 
+            if (instructionPointer>Opcodes.Count){
+                throw new Exception("Instruction way out of bounds!");
+            }
+
+            return ExecStatus.OK;
         }
 
         internal object PopValue(bool barewordOkay = false)

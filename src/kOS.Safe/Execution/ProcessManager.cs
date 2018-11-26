@@ -74,7 +74,7 @@ namespace kOS.Safe
             foreach (var opcode in Program.Opcodes) {
                 (opcode as OpcodePushDelegate)?.EncapsulateProcedure(Program.Opcodes);
             }
-            Deb.clearMiscLog();
+
             Deb.miscIsLogging=true;
             Deb.logmisc("Creating Dummy processes");
             KOSProcess process = new KOSProcess(this);
