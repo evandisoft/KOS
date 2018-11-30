@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System;
 using kOS.Safe.Persistence;
+using System.Collections;
 
 namespace kOS.Safe.Compilation
 {
@@ -11,7 +12,38 @@ namespace kOS.Safe.Compilation
             FunctionsCode = new List<Opcode>(); 
             InitializationCode = new List<Opcode>();
             MainCode = new List<Opcode>();
+            AllOpcodes=new OpcodeEnumerator(this);
         }
+
+        public OpcodeEnumerator AllOpcodes { get; }
+
+        public class OpcodeEnumerator : IEnumerable<Opcode> {
+            CodePart codePart;
+            public OpcodeEnumerator(CodePart codePart){
+                this.codePart=codePart;
+            }
+
+            public IEnumerator<Opcode> GetEnumerator()
+            {
+                foreach (var opcode in codePart.FunctionsCode) {
+                    yield return opcode;
+                }
+                foreach (var opcode in codePart.InitializationCode) {
+                    yield return opcode;
+                }
+                foreach (var opcode in codePart.MainCode) {
+                    yield return opcode;
+                }
+
+            }
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return GetEnumerator();
+            }
+
+        }
+       
+
 
         public List<Opcode> FunctionsCode { get; set; }
         public List<Opcode> InitializationCode { get; set; }
@@ -40,6 +72,7 @@ namespace kOS.Safe.Compilation
                 opcode.SourcePath = filePath;
             }
         }
+
 
     }
 }

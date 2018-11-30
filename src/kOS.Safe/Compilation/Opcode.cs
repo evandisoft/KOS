@@ -2180,6 +2180,10 @@ namespace kOS.Safe.Compilation
         {
             throw new InvalidOperationException("Attempt to execute OpcodePushRelocateLater. This type of Opcode should have been replaced before execution.\n");
         }
+        public override void Execute(ProcedureExec exec)
+        {
+            throw new InvalidOperationException("Attempt to execute OpcodePushRelocateLater. This type of Opcode should have been replaced before execution.\n");
+        }
 
         public override string ToString()
         {
@@ -2548,26 +2552,26 @@ namespace kOS.Safe.Compilation
         private bool WithClosure { get; set; }
 
 
-        List<Opcode> procedureOpcodes;
+
         // Put all the opcodes associated with this delegate into
         // "procedureOpcodes".
-        public void EncapsulateProcedure(List<Opcode> Program){
-            procedureOpcodes = new List<Opcode>();
+        //public void EncapsulateProcedure(List<Opcode> Program){
+        //    procedureOpcodes = new List<Opcode>();
 
-            // Add the opcodes from EntryPoint till after we've seen an 
-            // OpcodeReturn. Include the Return.
-            // evandisoft TODO: ensure that this works for all cases of
-            // return. Maybe optional returns in if statements will throw this
-            // off. I don't know how returns are implemented.
-            // I assume that only returns that have a 0 "pop scope" are the end
-            int i = EntryPoint;
-            do {
-                procedureOpcodes.Add(Program[i]);
-            } while (!isEndReturn(Program[i++]));
-        }
-        Boolean isEndReturn(Opcode opcode){
-            return opcode.GetType()==typeof(OpcodeReturn)&&((OpcodeReturn)opcode).Depth==0;
-        }
+        //    // Add the opcodes from EntryPoint till after we've seen an 
+        //    // OpcodeReturn. Include the Return.
+        //    // evandisoft TODO: ensure that this works for all cases of
+        //    // return. Maybe optional returns in if statements will throw this
+        //    // off. I don't know how returns are implemented.
+        //    // I assume that only returns that have a 0 "pop scope" are the end
+        //    int i = EntryPoint;
+        //    do {
+        //        procedureOpcodes.Add(Program[i]);
+        //    } while (!isEndReturn(Program[i++]));
+        //}
+        //Boolean isEndReturn(Opcode opcode){
+        //    return opcode.GetType()==typeof(OpcodeReturn)&&((OpcodeReturn)opcode).Depth==0;
+        //}
 
         protected override string Name { get { return "pushdelegate"; } }
         public override ByteCode Code { get { return ByteCode.PUSHDELEGATE; } }
@@ -2575,6 +2579,13 @@ namespace kOS.Safe.Compilation
         public OpcodePushDelegate(int entryPoint, bool withClosure)
         {
             EntryPoint = entryPoint;
+            WithClosure = withClosure;
+        }
+        List<Opcode> procedureOpcodes;
+        // evandisoft TODO: New way of doing this.
+        public OpcodePushDelegate(List<Opcode> procedureOpcodes,bool withClosure)
+        {
+            this.procedureOpcodes=procedureOpcodes;
             WithClosure = withClosure;
         }
 

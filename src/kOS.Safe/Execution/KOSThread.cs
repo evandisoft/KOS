@@ -88,16 +88,17 @@ namespace kOS.Safe
             }
         }
 
-        // creates a new ProcedureExec, and adds it to the stack, 
+        // Create a new ProcedureExec, and add it to the stack, 
         // to be executed next time this thread runs.
         // Called by OpcodeCall.Execute
         // Used only for calls made within this thread.
+        // Because we the stack is local to this thread.
         public void Call(Procedure procedure){
             ProcedureExec exec = new ProcedureExec(this,procedure);
             callStack.Push(exec);
         }
 
-        // manually add in arguments when this is called via 'run'
+        // Manually add in arguments when this is called via 'run'
         // because we are not sharing a global stack.
         public void CallWithArgs(Procedure procedure,coll.List<object> args)
         {

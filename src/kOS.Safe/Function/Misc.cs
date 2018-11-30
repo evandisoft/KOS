@@ -132,7 +132,7 @@ namespace kOS.Safe.Function
             //shared.ScriptHandler.ClearContext("program");
             //string filePath = shared.VolumeMgr.GetVolumeRawIdentifier(shared.VolumeMgr.CurrentVolume) + "/" + fileName;
             //var options = new CompilerOptions { LoadProgramsInSameAddressSpace = true, FuncManager = shared.FunctionManager };
-            ////var programContext = shared.Cpu.SwitchToProgramContext();
+            //var programContext = shared.Cpu.SwitchToProgramContext();
 
             //List<CodePart> codeParts;
             //if (content.Category == FileCategory.KSM)
