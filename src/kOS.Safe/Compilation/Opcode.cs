@@ -251,10 +251,11 @@ namespace kOS.Safe.Compilation
         
         public virtual void Execute(ICpu cpu)
         {
+            throw new NotImplementedException("(Opcode.Execute(ICpu cpu))");
         }
         public virtual void Execute(ProcedureExec exec)
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException("(Opcode.Execute(ProcedureExec exec))");
         }
 
         public override string ToString()
