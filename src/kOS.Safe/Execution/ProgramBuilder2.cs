@@ -171,8 +171,12 @@ namespace kOS.Safe.Execution {
 
         static Dictionary<string, int> LabelIndexMap(List<Opcode> opcodes){
             var labelIndexMap = new Dictionary<string, int>();
+            // If this returns a duplicate label error again
+            // make it so it ignores empty labels
             for (int i = 0;i<opcodes.Count;i++){
-                labelIndexMap.Add(opcodes[i].Label, i);
+                if(opcodes[i].Label!=String.Empty){
+                    labelIndexMap.Add(opcodes[i].Label, i);
+                }
             }
             return labelIndexMap;
         }
