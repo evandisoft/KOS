@@ -2267,7 +2267,13 @@ namespace kOS.Safe.Compilation
         {
             bool worked;
             worked=exec.Stack.Count>0;
-
+            if(worked){
+                object shouldBeArgMarker = exec.Stack.Peek();
+                if((shouldBeArgMarker != null) && (shouldBeArgMarker.GetType() == OpcodeCall.ArgMarkerType) ){
+                    return;
+                }
+            }
+            throw new KOSArgumentMismatchException("Called with too many arguments.");
             //evandisoft TODO: I dont know what this does and I'm going to ignore it atm.
         }
     }
