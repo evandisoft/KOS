@@ -16,6 +16,7 @@ namespace kOS.Safe
         RETURN,
         CALL,
         ERROR,
+        WAIT,
     }
 
     // Almost every single call made by an opcode does not have to be made
@@ -75,6 +76,8 @@ namespace kOS.Safe
 
             case (ByteCode.RETURN):
                 return ExecStatus.RETURN;
+            case ByteCode.WAIT:
+                return ExecStatus.WAIT;
             //case (ByteCode.CALL):
             //    return ExecStatus.CALL;
             }

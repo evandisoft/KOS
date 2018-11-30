@@ -58,6 +58,15 @@ namespace kOS.Safe.Function
             AssertArgBottomAndConsume(shared);
             ((CPU)shared.Cpu).ToggleFlyByWire(paramName, enabled);
         }
+        // I have not looked into how to make this work when I no longer
+        // am using a "program context"
+        public override void Execute(SafeSharedObjects shared,ProcedureExec exec)
+        {
+            bool enabled = Convert.ToBoolean(PopValueAssert(exec));
+            string paramName = PopValueAssert(exec).ToString();
+            AssertArgBottomAndConsume(exec);
+            ((CPU)shared.Cpu).ToggleFlyByWire(paramName, enabled);
+        }
     }
 
     [Function("selectautopilotmode")]

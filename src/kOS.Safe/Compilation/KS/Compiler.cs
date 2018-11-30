@@ -825,6 +825,7 @@ namespace kOS.Safe.Compilation.KS
             AddOpcode(new OpcodeReturn((short)0));
 
             // Main body:
+            
             AddOpcode(new OpcodePush(new KOSArgMarkerType())); // need these for all locks now.
             AddOpcode(new OpcodeCall(func.ScopelessPointerIdentifier));
             AddOpcode(new OpcodeStoreGlobal("$" + func.ScopelessIdentifier));
@@ -2514,7 +2515,10 @@ namespace kOS.Safe.Compilation.KS
             string functionLabel = lockObject.GetUserFunctionLabel(expressionHash);
             // lock variable
             AddOpcode(new OpcodePushDelegateRelocateLater(null,true), functionLabel);
-            AddOpcode(CreateAppropriateStoreCode(whereToStore, allowLazyGlobal, lockObject.ScopelessPointerIdentifier));
+            // We're going to try to use opcodeAddTrigger to add
+            // system triggers
+            if (!lockObject.IsSystemLock())
+                AddOpcode(CreateAppropriateStoreCode(whereToStore, allowLazyGlobal, lockObject.ScopelessPointerIdentifier));
 
             if (lockObject.IsSystemLock())
             {
@@ -2524,7 +2528,10 @@ namespace kOS.Safe.Compilation.KS
                 if (context.Triggers.Contains(triggerIdentifier))
                 {
                     Trigger triggerObject = context.Triggers.GetTrigger(triggerIdentifier);
-                    AddOpcode(new OpcodePushRelocateLater(null), triggerObject.GetFunctionLabel());
+                    //AddOpcode(new OpcodePushDelegateRelocateLater(null,true), triggerObject.GetFunctionLabel());
+                    // evandisoft AddTrigger will now expect two arguments
+                    // One is the 
+                    AddOpcode(new OpcodePush(lockIdentifier));
                     AddOpcode(new OpcodeAddTrigger(false));
                 }
                     
@@ -2532,7 +2539,7 @@ namespace kOS.Safe.Compilation.KS
                 AddOpcode(new OpcodePush(new KOSArgMarkerType()));
                 AddOpcode(new OpcodePush(lockIdentifier));
                 AddOpcode(new OpcodePush(true));
-                AddOpcode(new OpcodeCall("toggleflybywire()"));
+                AddOpcode(new OpcodeCall("toggleflybywire") { isBuiltin=true });
                 // add a pop to clear out the dummy return value from toggleflybywire()
                 AddOpcode(new OpcodePop());
             }

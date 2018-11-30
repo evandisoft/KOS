@@ -2712,6 +2712,24 @@ namespace kOS.Safe.Compilation
             List<Structure> args = new List<Structure>();
             cpu.AddTrigger(functionPointer, InterruptPriority.Recurring, (Unique ? cpu.NextTriggerInstanceId : 0), false, cpu.GetCurrentClosure());
         }
+        public override void Execute(ProcedureExec exec)
+        {
+            string triggerName = Convert.ToString(exec.PopValue()); // in case it got wrapped in a ScalarIntValue
+            object poppepdval= exec.PopValue();
+            Deb.logmisc("trigger is", triggerName);
+            Procedure procedure = poppepdval as Procedure;
+            List<Structure> args = new List<Structure>();
+            if (procedure==null)
+                throw new Exception("The stored value was not a procedure! It was a "+poppepdval.GetType());
+            Deb.logmisc("Calling procedure", procedure);
+            var process = exec.Thread.Process;
+            var systemTrigger = new SystemTrigger(triggerName, process);
+            Deb.logmisc("Created System Trigger", triggerName);
+            systemTrigger.Call(procedure);
+            Deb.logmisc("Called procedure on System Trigger", triggerName);
+            process.AddSystemTrigger(systemTrigger);
+            Deb.logmisc("Added System Trigger", triggerName);
+        }
 
         public override string ToString()
         {
@@ -2757,6 +2775,11 @@ namespace kOS.Safe.Compilation
         {
             double arg = Convert.ToDouble(cpu.PopValueArgument());
             cpu.YieldProgram(new YieldFinishedGameTimer(arg));
+        }
+        public override void Execute(ProcedureExec exec)
+        {
+            double arg = Convert.ToDouble(exec.PopValue());
+            exec.Thread.Wait(arg);
         }
     }
 

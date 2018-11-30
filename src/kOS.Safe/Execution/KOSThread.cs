@@ -4,21 +4,20 @@ using kOS.Safe.Encapsulation;
 using kOS.Safe.Execution;
 using coll = System.Collections.Generic;
 using kOS.Safe.Exceptions;
+using System.Diagnostics;
 
-namespace kOS.Safe
-{
-    public enum ThreadStatus
-    {
+namespace kOS.Safe {
+    public enum ThreadStatus {
         OK,
         FINISHED,
         ERROR,
         GLOBAL_INSTRUCTION_LIMIT,
         THREAD_INSTRUCTION_LIMIT,
         TERMINATED,
+        WAIT,
     }
 
-    public class KOSThread
-    {
+    public class KOSThread {
         static long IDCounter = 0;
         public readonly long ID = IDCounter++;
         bool isTerminated = false;
@@ -35,45 +34,62 @@ namespace kOS.Safe
         // This counter keeps track of the total limit on
         // instructions per update.
         internal InstructionCounter GlobalInstructionCounter;
-        public KOSThread(KOSProcess process){
+        Stopwatch waitWatch = new Stopwatch();
+        long timeToWait;
+
+        public KOSThread(KOSProcess process)
+        {
             Process=process;
             Stack=new ArgumentStack();
             GlobalInstructionCounter=Process.ProcessManager.GlobalInstructionCounter;
         }
 
+
         public ThreadStatus Execute()
         {
-            Deb.logmisc("Executing thread",ID,"ProcedureExecs", callStack.Count);
+            Deb.logmisc("Executing thread", ID, "ProcedureExecs", callStack.Count);
+
+            if (timeToWait>0 && waitWatch.ElapsedMilliseconds<timeToWait){
+                // Use one instruction up so that if all threads are waiting
+                // we can still eventually return to allow the fixedupdate
+                if(GlobalInstructionCounter.Continue()){
+                    return ThreadStatus.GLOBAL_INSTRUCTION_LIMIT;
+                } 
+                return ThreadStatus.WAIT;
+            }
 
             if (callStack.Count == 0) { return ThreadStatus.FINISHED; }
             if (isTerminated) { return ThreadStatus.TERMINATED; }
 
             // run the procedure.
             var status = ThreadStatus.OK;
-            while(status==ThreadStatus.OK){
+            while (status==ThreadStatus.OK) {
                 status=ExecuteProcedure(callStack.Peek());
             }
-            Deb.logmisc("Exiting thread",ID,"with status", status);
+            Deb.logmisc("Exiting thread", ID, "with status", status);
 
             return status;
         }
 
-        ThreadStatus ExecuteProcedure(ProcedureExec procedureExec){
-            if (!GlobalInstructionCounter.Continue()){
+        ThreadStatus ExecuteProcedure(ProcedureExec procedureExec)
+        {
+            if (!GlobalInstructionCounter.Continue()) {
                 GlobalInstructionCounter.Reset();
                 return ThreadStatus.GLOBAL_INSTRUCTION_LIMIT;
             }
-            if (!ThreadInstructionCounter.Continue()){
+            if (!ThreadInstructionCounter.Continue()) {
                 ThreadInstructionCounter.Reset();
                 return ThreadStatus.THREAD_INSTRUCTION_LIMIT;
             }
 
-            var status=procedureExec.Execute();
+            var status = procedureExec.Execute();
 
             switch (status) {
 
             case ExecStatus.ERROR:
                 return ThreadStatus.ERROR;
+            case ExecStatus.WAIT:
+                return ThreadStatus.WAIT;
             case ExecStatus.RETURN:
             case ExecStatus.FINISHED:
                 Deb.logmisc("Removing ProcedureExec");
@@ -93,19 +109,20 @@ namespace kOS.Safe
         // Called by OpcodeCall.Execute
         // Used only for calls made within this thread.
         // Because we the stack is local to this thread.
-        public void Call(Procedure procedure){
-            ProcedureExec exec = new ProcedureExec(this,procedure);
+        public void Call(Procedure procedure)
+        {
+            ProcedureExec exec = new ProcedureExec(this, procedure);
             callStack.Push(exec);
         }
 
         // Manually add in arguments when this is called via 'run'
         // because we are not sharing a global stack.
-        public void CallWithArgs(Procedure procedure,coll.List<object> args)
+        public void CallWithArgs(Procedure procedure, coll.List<object> args)
         {
             ProcedureExec exec = new ProcedureExec(this, procedure);
             callStack.Push(exec);
             Stack.Push(new KOSArgMarkerType());
-            for (int i = args.Count-1;i>=0;i--){
+            for (int i = args.Count-1;i>=0;i--) {
                 Stack.Push(args[i]);
             }
         }
@@ -116,8 +133,15 @@ namespace kOS.Safe
         //    this.retval=retval;
         //}
 
-        public void Terminate(){
+        public void Terminate()
+        {
             isTerminated=true;
+        }
+
+        internal void Wait(double arg)
+        {
+            timeToWait=Convert.ToInt64(arg)*1000;
+            waitWatch.Start();
         }
     }
 }
