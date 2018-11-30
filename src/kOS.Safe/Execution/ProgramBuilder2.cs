@@ -6,9 +6,9 @@ using kOS.Safe.Compilation;
 namespace kOS.Safe.Execution {
     public class ProgramBuilder2 {
         static public Procedure BuildProgram(List<CodePart> parts){
-            PrintCodeParts("Before Relocate", parts);
+            PrintCodeParts("Before Relocate and Jump Labels", parts);
             ReplaceRelocateDelegateOpcodes(parts);
-            PrintCodeParts("After Relocate", parts);
+
             Deb.miscIsLogging=true;
 
             List<Opcode> mainProgram = null;
@@ -24,9 +24,11 @@ namespace kOS.Safe.Execution {
                     mainProgram=part.MainCode;
                 }
             }
+            PrintCodeParts("After Relocate and Jump Labels", parts);
             if (mainProgram==null) {
                 throw new Exception("There was no MainCode section!");
             }
+
             return new Procedure(mainProgram);
         }
 
@@ -56,11 +58,11 @@ namespace kOS.Safe.Execution {
                 new Dictionary<string, bool>();
             foreach (var part in parts) {
                 foreach (var opcode in part.AllOpcodes) {
-                    Deb.logcompile("GetAllLabels,Perusing opcode", opcode);
+                    //Deb.logcompile("GetAllLabels,Perusing opcode", opcode);
                     if (opcode.Code==ByteCode.PUSHDELEGATERELOCATELATER) {
-                        Deb.logcompile(
-                            "IsRelocate. DestLabel is ",opcode.DestinationLabel,
-                            "opcode label is ",opcode.Label);
+                        //Deb.logcompile(
+                            //"IsRelocate. DestLabel is ",opcode.DestinationLabel,
+                            //"opcode label is ",opcode.Label);
                         var relopcode = opcode as OpcodePushDelegateRelocateLater;
                         delegateDestinationLabels.Add(opcode.DestinationLabel, relopcode.WithClosure);
                     }
@@ -76,14 +78,14 @@ namespace kOS.Safe.Execution {
             foreach (var part in parts) {
                 var opcodesEnumerator = part.AllOpcodes.GetEnumerator();
                 while (opcodesEnumerator.MoveNext()) {
-                    Deb.logcompile(
-                        "CreateMap IsRelocate.",
-                        "opcode label is ", opcodesEnumerator.Current.Label);
+                    //Deb.logcompile(
+                        //"CreateMap IsRelocate.",
+                        //"opcode label is ", opcodesEnumerator.Current.Label);
                     if (delegateDestinationLabels.TryGetValue(
                         opcodesEnumerator.Current.Label, out bool withClosure)) {
                         var destLabel = opcodesEnumerator.Current.Label;
-                        Deb.logcompile(
-                            "Found dest label",opcodesEnumerator.Current.Label);
+                        //Deb.logcompile(
+                            //"Found dest label",opcodesEnumerator.Current.Label);
                         var delegateOpcodes = GetDelegateOpcodes(opcodesEnumerator);
                         pushDelegatesMap.Add(
                             destLabel,
