@@ -236,7 +236,7 @@ namespace kOS.Safe.Compilation
         /// average for a single execution of it was.
         /// </summary>
         public long ProfileTicksElapsed { get; set; }
-
+       
         public string Label {get{return label;} set {label = value;} }
         public virtual string DestinationLabel {get;set;}
         public GlobalPath SourcePath;
@@ -719,6 +719,11 @@ namespace kOS.Safe.Compilation
         {
             Structure value = PopStructureAssertEncapsulated(cpu);
             cpu.SetGlobal(Identifier, value);
+        }
+        public override void Execute(ProcedureExec exec)
+        {
+            Structure value = PopStructureAssertEncapsulated(exec);
+            exec.Store.SetGlobal(Identifier, value);
         }
     }
 

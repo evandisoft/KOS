@@ -299,7 +299,8 @@
     <Compile Include="Execution\VariableStore.cs" />
     <Compile Include="Execution\ArgumentStack.cs" />
     <Compile Include="Encapsulation\Procedure.cs" />
-    <Compile Include="Execution\ProgramBuilder2.cs" />
+    <Compile Include="Compilation\ProgramBuilder2.cs" />
+    <Compile Include="Execution\SystemTrigger.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Compilation\CompiledObject-doc.md" />

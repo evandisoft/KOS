@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using kOS.Safe.Encapsulation;
-using kOS.Safe.Compilation;
 
-namespace kOS.Safe.Execution {
+namespace kOS.Safe.Compilation{
     public class ProgramBuilder2 {
         static public Procedure BuildProgram(List<CodePart> parts){
             PrintCodeParts("Before Relocate and Jump Labels", parts);
@@ -159,11 +158,12 @@ namespace kOS.Safe.Execution {
             var labelIndexMap = LabelIndexMap(opcodes);
             for (int i = 0;i<opcodes.Count;i++){
                 var branchOpcode = opcodes[i] as BranchOpcode;
-                if(branchOpcode!=null){
+                if(branchOpcode!=null && branchOpcode.Distance==0){
                     if(labelIndexMap.TryGetValue(branchOpcode.DestinationLabel,out int destIndex)){
                         branchOpcode.Distance=destIndex-i;
                     } else{
-                        throw new Exception("Index not found for label "+branchOpcode.DestinationLabel);
+                        throw new Exception("Index not found for label "+branchOpcode.DestinationLabel+
+                                            " at opcode "+branchOpcode+" of type "+ branchOpcode.Code);
                     }
                 }
             }
@@ -171,8 +171,6 @@ namespace kOS.Safe.Execution {
 
         static Dictionary<string, int> LabelIndexMap(List<Opcode> opcodes){
             var labelIndexMap = new Dictionary<string, int>();
-            // If this returns a duplicate label error again
-            // make it so it ignores empty labels
             for (int i = 0;i<opcodes.Count;i++){
                 if(opcodes[i].Label!=String.Empty){
                     labelIndexMap.Add(opcodes[i].Label, i);

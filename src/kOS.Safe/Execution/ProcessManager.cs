@@ -113,6 +113,7 @@ namespace kOS.Safe
             // information.
             IfNotActiveStopDebugging();
 
+
             for (int i = processes.Count-1;i>= 0;i--) {
                 Deb.logmisc("i", i, "total", processes.Count);
                 var status = processes[i].Execute();
@@ -152,14 +153,8 @@ namespace kOS.Safe
         //    return programProcedure;
         //}
 
-        // Encapsulate a compiled program, then create a process and thread for
-        // it, and run it.
+
         public void RunProgram(Procedure Program,List<object> args=null){
-            // log all the opcodes that were created into the compile.log
-
-            // Instantiate the Procedures in all the OpcodePushDelegate's
-
-
             Deb.miscIsLogging=true;
             Deb.logmisc("Creating Dummy processes");
             KOSProcess process = new KOSProcess(this);

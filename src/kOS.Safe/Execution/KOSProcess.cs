@@ -14,15 +14,16 @@ namespace kOS.Safe
         STACK_EMPTY,
     }
 
-
     public class KOSProcess {
+        public Dictionary<string, SystemTrigger> SystemTriggerMap = 
+            new Dictionary<string, SystemTrigger>();
+
         internal ProcessManager ProcessManager { get; }
         readonly HashSet<KOSThread> threadSet = new HashSet<KOSThread>();
         readonly HashSet<KOSThread> triggerSet = new HashSet<KOSThread>();
 
-        readonly coll.Stack<KOSThread> threadStack= new coll.Stack<KOSThread>();
+        readonly coll.Stack<KOSThread> threadStack = new coll.Stack<KOSThread>();
         readonly coll.Stack<KOSThread> triggerStack = new coll.Stack<KOSThread>();
-
 
         public KOSProcess(ProcessManager processManager)
         {
@@ -63,7 +64,8 @@ namespace kOS.Safe
 
         ProcessStatus ExecuteThreads(coll.Stack<KOSThread> stack){
             while (stack.Count>0) {
-                var status = stack.Peek().Execute();
+                var currentThread = stack.Peek();
+                var status = currentThread.Execute();
 
                 switch (status) {
 
@@ -80,8 +82,15 @@ namespace kOS.Safe
                 // it
                 case ThreadStatus.TERMINATED:
                 case ThreadStatus.ERROR:
+                    RemoveThread(currentThread);
+
+                    break;
                 case ThreadStatus.FINISHED:
-                    RemoveThread(stack.Peek());
+                    if(currentThread is SystemTrigger){
+                        throw new Exception(
+                            "SystemTrigger thread should not have 'FINISHED'.");
+                    }
+                    RemoveThread(currentThread);
 
                     break;
                 }
@@ -126,6 +135,20 @@ namespace kOS.Safe
             if (trigger==null)
                 throw new Exception("Triggers passed to AddTrigger cannot be null");
             triggerSet.Add(trigger);
+        }
+        public void AddSystemTrigger(SystemTrigger systemTrigger){
+            if (systemTrigger==null)
+                throw new Exception(
+                    "SystemTriggers passed to AddSystemTrigger cannot be null");
+            SystemTriggerMap.Add(systemTrigger.Name, systemTrigger);
+            triggerSet.Add(systemTrigger);
+        }
+        public bool RemoveSystemTrigger(string name){
+            if(SystemTriggerMap.TryGetValue(name, out SystemTrigger systemTrigger)){
+                SystemTriggerMap.Remove(name);
+                return triggerSet.Remove(systemTrigger);
+            }
+            return false;
         }
     }
 }
