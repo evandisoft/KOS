@@ -153,6 +153,7 @@ namespace kOS.Screen
 				// the "new" way. If it's just a CPU, do it the old way.
 				ProcessManager processManager = Shared.Cpu as ProcessManager;
 				if (processManager!=null){
+					Deb.clearCompileLog();
 					Deb.clearMiscLog();
 					Deb.miscIsLogging=true;
 					Deb.logmisc("creating new builder");
@@ -163,7 +164,7 @@ namespace kOS.Screen
 					List<Opcode> newProgram = builder.BuildProgram();
 					Deb.logmisc("running program");
 					Deb.miscIsLogging=false;
-					processManager.RunProgram(new Procedure(newProgram));
+					processManager.RunProgram(new Procedure(newProgram),new List<object>());
 				} else{
 					var interpreterContext = ((CPU)Shared.Cpu).GetInterpreterContext();
 					interpreterContext.AddParts(commandParts);

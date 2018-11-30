@@ -24,6 +24,7 @@ namespace kOS.Safe
         bool isTerminated = false;
 
         internal KOSProcess Process { get; }
+        internal ArgumentStack Stack { get; }
 
         readonly coll.Stack<ProcedureExec> callStack = new coll.Stack<ProcedureExec>();
         // This counter keeps track of the threads own execution limit
@@ -36,6 +37,7 @@ namespace kOS.Safe
         internal InstructionCounter GlobalInstructionCounter;
         public KOSThread(KOSProcess process){
             Process=process;
+            Stack=new ArgumentStack();
             GlobalInstructionCounter=Process.ProcessManager.GlobalInstructionCounter;
         }
 
@@ -89,9 +91,22 @@ namespace kOS.Safe
         // creates a new ProcedureExec, and adds it to the stack, 
         // to be executed next time this thread runs.
         // Called by OpcodeCall.Execute
+        // Used only for calls made within this thread.
         public void Call(Procedure procedure){
             ProcedureExec exec = new ProcedureExec(this,procedure);
             callStack.Push(exec);
+        }
+
+        // manually add in arguments when this is called via 'run'
+        // because we are not sharing a global stack.
+        public void CallWithArgs(Procedure procedure,coll.List<object> args)
+        {
+            ProcedureExec exec = new ProcedureExec(this, procedure);
+            callStack.Push(exec);
+            Stack.Push(new KOSArgMarkerType());
+            for (int i = args.Count-1;i>=0;i--){
+                Stack.Push(args[i]);
+            }
         }
 
         object retval;

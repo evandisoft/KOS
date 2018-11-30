@@ -987,7 +987,7 @@ namespace kOS.Safe.Compilation
         }
         public override void Execute(ProcedureExec exec)
         {
-            AbortContext = true;
+            //AbortContext = true;
         }
     }
 
@@ -1004,6 +1004,10 @@ namespace kOS.Safe.Compilation
         public override void Execute(ICpu cpu)
         {
             AbortProgram = true;
+        }
+        public override void Execute(ProcedureExec exec)
+        {
+            //AbortProgram = true;
         }
     }
 

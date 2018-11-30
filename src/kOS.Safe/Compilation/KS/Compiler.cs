@@ -84,7 +84,7 @@ namespace kOS.Safe.Compilation.KS
 
         public CodePart Compile(int startLineNum, ParseTree tree, Context context, CompilerOptions options)
         {
-            Deb.clearCompileLog();
+
             InitCompileFlags();
 
             part = new CodePart();
@@ -104,7 +104,7 @@ namespace kOS.Safe.Compilation.KS
 
         private void CompileProgram(ParseTree tree)
         {
-            Deb.clearCompileLog();
+
             currentCodeSection = part.MainCode;
             
             VisitNode(tree.Nodes[0]);
@@ -3037,7 +3037,8 @@ namespace kOS.Safe.Compilation.KS
                 
                 // Note: it is not an error that there are two Pop's here:  There are two levels of return value - one from the program run
                 // and one from the function call run():
-                AddOpcode(new OpcodePop()); // ditch the program exit's dummy return value for now - maybe we can use it in a later version.
+                // evandisoft TODO: Breaking Change! z
+                //AddOpcode(new OpcodePop()); // ditch the program exit's dummy return value for now - maybe we can use it in a later version.
                 AddOpcode(new OpcodePop()); // ditch the run()'s dummy return value for now - maybe we can use it in a later version.
             }
         }

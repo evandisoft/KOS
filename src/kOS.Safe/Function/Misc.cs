@@ -105,66 +105,66 @@ namespace kOS.Safe.Function
             {
                 throw new KOSObsoletionException("v1.0.2", "run [file] on [volume]", "None", "");
             }
-            else
-            {
 
-                CompilerOptions options = new CompilerOptions {
-                    LoadProgramsInSameAddressSpace = false,
-                    FuncManager = shared.FunctionManager,
-                    IsCalledFromRun = false
-                };
-                // evandisoft TODO: this is not a full reimplementation of run
-                // yet. This is just a basic version
-                // Doesn't compile in a different thread or anything.
-                List<CodePart> commandParts = 
-                    shared.ScriptHandler.Compile(
-                        path,1, content.String, "program", options);
-                ProcessManager processManager = shared.Cpu as ProcessManager;
-                Deb.clearMiscLog();
-                Deb.miscIsLogging=true;
-                Deb.logmisc("creating new builder");
-                ProgramBuilder builder = new ProgramBuilder();
-                Deb.logmisc("adding parts");
-                builder.AddRange(commandParts);
-                Deb.logmisc("building program");
-                List<Opcode> newProgram = builder.BuildProgram();
-                Deb.logmisc("running program");
-                Deb.miscIsLogging=false;
 
-                processManager.RunProgram(new Procedure(newProgram));
+            CompilerOptions options = new CompilerOptions {
+                LoadProgramsInSameAddressSpace = false,
+                FuncManager = shared.FunctionManager,
+                IsCalledFromRun = false
+            };
+            // evandisoft TODO: this is not a full reimplementation of run
+            // yet. This is just a basic version
+            // Doesn't compile in a different thread or anything.
+            List<CodePart> commandParts =
+                shared.ScriptHandler.Compile(
+                    path, 1, content.String, "program", options);
+            ProcessManager processManager = shared.Cpu as ProcessManager;
+            //Deb.clearMiscLog();
+            Deb.miscIsLogging=true;
+            Deb.logmisc("creating new builder");
+            ProgramBuilder builder = new ProgramBuilder();
+            Deb.logmisc("adding parts");
+            builder.AddRange(commandParts);
+            Deb.logmisc("building program");
+            List<Opcode> newProgram = builder.BuildProgram();
+            Deb.logmisc("running program");
+            Deb.miscIsLogging=false;
+            exec.Stack.Push(0); // the "return" value
+            processManager.RunProgram(new Procedure(newProgram), progArgs);
 
-                // clear the "program" compilation context
-                //shared.Cpu.StartCompileStopwatch();
-                //shared.ScriptHandler.ClearContext("program");
-                //string filePath = shared.VolumeMgr.GetVolumeRawIdentifier(shared.VolumeMgr.CurrentVolume) + "/" + fileName;
-                //var options = new CompilerOptions { LoadProgramsInSameAddressSpace = true, FuncManager = shared.FunctionManager };
-                ////var programContext = shared.Cpu.SwitchToProgramContext();
+            // clear the "program" compilation context
+            //shared.Cpu.StartCompileStopwatch();
+            //shared.ScriptHandler.ClearContext("program");
+            //string filePath = shared.VolumeMgr.GetVolumeRawIdentifier(shared.VolumeMgr.CurrentVolume) + "/" + fileName;
+            //var options = new CompilerOptions { LoadProgramsInSameAddressSpace = true, FuncManager = shared.FunctionManager };
+            ////var programContext = shared.Cpu.SwitchToProgramContext();
 
-                //List<CodePart> codeParts;
-                //if (content.Category == FileCategory.KSM)
-                //{
-                //    string prefix = programContext.Program.Count.ToString();
-                //    codeParts = content.AsParts(path, prefix);
-                //    programContext.AddParts(codeParts);
-                //    shared.Cpu.StopCompileStopwatch();
-                //}
-                //else
-                //{
-                //    shared.Cpu.YieldProgram(YieldFinishedCompile.RunScript(path, 1, content.String, "program", options));
-                //}
-            }
+            //List<CodePart> codeParts;
+            //if (content.Category == FileCategory.KSM)
+            //{
+            //    string prefix = programContext.Program.Count.ToString();
+            //    codeParts = content.AsParts(path, prefix);
+            //    programContext.AddParts(codeParts);
+            //    shared.Cpu.StopCompileStopwatch();
+            //}
+            //else
+            //{
+            //    shared.Cpu.YieldProgram(YieldFinishedCompile.RunScript(path, 1, content.String, "program", options));
+            //}
+
 
             // Because run() returns FIRST, and THEN the CPU jumps to the new program's first instruction that it set up,
             // it needs to put the return stack in a weird order.  Its return value needs to be buried UNDER the args to the
             // program it's calling:
             UsesAutoReturn = false;
 
-            shared.Cpu.PushArgumentStack(0); // dummy return that all functions have.
+            //exec.Stack.Push(0); // dummy return that all functions have.
 
             // Put the args for the program being called back on in the same order they were in before (so read the list backward):
-            shared.Cpu.PushArgumentStack(new KOSArgMarkerType());
-            for (int i = argc - 1; i >= 0; --i)
-                shared.Cpu.PushArgumentStack(progArgs[i]);
+            //exec.Stack.Push(new KOSArgMarkerType());
+            //for (int i = argc - 1; i >= 0; --i)
+            //    exec.Stack.Push(progArgs[i]);
+
         }
         public override void Execute(SafeSharedObjects shared)
         {

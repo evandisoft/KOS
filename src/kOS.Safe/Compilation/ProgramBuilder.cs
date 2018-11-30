@@ -41,7 +41,7 @@ namespace kOS.Safe.Compilation
                 objectFile.Parts.AddRange(parts);
             }
         }
-        
+
         public List<Opcode> BuildProgram()
         {
             var program = new List<Opcode>();
@@ -210,7 +210,10 @@ namespace kOS.Safe.Compilation
             // what makes that non-trivial.
             if (isMainProgram)
             {
-                linkedObject.MainCode.Add(new OpcodePop()); // to consume the argbottom mark.
+                // evandisoft TODO: breaking change! Removing this pop
+                // because it is trying to pop something that isn't being pushed
+                // in my version.
+                //linkedObject.MainCode.Add(new OpcodePop()); // to consume the argbottom mark.
                 linkedObject.MainCode.Add(new OpcodeEOP());
             }
             else

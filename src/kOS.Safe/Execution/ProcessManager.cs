@@ -104,9 +104,7 @@ namespace kOS.Safe
         Boolean debugging = false;
         override internal void ContinueExecution(bool doProfiling)
         {
-            Deb.logmisc("ContinueExecution", "Processes", processes.Count,
-                         "Program", GetCurrentContext().Program.Count,
-                         "Program pointer", GetCurrentContext().InstructionPointer);
+            Deb.logmisc("ContinueExecution", "Processes", processes.Count);
 
             // TODO: this is just "getting started" code
             // it will be replaced later.
@@ -133,7 +131,7 @@ namespace kOS.Safe
 
         // Encapsulate a compiled program, then create a process and thread for
         // it, and run it.
-        public void RunProgram(Procedure Program){
+        public void RunProgram(Procedure Program,List<object> args){
             // log all the opcodes that were created into the compile.log
             foreach (var opcode in Program.Opcodes) {
                 Deb.logcompile(opcode.Label, opcode);
@@ -149,7 +147,8 @@ namespace kOS.Safe
             processes.Add(process);
             KOSThread thread = new KOSThread(process);
             process.AddThread(thread);
-            thread.Call(Program);
+            thread.CallWithArgs(Program,args);
+
             debugging=true;
         }
 
@@ -157,7 +156,6 @@ namespace kOS.Safe
             if (debugging && processes.Count==0) {
                 Deb.logmisc("Resetting program");
 
-                Opcode opcode = new OpcodeEOF();
                 debugging=false;
                 Deb.miscIsLogging=false;
                 Deb.clearOpcodeFile();

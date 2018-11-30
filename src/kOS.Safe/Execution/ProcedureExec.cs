@@ -44,7 +44,7 @@ namespace kOS.Safe
         {
             Thread = thread;
             Store = new VariableStore(Thread.Process.ProcessManager.globalVariables);
-            Stack=new ArgumentStack();
+            Stack=Thread.Stack;
             Shared=Thread.Process.ProcessManager.shared;
             Store.AddClosure(procedure.Closure);
             Opcodes = procedure.Opcodes;
