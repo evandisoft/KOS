@@ -121,10 +121,10 @@ namespace kOS.Safe.Function
             ProcessManager processManager = shared.Cpu as ProcessManager;
             //Deb.clearMiscLog();
 
-            var procedure = ProcessManager.CreateProgramProcedure(commandParts);
+            var programProcedure = ProgramBuilder2.BuildProgram(commandParts);
             //Deb.miscIsLogging=false;
             exec.Stack.Push(0); // the "return" value
-            exec.Thread.CallWithArgs(procedure,progArgs);
+            exec.Thread.CallWithArgs(programProcedure,progArgs);
             //processManager.RunProgram(new Procedure(newProgram), progArgs);
 
             // clear the "program" compilation context

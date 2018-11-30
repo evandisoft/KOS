@@ -156,8 +156,8 @@ namespace kOS.Screen
 					Deb.clearCompileLog();
 					Deb.clearMiscLog();
 
-					var procedure = ProcessManager.CreateProgramProcedure(commandParts);
-					processManager.RunProgram(procedure,new List<object>());
+					var programProcedure = ProgramBuilder2.BuildProgram(commandParts);
+					processManager.RunProgram(programProcedure,new List<object>());
 				} else{
 					var interpreterContext = ((CPU)Shared.Cpu).GetInterpreterContext();
 					interpreterContext.AddParts(commandParts);
