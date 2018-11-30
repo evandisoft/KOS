@@ -35,7 +35,7 @@ namespace kOS.Safe {
         // instructions per update.
         internal InstructionCounter GlobalInstructionCounter;
         Stopwatch waitWatch = new Stopwatch();
-        long timeToWait;
+        long timeToWaitInMilliseconds;
 
         public KOSThread(KOSProcess process)
         {
@@ -49,9 +49,11 @@ namespace kOS.Safe {
         {
             Deb.logmisc("Executing thread", ID, "ProcedureExecs", callStack.Count);
 
-            if (timeToWait>0 && waitWatch.ElapsedMilliseconds<timeToWait){
+            if (timeToWaitInMilliseconds>0 && 
+                waitWatch.ElapsedMilliseconds>timeToWaitInMilliseconds){
                 // Use one instruction up so that if all threads are waiting
                 // we can still eventually return to allow the fixedupdate
+                waitWatch.Reset();
                 if(GlobalInstructionCounter.Continue()){
                     return ThreadStatus.GLOBAL_INSTRUCTION_LIMIT;
                 } 
@@ -140,7 +142,7 @@ namespace kOS.Safe {
 
         internal void Wait(double arg)
         {
-            timeToWait=Convert.ToInt64(arg)*1000;
+            timeToWaitInMilliseconds=Convert.ToInt64(arg)*1000;
             waitWatch.Start();
         }
     }
