@@ -143,16 +143,17 @@ namespace kOS.Safe
             foreach (var opcode in newProgram) {
                 (opcode as OpcodePushDelegate)?.EncapsulateProcedure(newProgram);
             }
-            return new Procedure(newProgram,null);
+            foreach (var opcode in newProgram) {
+                Deb.logcompile(opcode.Label, opcode);
+            }
+            return new Procedure(newProgram);
         }
 
         // Encapsulate a compiled program, then create a process and thread for
         // it, and run it.
-        public void RunProgram(Procedure Program,List<object> args){
+        public void RunProgram(Procedure Program,List<object> args=null){
             // log all the opcodes that were created into the compile.log
-            foreach (var opcode in Program.Opcodes) {
-                Deb.logcompile(opcode.Label, opcode);
-            }
+
             // Instantiate the Procedures in all the OpcodePushDelegate's
 
 

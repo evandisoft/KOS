@@ -155,7 +155,7 @@ namespace kOS.Screen
 				if (processManager!=null){
 					Deb.clearCompileLog();
 					Deb.clearMiscLog();
-					
+
 					var procedure = ProcessManager.CreateProgramProcedure(commandParts);
 					processManager.RunProgram(procedure,new List<object>());
 				} else{
