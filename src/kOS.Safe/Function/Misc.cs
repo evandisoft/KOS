@@ -120,17 +120,12 @@ namespace kOS.Safe.Function
                     path, 1, content.String, "program", options);
             ProcessManager processManager = shared.Cpu as ProcessManager;
             //Deb.clearMiscLog();
-            Deb.miscIsLogging=true;
-            Deb.logmisc("creating new builder");
-            ProgramBuilder builder = new ProgramBuilder();
-            Deb.logmisc("adding parts");
-            builder.AddRange(commandParts);
-            Deb.logmisc("building program");
-            List<Opcode> newProgram = builder.BuildProgram();
-            Deb.logmisc("running program");
-            Deb.miscIsLogging=false;
+
+            var procedure = ProcessManager.CreateProgramProcedure(commandParts);
+            //Deb.miscIsLogging=false;
             exec.Stack.Push(0); // the "return" value
-            processManager.RunProgram(new Procedure(newProgram), progArgs);
+            exec.Thread.CallWithArgs(procedure,progArgs);
+            //processManager.RunProgram(new Procedure(newProgram), progArgs);
 
             // clear the "program" compilation context
             //shared.Cpu.StartCompileStopwatch();

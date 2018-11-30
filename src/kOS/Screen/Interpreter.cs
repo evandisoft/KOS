@@ -155,16 +155,9 @@ namespace kOS.Screen
 				if (processManager!=null){
 					Deb.clearCompileLog();
 					Deb.clearMiscLog();
-					Deb.miscIsLogging=true;
-					Deb.logmisc("creating new builder");
-					ProgramBuilder builder = new ProgramBuilder();
-					Deb.logmisc("adding parts");
-					builder.AddRange(commandParts);
-					Deb.logmisc("building program");
-					List<Opcode> newProgram = builder.BuildProgram();
-					Deb.logmisc("running program");
-					Deb.miscIsLogging=false;
-					processManager.RunProgram(new Procedure(newProgram),new List<object>());
+					
+					var procedure = ProcessManager.CreateProgramProcedure(commandParts);
+					processManager.RunProgram(procedure,new List<object>());
 				} else{
 					var interpreterContext = ((CPU)Shared.Cpu).GetInterpreterContext();
 					interpreterContext.AddParts(commandParts);

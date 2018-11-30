@@ -53,6 +53,7 @@ namespace kOS.Safe
 
         public ExecStatus Execute()
         {
+            Deb.logmisc("opcodes is null", Opcodes==null);
             Deb.logmisc("ProcedureExec Execute. instructionPointer", instructionPointer,
                     "total opcodes", Opcodes.Count);
 
@@ -74,18 +75,22 @@ namespace kOS.Safe
 
             case (ByteCode.RETURN):
                 return ExecStatus.RETURN;
-            case (ByteCode.CALL):
-                return ExecStatus.CALL;
+            //case (ByteCode.CALL):
+            //    return ExecStatus.CALL;
             }
 
-            if (instructionPointer==Opcodes.Count || opcode.GetType()==typeof(OpcodeReturn)) {
+            // evandisoft TODO: "programs", unlike functions, don't have
+            // a return statement. Instead, they just run till the last
+            // instruction. Would be nice if we could make them have return
+            // values.
+            if (instructionPointer==Opcodes.Count) {
                 Deb.logmisc("Reached the end of the procedure.");
-                Thread.SetReturnValue(0);
+                //Stack.Push(0);
                 return ExecStatus.FINISHED;
             } 
-            if (instructionPointer>Opcodes.Count){
-                throw new Exception("Instruction way out of bounds!");
-            }
+            //if (instructionPointer>Opcodes.Count){
+            //    throw new Exception("Instruction way out of bounds!");
+            //}
 
             return ExecStatus.OK;
         }

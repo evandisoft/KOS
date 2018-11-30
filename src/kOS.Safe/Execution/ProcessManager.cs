@@ -129,6 +129,23 @@ namespace kOS.Safe
             }
         }
 
+        // This is only here temporarily. Can be put somewhere else later
+        static public Procedure CreateProgramProcedure(List<CodePart> parts){
+            Deb.miscIsLogging=true;
+            Deb.logmisc("creating new builder");
+            ProgramBuilder builder = new ProgramBuilder();
+            Deb.logmisc("adding parts");
+            builder.AddRange(parts);
+            Deb.logmisc("building program");
+            List<Opcode> newProgram = builder.BuildProgram();
+            Deb.logmisc("running program");
+            Deb.miscIsLogging=false;
+            foreach (var opcode in newProgram) {
+                (opcode as OpcodePushDelegate)?.EncapsulateProcedure(newProgram);
+            }
+            return new Procedure(newProgram,null);
+        }
+
         // Encapsulate a compiled program, then create a process and thread for
         // it, and run it.
         public void RunProgram(Procedure Program,List<object> args){
@@ -137,9 +154,7 @@ namespace kOS.Safe
                 Deb.logcompile(opcode.Label, opcode);
             }
             // Instantiate the Procedures in all the OpcodePushDelegate's
-            foreach (var opcode in Program.Opcodes) {
-                (opcode as OpcodePushDelegate)?.EncapsulateProcedure(Program.Opcodes);
-            }
+
 
             Deb.miscIsLogging=true;
             Deb.logmisc("Creating Dummy processes");

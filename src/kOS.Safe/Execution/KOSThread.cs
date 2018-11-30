@@ -81,7 +81,7 @@ namespace kOS.Safe
                 if (callStack.Count==0) {
                     return ThreadStatus.FINISHED;
                 }
-                callStack.Peek().Stack.Push(this.retval);
+                //callStack.Peek().Stack.Push(this.retval);
                 return ThreadStatus.OK;
             default:
                 return ThreadStatus.OK;
@@ -109,11 +109,11 @@ namespace kOS.Safe
             }
         }
 
-        object retval;
-        // OpcodeReturn.Execute calls this to set the return value
-        public void SetReturnValue(object retval){
-            this.retval=retval;
-        }
+        //object retval;
+        //// OpcodeReturn.Execute calls this to set the return value
+        //public void SetReturnValue(object retval){
+        //    this.retval=retval;
+        //}
 
         public void Terminate(){
             isTerminated=true;

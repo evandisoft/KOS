@@ -2058,7 +2058,7 @@ namespace kOS.Safe.Compilation
         }
         public override void Execute(ProcedureExec exec)
         {
-            exec.Thread.SetReturnValue(exec.PopValue());
+
         }
 
         public override string ToString()
@@ -2600,6 +2600,9 @@ namespace kOS.Safe.Compilation
         public override void Execute(ProcedureExec exec)
         {
             Deb.logmisc("Creating new procedure",exec.Store);
+            if(procedureOpcodes==null){
+                throw new Exception("Procedure Opcodes were not instantiated!");
+            }
             Procedure newProcedure = new Procedure(procedureOpcodes, exec.Store);
             exec.Stack.Push(newProcedure);
         }
