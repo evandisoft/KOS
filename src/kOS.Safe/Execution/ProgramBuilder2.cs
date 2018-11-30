@@ -13,6 +13,10 @@ namespace kOS.Safe.Execution {
 
             List<Opcode> mainProgram = null;
             foreach (var part in parts) {
+                ReplaceJumpLabels(part.FunctionsCode);
+                ReplaceJumpLabels(part.InitializationCode);
+                ReplaceJumpLabels(part.MainCode);
+
                 if (part.MainCode.Count>0) {
                     if (mainProgram!=null) {
                         throw new Exception("More than one MainCode section!");
@@ -46,34 +50,43 @@ namespace kOS.Safe.Execution {
             return delegateOpcodes;
         }
         static Dictionary<string, bool>
-        GetAllDelegateLabels(List<CodePart> parts)
+        GetAllDelegateDestinationLabels(List<CodePart> parts)
         {
-            var delegateLabels =
+            var delegateDestinationLabels =
                 new Dictionary<string, bool>();
             foreach (var part in parts) {
                 foreach (var opcode in part.AllOpcodes) {
+                    Deb.logcompile("GetAllLabels,Perusing opcode", opcode);
                     if (opcode.Code==ByteCode.PUSHDELEGATERELOCATELATER) {
+                        Deb.logcompile(
+                            "IsRelocate. DestLabel is ",opcode.DestinationLabel,
+                            "opcode label is ",opcode.Label);
                         var relopcode = opcode as OpcodePushDelegateRelocateLater;
-                        delegateLabels.Add(opcode.DestinationLabel, relopcode.WithClosure);
+                        delegateDestinationLabels.Add(opcode.DestinationLabel, relopcode.WithClosure);
                     }
                 }
             }
-            return delegateLabels;
+            return delegateDestinationLabels;
         }
         static Dictionary<string, OpcodePushDelegate>
         CreatePushDelegatesMap(List<CodePart> parts)
         {
-            var delegateLabels = GetAllDelegateLabels(parts);
+            var delegateDestinationLabels = GetAllDelegateDestinationLabels(parts);
             var pushDelegatesMap = new Dictionary<string, OpcodePushDelegate>();
             foreach (var part in parts) {
                 var opcodesEnumerator = part.AllOpcodes.GetEnumerator();
                 while (opcodesEnumerator.MoveNext()) {
-                    if (delegateLabels.TryGetValue(
+                    Deb.logcompile(
+                        "CreateMap IsRelocate.",
+                        "opcode label is ", opcodesEnumerator.Current.Label);
+                    if (delegateDestinationLabels.TryGetValue(
                         opcodesEnumerator.Current.Label, out bool withClosure)) {
-
+                        var destLabel = opcodesEnumerator.Current.Label;
+                        Deb.logcompile(
+                            "Found dest label",opcodesEnumerator.Current.Label);
                         var delegateOpcodes = GetDelegateOpcodes(opcodesEnumerator);
                         pushDelegatesMap.Add(
-                            opcodesEnumerator.Current.Label,
+                            destLabel,
                             new OpcodePushDelegate(
                                 delegateOpcodes, withClosure));
                     }
@@ -90,13 +103,14 @@ namespace kOS.Safe.Execution {
             for (int i = 0;i<opcodes.Count;i++) {
                 if (opcodes[i].Code==ByteCode.PUSHDELEGATERELOCATELATER) {
                     if (pushDelegatesMap.TryGetValue(
-                        opcodes[i].Label,
+                        opcodes[i].DestinationLabel,
                         out OpcodePushDelegate pushDelegate
                     )) {
+                        pushDelegate.Label=opcodes[i].Label;
                         opcodes[i]=pushDelegate;
                     } else {
                         throw new Exception(
-                            "No OpcodePushDelegate found for label "+opcodes[i].Label);
+                            "No OpcodePushDelegate found for label "+opcodes[i].DestinationLabel);
                     }
                 }
             }
@@ -137,6 +151,28 @@ namespace kOS.Safe.Execution {
                 }
             }
             Deb.logcompile("End of Codeparts "+message);
+        }
+
+        static void ReplaceJumpLabels(List<Opcode> opcodes){
+            var labelIndexMap = LabelIndexMap(opcodes);
+            for (int i = 0;i<opcodes.Count;i++){
+                var branchOpcode = opcodes[i] as BranchOpcode;
+                if(branchOpcode!=null){
+                    if(labelIndexMap.TryGetValue(branchOpcode.DestinationLabel,out int destIndex)){
+                        branchOpcode.Distance=destIndex-i;
+                    } else{
+                        throw new Exception("Index not found for label "+branchOpcode.DestinationLabel);
+                    }
+                }
+            }
+        }
+
+        static Dictionary<string, int> LabelIndexMap(List<Opcode> opcodes){
+            var labelIndexMap = new Dictionary<string, int>();
+            for (int i = 0;i<opcodes.Count;i++){
+                labelIndexMap.Add(opcodes[i].Label, i);
+            }
+            return labelIndexMap;
         }
     }
 }

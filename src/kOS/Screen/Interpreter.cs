@@ -146,9 +146,6 @@ namespace kOS.Screen
                 List<CodePart> commandParts = Shared.ScriptHandler.Compile(new InterpreterPath(this),
                     commandHistoryIndex, commandText, InterpreterName, options);
                 if (commandParts == null) return;
-
-
-
 				// If the cpu is really a "ProcessManager", we'll handle it
 				// the "new" way. If it's just a CPU, do it the old way.
 				ProcessManager processManager = Shared.Cpu as ProcessManager;
