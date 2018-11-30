@@ -16,7 +16,7 @@ namespace kOS.Safe.Execution
 {
     public class CPU : ICpu
     {
-        private readonly IStack stack;
+        protected readonly IStack stack;
         internal readonly VariableScope globalVariables;
 
         static public int OpcodeQueueLen = 10000;
@@ -30,9 +30,9 @@ namespace kOS.Safe.Execution
         }
         private List<YieldFinishedWithPriority> yields;
 
-        private double currentTime;
+        protected double currentTime;
         internal readonly SafeSharedObjects shared;
-        private readonly List<ProgramContext> contexts;
+        internal readonly List<ProgramContext> contexts;
         private ProgramContext currentContext;
         private VariableScope savedPointers;
         private int instructionsPerUpdate;
@@ -94,7 +94,7 @@ namespace kOS.Safe.Execution
             popContextNotifyees = new List<WeakReference>();
         }
 
-        public void Boot()
+        virtual public void Boot()
         {
             // break all running programs
             currentContext = null;
@@ -181,7 +181,7 @@ namespace kOS.Safe.Execution
             }
         }
 
-        private void PushInterpreterContext()
+        protected void PushInterpreterContext()
         {
             var interpreterContext = new ProgramContext(true);
             // initialize the context with an empty program
@@ -1648,7 +1648,7 @@ namespace kOS.Safe.Execution
             compileWatch.Stop();
         }
 
-        private class BootGlobalPath : InternalPath
+        protected class BootGlobalPath : InternalPath
         {
             private string command;
 

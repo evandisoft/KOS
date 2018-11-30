@@ -65,7 +65,10 @@ namespace kOS.Safe.Execution {
             // does NOT have a value like $<.....>, which are special
             // flags used internally:
             var identifier = testValue as string;
-            if (identifier == null){
+            if (identifier == null ||
+                identifier.Length <= 1 ||
+                identifier[0] != '$' ||
+                identifier[1] == '<') {
                 return testValue;
             }
             //evandisoft TODO: just hardwiring this in there to get it to not

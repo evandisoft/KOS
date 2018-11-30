@@ -59,7 +59,7 @@ namespace kOS.Safe.Function
         }
 
         public abstract void Execute(SafeSharedObjects shared);
-        public virtual void Execute(ProcedureExec exec){
+        public virtual void Execute(SafeSharedObjects shared,ProcedureExec exec){
             throw new NotImplementedException("This builtin is not yet implemented.");
         }
 

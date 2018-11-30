@@ -3,6 +3,7 @@ using kOS.Safe.Function;
 using kOS.Suffixed;
 using System;
 using TimeSpan = kOS.Suffixed.TimeSpan;
+using kOS.Safe;
 
 namespace kOS.Function
 {
@@ -15,7 +16,16 @@ namespace kOS.Function
             Execute(shared as SharedObjects);
         }
 
-        protected Vector GetVector(object argument)
+		public virtual void Execute(SharedObjects shared,ProcedureExec exec){
+			throw new NotImplementedException("FunctionBase Execute");
+		}
+
+		public override void Execute(Safe.SafeSharedObjects shared, ProcedureExec exec)
+		{
+			Execute(shared as SharedObjects,exec);
+		}
+
+		protected Vector GetVector(object argument)
         {
             var vector = argument as Vector;
             if (vector != null)

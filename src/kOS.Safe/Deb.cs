@@ -49,7 +49,7 @@ namespace kOS.Safe
         }
 
         static public Boolean miscIsLogging = false;
-        [Conditional("DEBUG")]
+        //[Conditional("DEBUG")]
         static public void logmisc(params object [] args){
             if(SafeHouse.Config.DebugEachOpcode && miscIsLogging){
                 logall(miscLogname, args);
@@ -57,18 +57,18 @@ namespace kOS.Safe
         }
 
         static public Boolean compileIsLogging = true;
-        [Conditional("DEBUG")]
+        //[Conditional("DEBUG")]
         static public void logcompile(params object[] args)
         {
             if (SafeHouse.Config.DebugEachOpcode && compileIsLogging) {
                 logall(compileLogname, args);
             }
         }
-        [Conditional("DEBUG")]
+        //[Conditional("DEBUG")]
         static public void clearCompileLog(){
             File.WriteAllText(compileLogname, String.Empty);
         }
-        [Conditional("DEBUG")]
+        //[Conditional("DEBUG")]
         static public void clearMiscLog(){
             File.WriteAllText(miscLogname, String.Empty);
         }

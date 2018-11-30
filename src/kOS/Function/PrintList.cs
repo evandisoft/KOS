@@ -80,8 +80,68 @@ namespace kOS.Function
                 shared.Screen.Print(" ");
             }
         }
+		public override void Execute(SharedObjects shared,ProcedureExec exec)
+		{
+			string listType = PopValueAssert(exec).ToString();
+			AssertArgBottomAndConsume(exec);
 
-        private kList GetFileList(Safe.SafeSharedObjects shared)
+			if (shared.Screen == null) return;
+
+			kList list;
+
+			switch (listType) {
+			case "files":
+				list = GetFileList(shared);
+				break;
+
+			case "volumes":
+				list = GetVolumeList(shared);
+				break;
+
+			case "processors":
+				list = GetProcessorList(shared);
+				break;
+
+			case "bodies":
+				list = GetBodyList(shared);
+				break;
+
+			case "targets":
+				list = GetTargetList(shared);
+				break;
+
+			case "resources":
+				list = GetResourceList(shared);
+				break;
+
+			case "parts":
+				list = GetPartList(shared);
+				break;
+
+			case "engines":
+				list = GetEngineList(shared);
+				break;
+
+			case "sensors":
+				list = GetSensorList(shared);
+				break;
+
+			case "config":
+				list = GetConfigList();
+				break;
+
+			default:
+				throw new Exception("List type not supported");
+			}
+
+			if (list != null) {
+				shared.Screen.Print(" ");
+				shared.Screen.Print(list.ToString());
+				shared.Screen.Print(" ");
+			}
+		}
+
+		private kList GetFileList(Safe.SafeSharedObjects shared)
         {
             var list = new kList();
             list.AddColumn("Name", 30, ColumnAlignment.Left);

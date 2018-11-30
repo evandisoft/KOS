@@ -1527,6 +1527,22 @@ namespace kOS.Safe.Compilation
             }
             cpu.PushArgumentStack(Structure.FromPrimitive(result));
         }
+        public override void Execute(ProcedureExec exec)
+        {
+            object value = exec.PopValue();
+            object result;
+
+            // Convert to bool instead of cast in case the identifier is stored
+            // as an encapsulated BooleanValue, preventing an unboxing collision.
+            // Wrapped in a try/catch since the Convert framework doesn't have a
+            // way to determine if a type can be converted.
+            try {
+                result = !Convert.ToBoolean(value);
+            } catch {
+                throw new KOSCastException(value.GetType(), typeof(BooleanValue));
+            }
+            exec.Stack.Push(Structure.FromPrimitive(result));
+        }
     }
 
     /// <summary>
@@ -1690,7 +1706,7 @@ namespace kOS.Safe.Compilation
         }
         public override void Execute(ProcedureExec exec)
         {
-
+            Deb.logmisc("calling ", Destination);
             if(Direct){
                 string dest = Destination as string;
                 if (isBuiltin) {

@@ -3032,8 +3032,8 @@ namespace kOS.Safe.Compilation.KS
                     VisitNode(node.Nodes[volumeIndex]);
                 else
                     AddOpcode(new OpcodePush(null));
-
-                AddOpcode(new OpcodeCall("run()"));
+                var opcode = new OpcodeCall("run"){isBuiltin=true};
+                AddOpcode(opcode);
                 
                 // Note: it is not an error that there are two Pop's here:  There are two levels of return value - one from the program run
                 // and one from the function call run():
@@ -3166,7 +3166,9 @@ namespace kOS.Safe.Compilation.KS
                 else
                     AddOpcode(new OpcodePush("files"));
                 // print list
-                AddOpcode(new OpcodeCall("printlist()"));
+                var opcode = new OpcodeCall("printlist");
+                opcode.isBuiltin=true;
+                AddOpcode(opcode);
                 AddOpcode(new OpcodePop()); // all functions now return a value even if it's a dummy we ignore.
             }
         }

@@ -27,6 +27,9 @@ namespace kOS.Safe
 
         readonly coll.Stack<ProcedureExec> callStack = new coll.Stack<ProcedureExec>();
         // This counter keeps track of the threads own execution limit
+        // TODO: Currently this is just set to the normal instructions
+        // per update limit. I must give this a separate implementation
+        // so that there can be a different limit per thread
         internal InstructionCounter ThreadInstructionCounter = new InstructionCounter();
         // This counter keeps track of the total limit on
         // instructions per update.

@@ -20,7 +20,7 @@ namespace kOS.Safe.Function
             AssertArgBottomAndConsume(shared);
             shared.Screen.Print(textToPrint);
         }
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(SafeSharedObjects shared,ProcedureExec exec)
         {
             // evandisoft TODO: must make a rewrite of SafeFunctionBase's 
             // PopValueAssert that takes an "exec" and use that one here the 
@@ -74,20 +74,20 @@ namespace kOS.Safe.Function
     [Function("run")]
     public class FunctionRun : SafeFunctionBase
     {
-        public override void Execute(SafeSharedObjects shared)
+        public override void Execute(SafeSharedObjects shared,ProcedureExec exec)
         {
             // run() is strange.  It needs two levels of args - the args to itself, and the args it is meant to
             // pass on to the program it's invoking.  First, these are the args to run itself:
-            object volumeId = PopValueAssert(shared, true);
-            object pathObject = PopValueAssert(shared, true);
-            AssertArgBottomAndConsume(shared);
+            object volumeId = PopValueAssert(exec, true);
+            object pathObject = PopValueAssert(exec, true);
+            AssertArgBottomAndConsume(exec);
 
             // Now the args it is going to be passing on to the program:
             var progArgs = new List<object>();
-            int argc = CountRemainingArgs(shared);
+            int argc = exec.Stack.CountArgs();//CountRemainingArgs(shared);
             for (int i = 0; i < argc; ++i)
-                progArgs.Add(PopValueAssert(shared, true));
-            AssertArgBottomAndConsume(shared);
+                progArgs.Add(PopValueAssert(exec, true));
+            AssertArgBottomAndConsume(exec);
 
             if (shared.VolumeMgr == null) return;
 
@@ -107,6 +107,95 @@ namespace kOS.Safe.Function
             }
             else
             {
+
+                CompilerOptions options = new CompilerOptions {
+                    LoadProgramsInSameAddressSpace = false,
+                    FuncManager = shared.FunctionManager,
+                    IsCalledFromRun = false
+                };
+                // evandisoft TODO: this is not a full reimplementation of run
+                // yet. This is just a basic version
+                // Doesn't compile in a different thread or anything.
+                List<CodePart> commandParts = 
+                    shared.ScriptHandler.Compile(
+                        path,1, content.String, "program", options);
+                ProcessManager processManager = shared.Cpu as ProcessManager;
+                Deb.clearMiscLog();
+                Deb.miscIsLogging=true;
+                Deb.logmisc("creating new builder");
+                ProgramBuilder builder = new ProgramBuilder();
+                Deb.logmisc("adding parts");
+                builder.AddRange(commandParts);
+                Deb.logmisc("building program");
+                List<Opcode> newProgram = builder.BuildProgram();
+                Deb.logmisc("running program");
+                Deb.miscIsLogging=false;
+
+                processManager.RunProgram(new Procedure(newProgram));
+
+                // clear the "program" compilation context
+                //shared.Cpu.StartCompileStopwatch();
+                //shared.ScriptHandler.ClearContext("program");
+                //string filePath = shared.VolumeMgr.GetVolumeRawIdentifier(shared.VolumeMgr.CurrentVolume) + "/" + fileName;
+                //var options = new CompilerOptions { LoadProgramsInSameAddressSpace = true, FuncManager = shared.FunctionManager };
+                ////var programContext = shared.Cpu.SwitchToProgramContext();
+
+                //List<CodePart> codeParts;
+                //if (content.Category == FileCategory.KSM)
+                //{
+                //    string prefix = programContext.Program.Count.ToString();
+                //    codeParts = content.AsParts(path, prefix);
+                //    programContext.AddParts(codeParts);
+                //    shared.Cpu.StopCompileStopwatch();
+                //}
+                //else
+                //{
+                //    shared.Cpu.YieldProgram(YieldFinishedCompile.RunScript(path, 1, content.String, "program", options));
+                //}
+            }
+
+            // Because run() returns FIRST, and THEN the CPU jumps to the new program's first instruction that it set up,
+            // it needs to put the return stack in a weird order.  Its return value needs to be buried UNDER the args to the
+            // program it's calling:
+            UsesAutoReturn = false;
+
+            shared.Cpu.PushArgumentStack(0); // dummy return that all functions have.
+
+            // Put the args for the program being called back on in the same order they were in before (so read the list backward):
+            shared.Cpu.PushArgumentStack(new KOSArgMarkerType());
+            for (int i = argc - 1; i >= 0; --i)
+                shared.Cpu.PushArgumentStack(progArgs[i]);
+        }
+        public override void Execute(SafeSharedObjects shared)
+        {
+            // run() is strange.  It needs two levels of args - the args to itself, and the args it is meant to
+            // pass on to the program it's invoking.  First, these are the args to run itself:
+            object volumeId = PopValueAssert(shared, true);
+            object pathObject = PopValueAssert(shared, true);
+            AssertArgBottomAndConsume(shared);
+
+            // Now the args it is going to be passing on to the program:
+            var progArgs = new List<object>();
+            int argc = CountRemainingArgs(shared);
+            for (int i = 0;i < argc;++i)
+                progArgs.Add(PopValueAssert(shared, true));
+            AssertArgBottomAndConsume(shared);
+
+            if (shared.VolumeMgr == null) return;
+
+            GlobalPath path = shared.VolumeMgr.GlobalPathFromObject(pathObject);
+            Volume volume = shared.VolumeMgr.GetVolumeFromPath(path);
+            VolumeFile volumeFile = volume.Open(path) as VolumeFile;
+
+            FileContent content = volumeFile != null ? volumeFile.ReadAll() : null;
+
+            if (content == null) throw new Exception(string.Format("File '{0}' not found", path));
+
+            if (shared.ScriptHandler == null) return;
+
+            if (volumeId != null) {
+                throw new KOSObsoletionException("v1.0.2", "run [file] on [volume]", "None", "");
+            } else {
                 // clear the "program" compilation context
                 shared.Cpu.StartCompileStopwatch();
                 shared.ScriptHandler.ClearContext("program");
@@ -115,15 +204,12 @@ namespace kOS.Safe.Function
                 var programContext = shared.Cpu.SwitchToProgramContext();
 
                 List<CodePart> codeParts;
-                if (content.Category == FileCategory.KSM)
-                {
+                if (content.Category == FileCategory.KSM) {
                     string prefix = programContext.Program.Count.ToString();
                     codeParts = content.AsParts(path, prefix);
                     programContext.AddParts(codeParts);
                     shared.Cpu.StopCompileStopwatch();
-                }
-                else
-                {
+                } else {
                     shared.Cpu.YieldProgram(YieldFinishedCompile.RunScript(path, 1, content.String, "program", options));
                 }
             }
@@ -137,7 +223,7 @@ namespace kOS.Safe.Function
 
             // Put the args for the program being called back on in the same order they were in before (so read the list backward):
             shared.Cpu.PushArgumentStack(new KOSArgMarkerType());
-            for (int i = argc - 1; i >= 0; --i)
+            for (int i = argc - 1;i >= 0;--i)
                 shared.Cpu.PushArgumentStack(progArgs[i]);
         }
     }

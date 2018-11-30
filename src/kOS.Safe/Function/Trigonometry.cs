@@ -29,7 +29,7 @@ namespace kOS.Safe.Function
             double result = Math.Cos(radians);
             ReturnValue = result;
         }
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(SafeSharedObjects shared,ProcedureExec exec)
         {
             double degrees = GetDouble(PopValueAssert(exec));
             AssertArgBottomAndConsume(exec);

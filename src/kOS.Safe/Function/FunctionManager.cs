@@ -59,7 +59,7 @@ namespace kOS.Safe.Function
 
             SafeFunctionBase function = functions[functionName];
             Deb.logmisc("got function", function);
-            function.Execute(exec);
+            function.Execute(shared,exec);
             Deb.logmisc("function.UsesAutoReturn", function.UsesAutoReturn);
             if (function.UsesAutoReturn){
                 exec.Stack.Push(function.ReturnValue);

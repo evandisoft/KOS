@@ -5,12 +5,23 @@ using coll = System.Collections.Generic;
 using System.Collections.Generic;
 using kOS.Safe.Encapsulation;
 using kOS.Safe.Utilities;
+using kOS.Safe.Binding;
+using kOS.Safe.Callback;
+using kOS.Safe.Exceptions;
+using System.Diagnostics;
+using System.Linq;
+using System.Text;
+using Debug = kOS.Safe.Utilities.Debug;
+using kOS.Safe.Persistence;
 
 namespace kOS.Safe
 {
     public class InstructionCounter {
         public int executionCounter;
         public int instructionsPerUpdate;
+        public InstructionCounter(){
+            Reset();
+        }
 
         public void Reset(){
             executionCounter=0;
@@ -31,6 +42,63 @@ namespace kOS.Safe
         public ProcessManager(SafeSharedObjects safeSharedObjects):base(safeSharedObjects)
         {
             
+        }
+
+        public  void Boot(){
+            globalVariables.Clear();
+            //if (shared.GameEventDispatchManager != null) shared.GameEventDispatchManager.Clear();
+
+            PushInterpreterContext();
+            currentTime = 0;
+            // clear stack (which also orphans all local variables so they can get garbage collected)
+            stack.Clear();
+            if (shared.Interpreter != null) shared.Interpreter.Reset();
+            // load functions
+            if (shared.FunctionManager != null) shared.FunctionManager.Load();
+            // load bindings
+            if (shared.BindingMgr != null) shared.BindingMgr.Load();
+            if (shared.Screen != null) {
+                shared.Screen.ClearScreen();
+                string bootMessage = string.Format("kOS Operating System\n" + "KerboScript v{0}\n(manual at {1})\n \n" + "Proceed.\n",
+                                                   SafeHouse.Version, SafeHouse.DocumentationURL);
+                shared.Screen.Print(bootMessage);
+            }
+            if (!shared.Processor.CheckCanBoot()) return;
+            VolumePath path = shared.Processor.BootFilePath;
+            // Check to make sure the boot file name is valid, and then that the boot file exists.
+            if (path == null) {
+                SafeHouse.Logger.Log("Boot file name is empty, skipping boot script");
+            } 
+            else {
+                // Boot is only called once right after turning the processor on,
+                // the volume cannot yet have been changed from that set based on
+                // Config.StartOnArchive, and Processor.CheckCanBoot() has already
+                // handled the range check for the archive.
+                Volume sourceVolume = shared.VolumeMgr.CurrentVolume;
+                var file = shared.VolumeMgr.CurrentVolume.Open(path);
+                if (file == null) {
+                    SafeHouse.Logger.Log(string.Format("Boot file \"{0}\" is missing, skipping boot script", path));
+                }
+
+                //shared.VolumeMgr.SwitchTo(shared.VolumeMgr.GetVolume(0));
+                //else {
+                //    var bootContext = "program";
+                //    shared.ScriptHandler.ClearContext(bootContext);
+                //    IProgramContext programContext = SwitchToProgramContext();
+                //    programContext.Silent = true;
+
+                //    string bootCommand = string.Format("run \"{0}\".", file.Path);
+
+                //    var options = new CompilerOptions {
+                //        LoadProgramsInSameAddressSpace = true,
+                //        FuncManager = shared.FunctionManager,
+                //        IsCalledFromRun = false
+                //    };
+
+                //    YieldProgram(YieldFinishedCompile.RunScript(new BootGlobalPath(bootCommand), 1, bootCommand, bootContext, options));
+
+                //}
+            }
         }
 
         Boolean debugging = false;
