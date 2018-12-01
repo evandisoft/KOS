@@ -17,13 +17,16 @@ namespace kOS.Safe {
         WAIT,
     }
 
-    public class KOSThread {
+    public class KOSThread:IExec {
         static long IDCounter = 0;
         public readonly long ID = IDCounter++;
         bool isTerminated = false;
 
         internal KOSProcess Process { get; }
         internal ArgumentStack Stack { get; }
+
+        ProcedureExec CurrentProcedure => callStack.Peek();
+        VariableStore CurrentStore => CurrentProcedure.Store;
 
         readonly coll.Stack<ProcedureExec> callStack = new coll.Stack<ProcedureExec>();
         // This counter keeps track of the threads own execution limit
@@ -49,15 +52,8 @@ namespace kOS.Safe {
         {
             Deb.logmisc("Executing thread", ID, "ProcedureExecs", callStack.Count);
 
-            if (timeToWaitInMilliseconds>0 && 
-                waitWatch.ElapsedMilliseconds>timeToWaitInMilliseconds){
-                // Use one instruction up so that if all threads are waiting
-                // we can still eventually return to allow the fixedupdate
-                waitWatch.Reset();
-                if(GlobalInstructionCounter.Continue()){
-                    return ThreadStatus.GLOBAL_INSTRUCTION_LIMIT;
-                } 
-                return ThreadStatus.WAIT;
+            if(isWaiting(out ThreadStatus threadStatus)){
+                return threadStatus;
             }
 
             if (callStack.Count == 0) { return ThreadStatus.FINISHED; }
@@ -66,14 +62,16 @@ namespace kOS.Safe {
             // run the procedure.
             var status = ThreadStatus.OK;
             while (status==ThreadStatus.OK) {
-                status=ExecuteProcedure(callStack.Peek());
+                status=ExecuteCurrentProcedure();
             }
             Deb.logmisc("Exiting thread", ID, "with status", status);
 
             return status;
         }
 
-        ThreadStatus ExecuteProcedure(ProcedureExec procedureExec)
+
+
+        ThreadStatus ExecuteCurrentProcedure()
         {
             if (!GlobalInstructionCounter.Continue()) {
                 GlobalInstructionCounter.Reset();
@@ -83,28 +81,34 @@ namespace kOS.Safe {
                 ThreadInstructionCounter.Reset();
                 return ThreadStatus.THREAD_INSTRUCTION_LIMIT;
             }
-
-            var status = procedureExec.Execute();
-
-            switch (status) {
-
-            case ExecStatus.ERROR:
-                return ThreadStatus.ERROR;
-            case ExecStatus.WAIT:
-                return ThreadStatus.WAIT;
-            case ExecStatus.RETURN:
-            case ExecStatus.FINISHED:
+            if (!CurrentProcedure.MoveNext()){
                 Deb.logmisc("Removing ProcedureExec");
                 callStack.Pop();
                 if (callStack.Count==0) {
                     return ThreadStatus.FINISHED;
                 }
-                //callStack.Peek().Stack.Push(this.retval);
-                return ThreadStatus.OK;
-            default:
-                return ThreadStatus.OK;
             }
+            var opcode = CurrentProcedure.Current;
+            Deb.storeOpcode(opcode);
+            Deb.logmisc("Current Opcode", opcode.Label, opcode);
+            opcode.Execute(this);
+
+            switch(opcode.Code){
+            case ByteCode.WAIT:
+                return ThreadStatus.WAIT;
+            case ByteCode.RETURN:
+                Deb.logmisc("Removing ProcedureExec");
+                callStack.Pop();
+                if (callStack.Count==0) {
+                    return ThreadStatus.FINISHED;
+                }
+                break;
+            }
+
+            return ThreadStatus.OK;
         }
+
+
 
         // Create a new ProcedureExec, and add it to the stack, 
         // to be executed next time this thread runs.
@@ -129,12 +133,6 @@ namespace kOS.Safe {
             }
         }
 
-        //object retval;
-        //// OpcodeReturn.Execute calls this to set the return value
-        //public void SetReturnValue(object retval){
-        //    this.retval=retval;
-        //}
-
         public void Terminate()
         {
             isTerminated=true;
@@ -144,6 +142,45 @@ namespace kOS.Safe {
         {
             timeToWaitInMilliseconds=Convert.ToInt64(arg)*1000;
             waitWatch.Start();
+        }
+
+        // This has to increment the GlobalInstructionPointer
+        // to prevent the game from locking up when all threads are sleeping.
+        bool isWaiting(out ThreadStatus threadStatus)
+        {
+            if (timeToWaitInMilliseconds>0 &&
+                waitWatch.ElapsedMilliseconds>timeToWaitInMilliseconds) {
+                waitWatch.Reset();
+                // Count this as an instruction so that if all threads are waiting
+                // we can still eventually return to allow the fixedupdate
+                if (GlobalInstructionCounter.Continue()) {
+                    threadStatus=ThreadStatus.GLOBAL_INSTRUCTION_LIMIT;
+                } else {
+                    threadStatus=ThreadStatus.WAIT;
+                }
+                return true;
+            }
+            threadStatus=ThreadStatus.OK;
+            return false;
+        }
+
+        KOSThread IExec.Thread => this;
+
+        KOSProcess IExec.Process => Process;
+
+        ArgumentStack IExec.Stack => Stack;
+
+        VariableStore IExec.Store => CurrentStore;
+
+        SafeSharedObjects IExec.Shared => Process.ProcessManager.shared;
+
+        public object PopValue(bool barewordOkay = false)
+        {
+            var retval = Stack.Pop();
+            Deb.logmisc("Getting value of", retval);
+            var retval2 = CurrentStore.GetValue(retval, barewordOkay);
+            Deb.logmisc("Got value of", retval2);
+            return retval2;
         }
     }
 }

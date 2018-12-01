@@ -59,7 +59,7 @@ namespace kOS.Safe.Function
         }
 
         public abstract void Execute(SafeSharedObjects shared);
-        public virtual void Execute(SafeSharedObjects shared,ProcedureExec exec){
+        public virtual void Execute(SafeSharedObjects shared,IExec exec){
             throw new NotImplementedException("This builtin is not yet implemented.");
         }
 
@@ -114,7 +114,7 @@ namespace kOS.Safe.Function
 
             throw new KOSArgumentMismatchException("Too many arguments were passed to " + GetFuncName());
         }
-        protected void AssertArgBottomAndConsume(ProcedureExec exec)
+        protected void AssertArgBottomAndConsume(IExec exec)
         {
             object shouldBeBottom = exec.Stack.Pop();
             if (shouldBeBottom != null && shouldBeBottom.GetType() == OpcodeCall.ArgMarkerType)
@@ -161,7 +161,7 @@ namespace kOS.Safe.Function
                 throw new KOSArgumentMismatchException("Too few arguments were passed to " + GetFuncName());
             return returnValue;
         }
-        protected object PopValueAssert(ProcedureExec exec, bool barewordOkay = false)
+        protected object PopValueAssert(IExec exec, bool barewordOkay = false)
         {
             object returnValue = exec.PopValue(barewordOkay);
             if (returnValue != null && returnValue.GetType() == OpcodeCall.ArgMarkerType)

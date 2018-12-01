@@ -253,7 +253,7 @@ namespace kOS.Safe.Compilation
         {
             throw new NotImplementedException("(Opcode.Execute(ICpu cpu))");
         }
-        public virtual void Execute(ProcedureExec exec)
+        public virtual void Execute(IExec exec)
         {
             throw new NotImplementedException("(Opcode.Execute(ProcedureExec exec))");
         }
@@ -453,7 +453,7 @@ namespace kOS.Safe.Compilation
                 throw new KOSArgumentMismatchException("Called with not enough arguments.");
             return returnValue;
         }
-        protected object PopValueAssert(ProcedureExec exec, bool barewordOkay = false)
+        protected object PopValueAssert(IExec exec, bool barewordOkay = false)
         {
             object returnValue = exec.PopValue(barewordOkay);
             if (returnValue != null && returnValue.GetType() == OpcodeCall.ArgMarkerType)
@@ -480,7 +480,7 @@ namespace kOS.Safe.Compilation
         {
             return Structure.FromPrimitiveWithAssert(PopValueAssert(cpu, barewordOkay));
         }
-        protected Structure PopStructureAssertEncapsulated(ProcedureExec exec, bool barewordOkay = false)
+        protected Structure PopStructureAssertEncapsulated(IExec exec, bool barewordOkay = false)
         {
             return Structure.FromPrimitiveWithAssert(PopValueAssert(exec,barewordOkay));
         }
@@ -577,7 +577,7 @@ namespace kOS.Safe.Compilation
             Structure value = PopStructureAssertEncapsulated(cpu);
             cpu.SetValue(Identifier, value);
         }
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
             Structure value = PopStructureAssertEncapsulated(exec);
             exec.Store.SetValue(Identifier, value);
@@ -681,7 +681,7 @@ namespace kOS.Safe.Compilation
             cpu.SetNewLocal(Identifier, value);
         }
 
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
             Structure value = PopStructureAssertEncapsulated(exec);
             exec.Store.SetNewLocal(Identifier, value);
@@ -720,7 +720,7 @@ namespace kOS.Safe.Compilation
             Structure value = PopStructureAssertEncapsulated(cpu);
             cpu.SetGlobal(Identifier, value);
         }
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
             Structure value = PopStructureAssertEncapsulated(exec);
             exec.Store.SetGlobal(Identifier, value);
@@ -991,7 +991,7 @@ namespace kOS.Safe.Compilation
         {
             AbortContext = true;
         }
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
             //AbortContext = true;
         }
@@ -1011,7 +1011,7 @@ namespace kOS.Safe.Compilation
         {
             AbortProgram = true;
         }
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
             //AbortProgram = true;
         }
@@ -1103,7 +1103,7 @@ namespace kOS.Safe.Compilation
 
             DeltaInstructionPointer = !condition ? Distance : 1;
         }
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
             bool condition = Convert.ToBoolean(exec.PopValue());
 
@@ -1129,7 +1129,7 @@ namespace kOS.Safe.Compilation
             bool condition = Convert.ToBoolean(cpu.PopValueArgument());
             DeltaInstructionPointer = condition ? Distance : 1;
         }
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
             bool condition = Convert.ToBoolean(exec.PopValue());
 
@@ -1154,7 +1154,7 @@ namespace kOS.Safe.Compilation
         {
             DeltaInstructionPointer = Distance;
         }
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
             DeltaInstructionPointer = Distance;
         }
@@ -1537,7 +1537,7 @@ namespace kOS.Safe.Compilation
             }
             cpu.PushArgumentStack(Structure.FromPrimitive(result));
         }
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
             object value = exec.PopValue();
             object result;
@@ -1714,7 +1714,7 @@ namespace kOS.Safe.Compilation
             if (absoluteJumpTo >= 0)
                 DeltaInstructionPointer = absoluteJumpTo - cpu.InstructionPointer;
         }
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
             Deb.logmisc("calling ", Destination);
             if(Direct){
@@ -2062,7 +2062,7 @@ namespace kOS.Safe.Compilation
             int currentPointer = cpu.InstructionPointer;
             DeltaInstructionPointer = destinationPointer - currentPointer;
         }
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
 
         }
@@ -2115,7 +2115,7 @@ namespace kOS.Safe.Compilation
             cpu.PushArgumentStack(Argument);
         }
 
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
             exec.Stack.Push(Argument);
         }
@@ -2185,7 +2185,7 @@ namespace kOS.Safe.Compilation
         {
             throw new InvalidOperationException("Attempt to execute OpcodePushRelocateLater. This type of Opcode should have been replaced before execution.\n");
         }
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
             throw new InvalidOperationException("Attempt to execute OpcodePushRelocateLater. This type of Opcode should have been replaced before execution.\n");
         }
@@ -2221,7 +2221,7 @@ namespace kOS.Safe.Compilation
 
             cpu.PopValueArgument();
         }
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
             // Even though this value is being thrown away it's still important to attempt to
             // process it (with cpu.PopValueArgument()) rather than ignore it (with cpu.PopArgumentStack()).  This
@@ -2263,7 +2263,7 @@ namespace kOS.Safe.Compilation
                 throw new KOSArgumentMismatchException("Called with too many arguments.");
             }
         }
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
             bool worked;
             worked=exec.Stack.Count>0;
@@ -2468,7 +2468,7 @@ namespace kOS.Safe.Compilation
         {
             cpu.PushNewScope(ScopeId,ParentScopeId);
         }
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
             exec.Store.PushNewScope();
         }
@@ -2520,7 +2520,7 @@ namespace kOS.Safe.Compilation
         {
             DoPopScope(cpu, NumLevels);
         }
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
             exec.Store.PopScope(NumLevels);
         }
@@ -2620,7 +2620,7 @@ namespace kOS.Safe.Compilation
             cpu.PushArgumentStack(pushMe);
         }
 
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
             Deb.logmisc("Creating new procedure",exec.Store);
             if(procedureOpcodes==null){
@@ -2712,7 +2712,7 @@ namespace kOS.Safe.Compilation
             List<Structure> args = new List<Structure>();
             cpu.AddTrigger(functionPointer, InterruptPriority.Recurring, (Unique ? cpu.NextTriggerInstanceId : 0), false, cpu.GetCurrentClosure());
         }
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
             string triggerName = Convert.ToString(exec.PopValue()); // in case it got wrapped in a ScalarIntValue
             object poppepdval= exec.PopValue();
@@ -2776,7 +2776,7 @@ namespace kOS.Safe.Compilation
             double arg = Convert.ToDouble(cpu.PopValueArgument());
             cpu.YieldProgram(new YieldFinishedGameTimer(arg));
         }
-        public override void Execute(ProcedureExec exec)
+        public override void Execute(IExec exec)
         {
             double arg = Convert.ToDouble(exec.PopValue());
             exec.Thread.Wait(arg);

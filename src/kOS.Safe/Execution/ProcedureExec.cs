@@ -5,6 +5,7 @@ using kOS.Safe.Encapsulation;
 using kOS.Safe.Execution;
 using coll = System.Collections.Generic;
 using kOS.Safe.Exceptions;
+using System.Collections;
 
 namespace kOS.Safe
 {
@@ -31,71 +32,21 @@ namespace kOS.Safe
     // a reference to it's process. (Some opcodes like "addTrigger" will
     // need to make calls at the level of the process.)
     // Store holds a reference to the global scope
-    public class ProcedureExec {
-        internal KOSThread Thread { get; }
-
-        internal ArgumentStack Stack { get; } // manages the argument stack
+    public class ProcedureExec:IEnumerator<Opcode> {
         internal VariableStore Store { get; } // manages variable storing and retrieval
-        internal SafeSharedObjects Shared { get; }
+
+        public Opcode Current => Opcodes[instructionPointer];
+
+        object IEnumerator.Current => Current;
 
         readonly List<Opcode> Opcodes;
         int instructionPointer = 0;
 
 	    public ProcedureExec(KOSThread thread,Procedure procedure)
         {
-            Thread = thread;
-            Store = new VariableStore(Thread.Process.ProcessManager.globalVariables);
-            Stack=Thread.Stack;
-            Shared=Thread.Process.ProcessManager.shared;
+            Store = new VariableStore(thread.Process.ProcessManager.globalVariables);
             Store.AddClosure(procedure.Closure);
             Opcodes = procedure.Opcodes;
-
-        }
-
-        public ExecStatus Execute()
-        {
-            Deb.logmisc("opcodes is null", Opcodes==null);
-            Deb.logmisc("ProcedureExec Execute. instructionPointer", instructionPointer,
-                    "total opcodes", Opcodes.Count);
-
-            Opcode opcode = Opcodes[instructionPointer];
-
-            Deb.storeOpcode(opcode);
-
-            Deb.logmisc("Current Opcode", opcode.Label, opcode);
-            try {
-                opcode.Execute(this);
-            } catch (Exception e) {
-                Deb.logmisc(e);
-                return ExecStatus.ERROR;
-            }
-
-            instructionPointer += opcode.DeltaInstructionPointer;
-
-            switch (opcode.Code) {
-
-            case (ByteCode.RETURN):
-                return ExecStatus.RETURN;
-            case ByteCode.WAIT:
-                return ExecStatus.WAIT;
-            //case (ByteCode.CALL):
-            //    return ExecStatus.CALL;
-            }
-
-            // evandisoft TODO: "programs", unlike functions, don't have
-            // a return statement. Instead, they just run till the last
-            // instruction. Would be nice if we could make them have return
-            // values.
-            if (instructionPointer==Opcodes.Count) {
-                Deb.logmisc("Reached the end of the procedure.");
-                //Stack.Push(0);
-                return ExecStatus.FINISHED;
-            } 
-            //if (instructionPointer>Opcodes.Count){
-            //    throw new Exception("Instruction way out of bounds!");
-            //}
-
-            return ExecStatus.OK;
         }
 
         internal object PopValue(bool barewordOkay = false)
@@ -105,6 +56,30 @@ namespace kOS.Safe
             var retval2 = Store.GetValue(retval, barewordOkay);
             Deb.logmisc("Got value of", retval2);
             return retval2;
+        }
+
+        public bool MoveNext()
+        {
+            instructionPointer+=Opcodes[instructionPointer].DeltaInstructionPointer;
+            if(instructionPointer<Opcodes.Count){
+                return true;
+            } 
+            if(instructionPointer>Opcodes.Count){
+                throw new Exception(
+                    "Opcodes Size is "+Opcodes.Count+
+                    " InstructionPointerSize "+instructionPointer);
+            }
+            return false;
+        }
+
+        public void Reset()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Dispose()
+        {
+            throw new NotImplementedException();
         }
     }
 }

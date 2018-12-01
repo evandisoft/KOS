@@ -16,11 +16,11 @@ namespace kOS.Function
             Execute(shared as SharedObjects);
         }
 
-		public virtual void Execute(SharedObjects shared,ProcedureExec exec){
+		public virtual void Execute(SharedObjects shared,IExec exec){
 			throw new NotImplementedException("FunctionBase Execute");
 		}
 
-		public override void Execute(Safe.SafeSharedObjects shared, ProcedureExec exec)
+		public override void Execute(Safe.SafeSharedObjects shared, IExec exec)
 		{
 			Execute(shared as SharedObjects,exec);
 		}

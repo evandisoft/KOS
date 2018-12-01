@@ -80,7 +80,7 @@ namespace kOS.Function
                 shared.Screen.Print(" ");
             }
         }
-		public override void Execute(SharedObjects shared,ProcedureExec exec)
+		public override void Execute(SharedObjects shared,IExec exec)
 		{
 			string listType = PopValueAssert(exec).ToString();
 			AssertArgBottomAndConsume(exec);

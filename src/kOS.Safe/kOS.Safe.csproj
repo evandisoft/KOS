@@ -293,7 +293,7 @@
     <Compile Include="Encapsulation\interfaces\ISuffix.cs" />
     <Compile Include="Encapsulation\interfaces\ISuffixed.cs" />
     <Compile Include="Execution\KOSThread.cs" />
-    <Compile Include="Execution\ProcedureExec.cs" />
+    <Compile Include="Execution\IExec.cs" />
     <Compile Include="Execution\ProcessManager.cs" />
     <Compile Include="Execution\KOSProcess.cs" />
     <Compile Include="Execution\VariableStore.cs" />
@@ -301,6 +301,7 @@
     <Compile Include="Encapsulation\Procedure.cs" />
     <Compile Include="Compilation\ProgramBuilder2.cs" />
     <Compile Include="Execution\SystemTrigger.cs" />
+    <Compile Include="Execution\ProcedureExec.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Compilation\CompiledObject-doc.md" />

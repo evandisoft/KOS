@@ -48,7 +48,7 @@ namespace kOS.Safe.Function
             }
         }
 
-        public void CallFunction(string functionName,ProcedureExec exec)
+        public void CallFunction(string functionName,IExec exec)
         {
             Deb.logmisc("In CallFunction for function",functionName);
 
