@@ -48,6 +48,9 @@ namespace kOS.Safe
         /// <summary>
         /// Moves to the next opcode, updating the internal instruction counter
         /// based on the current opcode's DeltaInstructionPointer.
+        /// The first opcode in a Procedure is a NOP that will be skipped over
+        /// on the first call to MoveNext. If the NOP is attempted to be executed
+        /// it will throw a NotImplementedException.
         /// </summary>
         public bool MoveNext()
         {

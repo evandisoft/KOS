@@ -77,8 +77,8 @@ namespace kOS.Safe {
         {
             Deb.logmisc("Executing thread", ID, "ProcedureExecs", callStack.Count);
 
-            if(IsWaiting(out ThreadStatus threadStatus)){
-                return threadStatus;
+            if(IsWaiting()){
+                return ThreadStatus.WAIT;
             }
 
             if (callStack.Count == 0) { return ThreadStatus.FINISHED; }
@@ -199,29 +199,19 @@ namespace kOS.Safe {
 
         /// <summary>
         /// Returns true if the thread is Waiting.
-        /// This has to increment the GlobalInstructionPointer
-        /// to prevent the game from locking up when all threads are sleeping.
-        /// If GlobalInstructionPointer is reached, it returns
-        /// ThreadStatus.GLOBAL_INSTRUCTION_LIMIT otherwise
-        /// ThreadStatus.WAIT
         /// </summary>
-        /// <returns><c>true</c>, if thread is waiting, <c>false</c> otherwise.</returns>
-        /// <param name="threadStatus">Thread status.</param>
-        private bool IsWaiting(out ThreadStatus threadStatus)
+        bool IsWaiting()
         {
-            if (timeToWaitInMilliseconds>0 &&
-                waitWatch.ElapsedMilliseconds>timeToWaitInMilliseconds) {
-                waitWatch.Reset();
-                // Count this as an instruction so that if all threads are waiting
-                // we can still eventually return to allow the fixedupdate
-                if (GlobalInstructionCounter.Continue()) {
-                    threadStatus=ThreadStatus.GLOBAL_INSTRUCTION_LIMIT;
-                } else {
-                    threadStatus=ThreadStatus.WAIT;
+            if (timeToWaitInMilliseconds>0){
+                if(timeToWaitInMilliseconds>waitWatch.ElapsedMilliseconds){
+                    Deb.logmisc("Thread", ID, "is waiting for",
+                           timeToWaitInMilliseconds-waitWatch.ElapsedMilliseconds,
+                           "more milliseconds");
+                    return true;
                 }
-                return true;
+                Deb.logmisc("Thread", ID, "is no longer waiting.");
+                timeToWaitInMilliseconds=0; waitWatch.Reset();
             }
-            threadStatus=ThreadStatus.OK;
             return false;
         }
 
@@ -238,7 +228,6 @@ namespace kOS.Safe {
         /// a variable.
         /// </summary>
         /// <returns>The value.</returns>
-        /// <param name="barewordOkay">If set to <c>true</c> bareword okay.</param>
         public object PopValue(bool barewordOkay = false)
         {
             var retval = Stack.Pop();

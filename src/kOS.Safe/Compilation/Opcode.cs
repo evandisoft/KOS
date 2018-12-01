@@ -1024,6 +1024,12 @@ namespace kOS.Safe.Compilation
     {
         protected override string Name { get { return "nop"; } }
         public override ByteCode Code { get { return ByteCode.NOP; } }
+
+        public override void Execute(IExec exec)
+        {
+            throw new NotImplementedException(
+                "OpcodeNOP cannot be executed.");
+        }
     }
 
     

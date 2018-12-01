@@ -12,14 +12,36 @@ namespace kOS.Safe
         FINISHED,
         GLOBAL_INSTRUCTION_LIMIT,
         STACK_EMPTY,
+        WAIT,
     }
 
     /// <summary>
     /// KOSProcess.
+    /// This manages triggers, threads, and systemtriggers. System triggers and
+    /// regular triggers are stored in triggerSet, and threads in threadSet.
+    /// Triggers are added from triggerSet to triggerStack when that stack is empty.
+    /// Threads are added from threadSet to threadStack when that stack is empty.
+    /// 
+    /// For these stacks, the threads/triggers in them are executed and then
+    /// removed from their stack if their execution is suspended via WAIT or
+    /// THREAD_INSTRUCTION_LIMIT. If the thread/trigger reaches 
+    /// GLOBAL_INSTRUCTION_LIMIT, it remains on its stack to be executed on 
+    /// the next FixedUpdate. If the thread/trigger has an ERROR or is FINISHED, 
+    /// the thread/trigger is removed from the stack and from the corresponding Set.
+    /// 
+    /// The triggerStack is always executed first on each FixedUpdate. If it is empty
+    /// because all triggers completed in the last update, it will be filled again with
+    /// the contents of the triggerSet at the beginning of the current update. and
+    /// then executed. If it did not complete in the last update, it will continue
+    /// where it left off and then once done it will move on to the threadStack.
+    /// 
+    /// The threadStack will not return to the FixedUpdate until GLOBAL_INSTRUCTION_LIMIT
+    /// is reached. It is executed in a loop and refilled if ever empty.
     /// </summary>
     public class KOSProcess {
         /// <summary>
-        /// Maps SystemTrigger names to SystemTriggers
+        /// Maps SystemTrigger names to SystemTriggers, so that we can remove
+        /// them later.
         /// </summary>
         readonly Dictionary<string, SystemTrigger> SystemTriggerMap = 
             new Dictionary<string, SystemTrigger>();
@@ -30,6 +52,9 @@ namespace kOS.Safe
         /// the threadStack when it is done running.
         /// </summary>
         readonly HashSet<KOSThread> threadSet = new HashSet<KOSThread>();
+        /// <summary>
+        /// Works similar to threadSet.
+        /// </summary>
         readonly HashSet<KOSThread> triggerSet = new HashSet<KOSThread>();
 
         /// <summary>
@@ -38,6 +63,9 @@ namespace kOS.Safe
         /// eventually get filled up by the threadSet.
         /// </summary>
         readonly coll.Stack<KOSThread> threadStack = new coll.Stack<KOSThread>();
+        /// <summary>
+        /// Works similar to threadStack
+        /// </summary>
         readonly coll.Stack<KOSThread> triggerStack = new coll.Stack<KOSThread>();
 
         public KOSProcess(ProcessManager processManager)
@@ -57,6 +85,11 @@ namespace kOS.Safe
 
             switch(status){
             case ProcessStatus.OK:
+                break;
+                // We don't care if all the triggers are waiting.
+                // Only the threads run in a loop until GLOBAL_INSTRUCTION_LIMIT
+                // is reached.
+            case ProcessStatus.WAIT:
                 break;
             default:
                 return status;
@@ -78,9 +111,17 @@ namespace kOS.Safe
         }
 
         ProcessStatus ExecuteThreads(coll.Stack<KOSThread> stack){
+            // Keep track of whether all the threads were waiting.
+            // If they were all waiting, then effectively the process
+            // is waiting.
+            bool allThreadsWaiting = true;
             while (stack.Count>0) {
                 var currentThread = stack.Peek();
                 var status = currentThread.Execute();
+
+                if(status!=ThreadStatus.WAIT){
+                    allThreadsWaiting=false;
+                }
 
                 switch (status) {
 
@@ -88,6 +129,8 @@ namespace kOS.Safe
                 // thread.
                 case ThreadStatus.THREAD_INSTRUCTION_LIMIT:
                     break;
+                // If the thread is waiting, start executing the next
+                // thread.
                 case ThreadStatus.WAIT:
                     break;
                 // If the global limit was reached, return to the current
@@ -112,10 +155,13 @@ namespace kOS.Safe
                     break;
                 }
 
-                // stop executing this thread until the next time
-                // the stack is repopulated
+                // Pop this thread off the current stack so that it will not
+                // be executed again until the stack is repopulated
                 stack.Pop();
-                return ProcessStatus.OK;
+            }
+
+            if(allThreadsWaiting){
+                return ProcessStatus.WAIT;
             }
             return ProcessStatus.OK;
         }
