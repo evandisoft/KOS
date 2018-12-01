@@ -808,10 +808,11 @@ namespace kOS.Safe.Compilation.KS
                         // I'm currently using. An alternative method
                         // would be to add a special opcode at the end
                         // of every function. (e.g. EOP,EOF,BOGUS, or DELIMITER)
-                        AddOpcode(new OpcodeReturn(0));
+                        AddOpcode(new OpcodeEOP());
                     }
                     else{
                         AddOpcode(new OpcodeReturn(implicitReturnScopeDepth));
+                        AddOpcode(new OpcodeEOP());
                     }
                 }
                 userFuncObject.ScopeNode = GetContainingBlockNode(node); // This limits the scope of the function to the instruction_block the DEFINE was in.
@@ -1373,6 +1374,7 @@ namespace kOS.Safe.Compilation.KS
                 {
                     AddOpcode(new OpcodePush(0)); // Functions must push a dummy return val when making implicit returns. Locks already leave an expr atop the stack.
                     AddOpcode(new OpcodeReturn(0));
+                    AddOpcode(new OpcodeEOP());
                 }
                 Opcode afterFunctionBody = AddOpcode(new OpcodePushDelegateRelocateLater(null,true), functionStartLabel);
                 skipPastFunctionBody.DestinationLabel = afterFunctionBody.Label;

@@ -38,16 +38,16 @@ namespace kOS.Safe.Compilation{
         // So we cannot look for the functions first. We can only find
         // the functions after we've seen all the PushDelecateRelocateLater
         // opcodes
-        static Boolean IsEndReturn(Opcode opcode)
+        static Boolean IsEOP(Opcode opcode)
         {
-            return opcode.GetType()==typeof(OpcodeReturn)&&((OpcodeReturn)opcode).Depth==0;
+            return opcode is OpcodeEOP;
         }
         static List<Opcode> GetDelegateOpcodes(IEnumerator<Opcode> opcodesEnumerator)
         {
             List<Opcode> delegateOpcodes = new List<Opcode>();
             do {
                 delegateOpcodes.Add(opcodesEnumerator.Current);
-            } while (!IsEndReturn(opcodesEnumerator.Current)&&opcodesEnumerator.MoveNext());
+            } while (!IsEOP(opcodesEnumerator.Current)&&opcodesEnumerator.MoveNext());
             return delegateOpcodes;
         }
         static Dictionary<string, bool>
