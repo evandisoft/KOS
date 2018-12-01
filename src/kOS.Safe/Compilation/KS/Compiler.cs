@@ -693,7 +693,7 @@ namespace kOS.Safe.Compilation.KS
             {
                 userFuncIdentifier = lastSubNode.Nodes[1].Token.Text; // The IDENT of: LOCK IDENT TO EXPR.
                 bodyNode = lastSubNode.Nodes[3]; // The EXPR of: LOCK IDENT TO EXPR.
-                needImplicitArgBottom = true;
+                //needImplicitArgBottom = true;
             }
             else if (isDefFunc)
             {

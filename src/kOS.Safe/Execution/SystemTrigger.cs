@@ -1,4 +1,6 @@
-﻿namespace kOS.Safe {
+﻿
+
+namespace kOS.Safe {
     public class SystemTrigger : KOSThread {
         private string _name;
 
