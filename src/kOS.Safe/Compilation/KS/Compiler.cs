@@ -693,7 +693,7 @@ namespace kOS.Safe.Compilation.KS
             {
                 userFuncIdentifier = lastSubNode.Nodes[1].Token.Text; // The IDENT of: LOCK IDENT TO EXPR.
                 bodyNode = lastSubNode.Nodes[3]; // The EXPR of: LOCK IDENT TO EXPR.
-                //needImplicitArgBottom = true;
+                needImplicitArgBottom = true;
             }
             else if (isDefFunc)
             {
@@ -729,7 +729,6 @@ namespace kOS.Safe.Compilation.KS
 
                 if (userFuncObject.IsSystemLock())
                 {
-
                     AddOpcode (new OpcodePush(userFuncObject.ScopelessPointerIdentifier));
                     AddOpcode(new OpcodeExists());
                     var branch = new OpcodeBranchIfTrue();
@@ -783,6 +782,19 @@ namespace kOS.Safe.Compilation.KS
                 {
                     EndScope(bodyNode, false);
                     implicitReturnScopeDepth = 1;
+                }
+
+
+                if(userFuncObject.IsSystemLock()){
+                    AddOpcode(new OpcodeStore("$"+userFuncIdentifier));
+                    // We will wait and Jump forever back to user code
+                    // because systemtriggers should only terminate by
+                    // explicit action
+                    AddOpcode(new OpcodePush(0));
+                    AddOpcode(new OpcodeWait());
+                    AddOpcode(new OpcodeBranchJump())
+                        .DestinationLabel=
+                            userFuncObject.GetUserFunctionLabel(expressionHash);
                 }
 
                 if (needImplicitReturn)

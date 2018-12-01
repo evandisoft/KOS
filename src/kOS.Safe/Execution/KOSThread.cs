@@ -109,8 +109,7 @@ namespace kOS.Safe {
                 ThreadInstructionCounter.Reset();
                 return ThreadStatus.THREAD_INSTRUCTION_LIMIT;
             }
-            // For IEnumerators, Must call MoveNext prior to 
-            // any call to Current
+
             if (!CurrentProcedure.MoveNext()) {
                 return PopStackAndReturnFinishedIfEmpty();
             }
