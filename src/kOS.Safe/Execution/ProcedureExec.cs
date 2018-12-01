@@ -20,21 +20,17 @@ namespace kOS.Safe
         WAIT,
     }
 
-    // Almost every single call made by an opcode does not have to be made
-    // at the top-level. This class passes itself to rewritten opcode
-    // "Execute" functions that now take a ProcedureExec, whereas
-    // before they took an "ICpu". The opcode's "Execute" can now access
-    // different parts of the program for different calls.
-    // This class contains references to a 'Store' that does the work of 
-    // storing and retrieving things (other than pushing and popping
-    // stack arguments, which is something ArgumentStack does).
-    // It also contains a reference to its thread, which in turn contains
-    // a reference to it's process. (Some opcodes like "addTrigger" will
-    // need to make calls at the level of the process.)
-    // Store holds a reference to the global scope
+    /// <summary>
+    /// Procedure exec.
+    /// This class holds a store and manages the instruction pointer.
+    /// </summary>
     public class ProcedureExec:IEnumerator<Opcode> {
         internal VariableStore Store { get; } // manages variable storing and retrieval
 
+        /// <summary>
+        /// Gets the current Opcode. 
+        /// </summary>
+        /// <value>The current opcode.</value>
         public Opcode Current => Opcodes[instructionPointer];
 
         object IEnumerator.Current => Current;
@@ -49,22 +45,17 @@ namespace kOS.Safe
             Opcodes = procedure.Opcodes;
         }
 
-        internal object PopValue(bool barewordOkay = false)
-        {
-            var retval = Stack.Pop();
-            Deb.logmisc("Getting value of", retval);
-            var retval2 = Store.GetValue(retval, barewordOkay);
-            Deb.logmisc("Got value of", retval2);
-            return retval2;
-        }
-
+        /// <summary>
+        /// Moves to the next opcode, updating the internal instruction counter
+        /// based on the current opcode's DeltaInstructionPointer.
+        /// </summary>
         public bool MoveNext()
         {
             instructionPointer+=Opcodes[instructionPointer].DeltaInstructionPointer;
-            if(instructionPointer<Opcodes.Count){
+            if (instructionPointer<Opcodes.Count) {
                 return true;
-            } 
-            if(instructionPointer>Opcodes.Count){
+            }
+            if (instructionPointer>Opcodes.Count){
                 throw new Exception(
                     "Opcodes Size is "+Opcodes.Count+
                     " InstructionPointerSize "+instructionPointer);
@@ -72,14 +63,23 @@ namespace kOS.Safe
             return false;
         }
 
+        /// <summary>
+        /// At the moment this just returns "NotImplementedException.
+        /// I don't quite see a use for implementing this
+        /// at the moment.
+        /// </summary>
         public void Reset()
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException(
+                "Reset of ProcedureExec is not implemented.");
+            //instructionPointer=0;
         }
 
-        public void Dispose()
+        /// <summary>
+        /// Does nothing.
+        /// </summary>
+       public void Dispose()
         {
-            throw new NotImplementedException();
         }
     }
 }

@@ -14,14 +14,29 @@ namespace kOS.Safe
         STACK_EMPTY,
     }
 
+    /// <summary>
+    /// KOSProcess.
+    /// </summary>
     public class KOSProcess {
-        public Dictionary<string, SystemTrigger> SystemTriggerMap = 
+        /// <summary>
+        /// Maps SystemTrigger names to SystemTriggers
+        /// </summary>
+        readonly Dictionary<string, SystemTrigger> SystemTriggerMap = 
             new Dictionary<string, SystemTrigger>();
 
         internal ProcessManager ProcessManager { get; }
+        /// <summary>
+        /// Stores a set of threads. Threads in this set will be added into
+        /// the threadStack when it is done running.
+        /// </summary>
         readonly HashSet<KOSThread> threadSet = new HashSet<KOSThread>();
         readonly HashSet<KOSThread> triggerSet = new HashSet<KOSThread>();
 
+        /// <summary>
+        /// Stack to be executed until it's empty. The stack effectively keeps
+        /// track of what was last executed even past an update. When it's empty it will
+        /// eventually get filled up by the threadSet.
+        /// </summary>
         readonly coll.Stack<KOSThread> threadStack = new coll.Stack<KOSThread>();
         readonly coll.Stack<KOSThread> triggerStack = new coll.Stack<KOSThread>();
 
@@ -73,12 +88,14 @@ namespace kOS.Safe
                 // thread.
                 case ThreadStatus.THREAD_INSTRUCTION_LIMIT:
                     break;
+                case ThreadStatus.WAIT:
+                    break;
                 // If the global limit was reached, return to the current
                 // thread after the update is over. (Don't pop the current
                 // thread/trigger from its stack)
                 case ThreadStatus.GLOBAL_INSTRUCTION_LIMIT:
                     return ProcessStatus.GLOBAL_INSTRUCTION_LIMIT;
-                // if this thread has an error, or is finished, remove
+                // if this thread has an error, or has been terminated, remove
                 // it
                 case ThreadStatus.TERMINATED:
                 case ThreadStatus.ERROR:
@@ -103,7 +120,11 @@ namespace kOS.Safe
             return ProcessStatus.OK;
         }
 
-        public void FillTriggerStackIfEmpty(){
+        /// <summary>
+        /// Fills the trigger stack with the contents of the triggerSet 
+        /// if empty.
+        /// </summary>
+        void FillTriggerStackIfEmpty(){
             if (triggerStack.Count==0) {
                 foreach (var trigger in triggerSet) {
                     triggerStack.Push(trigger);
@@ -111,7 +132,11 @@ namespace kOS.Safe
             }
         }
 
-        public void FillThreadStackIfEmpty(){
+        /// <summary>
+        /// Fills the thread stack with the contents of the threadSet 
+        /// if empty.
+        /// </summary>
+        void FillThreadStackIfEmpty(){
             if (threadStack.Count==0) {
                 foreach (var thread in threadSet) {
                     threadStack.Push(thread);
@@ -130,12 +155,14 @@ namespace kOS.Safe
                 throw new Exception("Threads passed to AddThread cannot be null");
             threadSet.Add(thread);
         }
+
         public void AddTrigger(KOSThread trigger)
         {
             if (trigger==null)
                 throw new Exception("Triggers passed to AddTrigger cannot be null");
             triggerSet.Add(trigger);
         }
+
         public void AddSystemTrigger(SystemTrigger systemTrigger){
             if (systemTrigger==null)
                 throw new Exception(
@@ -143,6 +170,7 @@ namespace kOS.Safe
             SystemTriggerMap.Add(systemTrigger.Name, systemTrigger);
             triggerSet.Add(systemTrigger);
         }
+
         public bool RemoveSystemTrigger(string name){
             if(SystemTriggerMap.TryGetValue(name, out SystemTrigger systemTrigger)){
                 SystemTriggerMap.Remove(name);

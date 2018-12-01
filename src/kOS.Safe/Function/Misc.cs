@@ -20,7 +20,7 @@ namespace kOS.Safe.Function
             AssertArgBottomAndConsume(shared);
             shared.Screen.Print(textToPrint);
         }
-        public override void Execute(SafeSharedObjects shared,ProcedureExec exec)
+        public override void Execute(SafeSharedObjects shared,IExec exec)
         {
             // evandisoft TODO: must make a rewrite of SafeFunctionBase's 
             // PopValueAssert that takes an "exec" and use that one here the 
@@ -58,9 +58,9 @@ namespace kOS.Safe.Function
             AssertArgBottomAndConsume(shared);
             ((CPU)shared.Cpu).ToggleFlyByWire(paramName, enabled);
         }
-        // I have not looked into how to make this work when I no longer
+        // evandisoft TODO: I have not looked into how to make this work when I no longer
         // am using a "program context"
-        public override void Execute(SafeSharedObjects shared,ProcedureExec exec)
+        public override void Execute(SafeSharedObjects shared,IExec exec)
         {
             bool enabled = Convert.ToBoolean(PopValueAssert(exec));
             string paramName = PopValueAssert(exec).ToString();
@@ -83,7 +83,7 @@ namespace kOS.Safe.Function
     [Function("run")]
     public class FunctionRun : SafeFunctionBase
     {
-        public override void Execute(SafeSharedObjects shared,ProcedureExec exec)
+        public override void Execute(SafeSharedObjects shared,IExec exec)
         {
             // run() is strange.  It needs two levels of args - the args to itself, and the args it is meant to
             // pass on to the program it's invoking.  First, these are the args to run itself:

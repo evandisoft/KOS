@@ -17,6 +17,14 @@ namespace kOS.Safe {
         WAIT,
     }
 
+    /// <summary>
+    /// KOSThread.
+    /// This thread is the center of all computation.
+    /// It passes itself to OpcodeExecute as an IExec.
+    /// It manages ProcedureExec instances on a stack.
+    /// It uses ProcedureExec as an IEnumerator<Opcode>
+    /// to get the opcode to execute next.
+    /// </summary>
     public class KOSThread:IExec {
         static long IDCounter = 0;
         public readonly long ID = IDCounter++;
@@ -25,21 +33,36 @@ namespace kOS.Safe {
         internal KOSProcess Process { get; }
         internal ArgumentStack Stack { get; }
 
+        /// <summary>
+        /// Gets the current procedure.
+        /// </summary>
+        /// <value>The current procedure.</value>
         ProcedureExec CurrentProcedure => callStack.Peek();
         VariableStore CurrentStore => CurrentProcedure.Store;
 
         readonly coll.Stack<ProcedureExec> callStack = new coll.Stack<ProcedureExec>();
-        // This counter keeps track of the threads own execution limit
-        // TODO: Currently this is just set to the normal instructions
-        // per update limit. I must give this a separate implementation
-        // so that there can be a different limit per thread
+
+        /// <summary>
+        /// The thread instruction counter.
+        /// This counter keeps track of the threads own execution limit
+        /// TODO: Currently this is just set to the normal instructions
+        /// per update limit. I must give this a separate implementation
+        /// so that there can be a different limit per thread
+        /// </summary>
         internal InstructionCounter ThreadInstructionCounter = new InstructionCounter();
-        // This counter keeps track of the total limit on
-        // instructions per update.
+        /// <summary>
+        /// The global instruction counter.
+        /// This counter keeps track of the total limit on
+        /// instructions per update.
+        /// </summary>
         internal InstructionCounter GlobalInstructionCounter;
         Stopwatch waitWatch = new Stopwatch();
         long timeToWaitInMilliseconds;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:kOS.Safe.KOSThread"/> class.
+        /// </summary>
+        /// <param name="process">Process.</param>
         public KOSThread(KOSProcess process)
         {
             Process=process;
@@ -47,12 +70,14 @@ namespace kOS.Safe {
             GlobalInstructionCounter=Process.ProcessManager.GlobalInstructionCounter;
         }
 
-
+        /// <summary>
+        /// Execute this instance.
+        /// </summary>
         public ThreadStatus Execute()
         {
             Deb.logmisc("Executing thread", ID, "ProcedureExecs", callStack.Count);
 
-            if(isWaiting(out ThreadStatus threadStatus)){
+            if(IsWaiting(out ThreadStatus threadStatus)){
                 return threadStatus;
             }
 
@@ -69,8 +94,11 @@ namespace kOS.Safe {
             return status;
         }
 
-
-
+        /// <summary>
+        /// Executes the current procedure's current opcode.
+        /// Checks the global instruction pointer and this threads
+        /// instruction pointer.
+        /// </summary>
         ThreadStatus ExecuteCurrentProcedure()
         {
             if (!GlobalInstructionCounter.Continue()) {
@@ -81,13 +109,12 @@ namespace kOS.Safe {
                 ThreadInstructionCounter.Reset();
                 return ThreadStatus.THREAD_INSTRUCTION_LIMIT;
             }
-            if (!CurrentProcedure.MoveNext()){
-                Deb.logmisc("Removing ProcedureExec");
-                callStack.Pop();
-                if (callStack.Count==0) {
-                    return ThreadStatus.FINISHED;
-                }
+            // For IEnumerators, Must call MoveNext prior to 
+            // any call to Current
+            if (!CurrentProcedure.MoveNext()) {
+                return PopStackAndReturnFinishedIfEmpty();
             }
+
             var opcode = CurrentProcedure.Current;
             Deb.storeOpcode(opcode);
             Deb.logmisc("Current Opcode", opcode.Label, opcode);
@@ -97,32 +124,50 @@ namespace kOS.Safe {
             case ByteCode.WAIT:
                 return ThreadStatus.WAIT;
             case ByteCode.RETURN:
-                Deb.logmisc("Removing ProcedureExec");
-                callStack.Pop();
-                if (callStack.Count==0) {
-                    return ThreadStatus.FINISHED;
-                }
-                break;
+                return PopStackAndReturnFinishedIfEmpty();
             }
+
 
             return ThreadStatus.OK;
         }
 
+        /// <summary>
+        /// Pops the callStack. If it is empty, returns ThreadStatus.FINISHED,
+        /// otherwise returns ThreadStatus.OK.
+        /// </summary>
+        ThreadStatus PopStackAndReturnFinishedIfEmpty(){
+            Deb.logmisc("Removing ProcedureExec");
+            callStack.Pop();
+            if (callStack.Count==0) {
+                return ThreadStatus.FINISHED;
+            }
+            return ThreadStatus.OK;
+        }
 
 
-        // Create a new ProcedureExec, and add it to the stack, 
-        // to be executed next time this thread runs.
-        // Called by OpcodeCall.Execute
-        // Used only for calls made within this thread.
-        // Because we the stack is local to this thread.
+        /// <summary>
+        /// Call the specified procedure.
+        /// Create a new ProcedureExec, and add it to the stack, 
+        /// to be executed next time this thread runs.
+        /// Called by OpcodeCall.Execute
+        /// Used only for calls made within this thread.
+        /// Because it requires that arguments were already pushed onto
+        /// the stack that is local to this thread.
+        /// </summary>
+        /// <param name="procedure">Procedure.</param>
         public void Call(Procedure procedure)
         {
             ProcedureExec exec = new ProcedureExec(this, procedure);
             callStack.Push(exec);
         }
 
-        // Manually add in arguments when this is called via 'run'
-        // because we are not sharing a global stack.
+
+        /// <summary>
+        /// Calls the procedure with arguments.
+        /// This is used for 'run' because it passes arguments explicitly.
+        /// </summary>
+        /// <param name="procedure">Procedure.</param>
+        /// <param name="args">Arguments.</param>
         public void CallWithArgs(Procedure procedure, coll.List<object> args)
         {
             ProcedureExec exec = new ProcedureExec(this, procedure);
@@ -133,20 +178,36 @@ namespace kOS.Safe {
             }
         }
 
+        /// <summary>
+        /// Terminate this thread.
+        /// </summary>
         public void Terminate()
         {
             isTerminated=true;
         }
 
-        internal void Wait(double arg)
+        /// <summary>
+        /// Make this thread wait the specified number of seconds.
+        /// </summary>
+        /// <param name="seconds">Argument.</param>
+        internal void Wait(double seconds)
         {
-            timeToWaitInMilliseconds=Convert.ToInt64(arg)*1000;
+            timeToWaitInMilliseconds=Convert.ToInt64(seconds*1000);
             waitWatch.Start();
         }
 
-        // This has to increment the GlobalInstructionPointer
-        // to prevent the game from locking up when all threads are sleeping.
-        bool isWaiting(out ThreadStatus threadStatus)
+
+        /// <summary>
+        /// Returns true if the thread is Waiting.
+        /// This has to increment the GlobalInstructionPointer
+        /// to prevent the game from locking up when all threads are sleeping.
+        /// If GlobalInstructionPointer is reached, it returns
+        /// ThreadStatus.GLOBAL_INSTRUCTION_LIMIT otherwise
+        /// ThreadStatus.WAIT
+        /// </summary>
+        /// <returns><c>true</c>, if thread is waiting, <c>false</c> otherwise.</returns>
+        /// <param name="threadStatus">Thread status.</param>
+        private bool IsWaiting(out ThreadStatus threadStatus)
         {
             if (timeToWaitInMilliseconds>0 &&
                 waitWatch.ElapsedMilliseconds>timeToWaitInMilliseconds) {
@@ -164,16 +225,20 @@ namespace kOS.Safe {
             return false;
         }
 
-        KOSThread IExec.Thread => this;
-
+        // Implementation of IExec
+        SafeSharedObjects IExec.Shared => Process.ProcessManager.shared;
+        ProcessManager IExec.ProcessManager => Process.ProcessManager;
         KOSProcess IExec.Process => Process;
-
+        KOSThread IExec.Thread => this;
         ArgumentStack IExec.Stack => Stack;
-
         VariableStore IExec.Store => CurrentStore;
 
-        SafeSharedObjects IExec.Shared => Process.ProcessManager.shared;
-
+        /// <summary>
+        /// Pops the value from the Stack, looking it up in the Store if it's
+        /// a variable.
+        /// </summary>
+        /// <returns>The value.</returns>
+        /// <param name="barewordOkay">If set to <c>true</c> bareword okay.</param>
         public object PopValue(bool barewordOkay = false)
         {
             var retval = Stack.Pop();

@@ -23,11 +23,21 @@ namespace kOS.Safe
             Reset();
         }
 
+        /// <summary>
+        /// Resets the instructionsPerUpdate to 
+        /// SafeHouse.Config.InstructionsPerUpdate and resets the
+        /// executionCounter to 0.
+        /// </summary>
         public void Reset(){
             executionCounter=0;
             instructionsPerUpdate=SafeHouse.Config.InstructionsPerUpdate;
         }
 
+
+        /// <summary>
+        /// Returns true if there are more instructions to execute this
+        /// update and increments the counter.
+        /// </summary>
         public Boolean Continue(){
             return instructionsPerUpdate>executionCounter++;
         }

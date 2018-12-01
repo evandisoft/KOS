@@ -18,6 +18,12 @@ namespace kOS.Safe.Encapsulation
 
         public Procedure(List<Opcode> Opcodes,VariableStore closure=null)
         {
+            // Sentinal Opcode that makes implementation of ProcedureExec as an 
+            // IEnumerator<Opcode> simpler.
+            // IEnumerator requires "MoveNext" to be done prior to any access to
+            // Current. And MoveNext accesses the current opcode's 
+            // "DeltaInstructionPointer". 
+            Opcodes.Insert(0, new OpcodeNOP());
             this.Opcodes = Opcodes;
             if(closure!=null){
                 foreach(var level in closure.scopeStack){

@@ -9,12 +9,17 @@ using System.Collections;
 
 namespace kOS.Safe
 {
+    /// <summary>
+    /// Interface to be passed to Opcodes, allowing them to access or execute
+    /// Anything they need.
+    /// </summary>
     public interface IExec {
-        KOSThread Thread { get; }
+        SafeSharedObjects Shared { get; }
+        ProcessManager ProcessManager { get; }
         KOSProcess Process { get; }
+        KOSThread Thread { get; }
         ArgumentStack Stack { get; } // manages the argument stack
         VariableStore Store { get; } // manages variable storing and retrieval
-        SafeSharedObjects Shared { get; }
-        object PopValue(bool barewordOkay);
+        object PopValue(bool barewordOkay=false);
     }
 }
