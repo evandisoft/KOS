@@ -213,6 +213,7 @@ namespace kOS.Safe.Execution
                 // remove the last context
                 ProgramContext contextRemove = contexts.Last();
                 NotifyPopContextNotifyees(contextRemove);
+                contextRemove.ClearTriggers();
                 contexts.Remove(contextRemove);
                 shared.GameEventDispatchManager.RemoveDispatcherFor(currentContext);
                 contextRemove.DisableActiveFlyByWire(shared.BindingMgr);
@@ -437,18 +438,17 @@ namespace kOS.Safe.Execution
 
             foreach (KeyValuePair<string, Variable> item in savedPointers.Locals)
             {
-                if (globalVariables.Contains (item.Key)) {
-                    // if the pointer exists it means it was redefined from inside a program
-                    // and it's going to be invalid outside of it, so we remove it
-                    globalVariables.Remove (item.Key);
-                    deletedPointers++;
 
+                if (globalVariables.Contains(item.Key))
+                {
+                    // If the pointer exists it means it was redefined from inside a program
+                    // and it's going to be invalid outside of it, so just to be sure, remove
+                    // it entirely in preparation for restoring the old one:
+                    globalVariables.Remove(item.Key);
+                    deletedPointers++;
                 }
-                //else // evandisoft
-                //{
-                    globalVariables.Add(item.Key, item.Value);
-                    restoredPointers++;
-                //}
+                globalVariables.Add(item.Key, item.Value);
+                restoredPointers++;
             }
 
             SafeHouse.Logger.Log(string.Format("Deleting {0} pointers and restoring {1} pointers", deletedPointers, restoredPointers));
@@ -499,7 +499,8 @@ namespace kOS.Safe.Execution
             }
             else
             {
-                currentContext.ClearTriggers();   // remove all the triggers
+                if (manual)
+                    currentContext.ClearTriggers(); // Removes the interpreter's triggers on Control-C and the like, but not on errors.
                 SkipCurrentInstructionId();
             }
             CurrentPriority = InterruptPriority.Normal;
@@ -1450,7 +1451,6 @@ namespace kOS.Safe.Execution
             bool okayToActivatePendingTriggers = false;
 
             executeLog.Remove(0, executeLog.Length); // In .net 2.0, StringBuilder had no Clear(), which is what this is simulating.
-            SafeHouse.Logger.Log("eraseme: ContinueExecution before While loop.");
             while (InstructionsThisUpdate < instructionsPerUpdate &&
                    executeNext &&
                    currentContext != null)
@@ -1495,7 +1495,6 @@ namespace kOS.Safe.Execution
             if (okayToActivatePendingTriggers)
             {
                 currentContext.ActivatePendingTriggers();
-                SafeHouse.Logger.Log("eraseme: ActivatedPendingTriggers.");
             }
 
             if (executeLog.Length > 0)
