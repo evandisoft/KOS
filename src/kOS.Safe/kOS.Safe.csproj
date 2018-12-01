@@ -301,7 +301,7 @@
     <Compile Include="Encapsulation\Procedure.cs" />
     <Compile Include="Compilation\ProgramBuilder2.cs" />
     <Compile Include="Execution\SystemTrigger.cs" />
-    <Compile Include="Execution\ProcedureExec.cs" />
+    <Compile Include="Execution\ProcedureCall.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Compilation\CompiledObject-doc.md" />

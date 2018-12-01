@@ -37,10 +37,10 @@ namespace kOS.Safe {
         /// Gets the current procedure.
         /// </summary>
         /// <value>The current procedure.</value>
-        ProcedureExec CurrentProcedure => callStack.Peek();
+        ProcedureCall CurrentProcedure => callStack.Peek();
         VariableStore CurrentStore => CurrentProcedure.Store;
 
-        readonly coll.Stack<ProcedureExec> callStack = new coll.Stack<ProcedureExec>();
+        readonly coll.Stack<ProcedureCall> callStack = new coll.Stack<ProcedureCall>();
 
         /// <summary>
         /// The thread instruction counter.
@@ -157,8 +157,8 @@ namespace kOS.Safe {
         /// <param name="procedure">Procedure.</param>
         public void Call(Procedure procedure)
         {
-            ProcedureExec exec = new ProcedureExec(this, procedure);
-            callStack.Push(exec);
+            ProcedureCall call = procedure.Call(this);
+            callStack.Push(call);
         }
 
 
@@ -170,8 +170,8 @@ namespace kOS.Safe {
         /// <param name="args">Arguments.</param>
         public void CallWithArgs(Procedure procedure, coll.List<object> args)
         {
-            ProcedureExec exec = new ProcedureExec(this, procedure);
-            callStack.Push(exec);
+            ProcedureCall call = procedure.Call(this);
+            callStack.Push(call);
             Stack.Push(new KOSArgMarkerType());
             for (int i = args.Count-1;i>=0;i--) {
                 Stack.Push(args[i]);

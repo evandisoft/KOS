@@ -43,7 +43,14 @@ namespace kOS.Safe
         }
     }
 
-
+    /// <summary>
+    /// Process manager. TODO: This is not really implemented fully yet.
+    /// Currently, threads in a particular process will
+    /// eat up all the rest of the GLOBAL_INSTRUCTION_LIMIT and prevent
+    /// triggers in other processes from running on each update. But currently
+    /// we are only using one process at a time, so this is not currently a
+    /// problem.
+    /// </summary>
     public class ProcessManager:CPU
     {
         readonly List<KOSProcess> processes = new List<KOSProcess> ();

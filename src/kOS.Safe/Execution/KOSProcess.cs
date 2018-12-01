@@ -90,6 +90,7 @@ namespace kOS.Safe
                 // Only the threads run in a loop until GLOBAL_INSTRUCTION_LIMIT
                 // is reached.
             case ProcessStatus.WAIT:
+                status=ProcessStatus.OK;
                 break;
             default:
                 return status;
@@ -111,6 +112,7 @@ namespace kOS.Safe
         }
 
         ProcessStatus ExecuteThreads(coll.Stack<KOSThread> stack){
+            if (stack.Count==0) return ProcessStatus.OK;
             // Keep track of whether all the threads were waiting.
             // If they were all waiting, then effectively the process
             // is waiting.
@@ -128,10 +130,12 @@ namespace kOS.Safe
                 // If the thread limit was reached, start executing the next
                 // thread.
                 case ThreadStatus.THREAD_INSTRUCTION_LIMIT:
+                    stack.Pop();
                     break;
                 // If the thread is waiting, start executing the next
                 // thread.
                 case ThreadStatus.WAIT:
+                    stack.Pop();
                     break;
                 // If the global limit was reached, return to the current
                 // thread after the update is over. (Don't pop the current
@@ -143,21 +147,25 @@ namespace kOS.Safe
                 case ThreadStatus.TERMINATED:
                 case ThreadStatus.ERROR:
                     RemoveThread(currentThread);
-
+                    stack.Pop();
                     break;
                 case ThreadStatus.FINISHED:
-                    if(currentThread is SystemTrigger){
+
+                    stack.Pop();
+                    if (currentThread is SystemTrigger){
+                        RemoveSystemTrigger(((SystemTrigger)currentThread).Name);
                         throw new Exception(
                             "SystemTrigger thread should not have 'FINISHED'.");
                     }
                     RemoveThread(currentThread);
 
                     break;
+                default:
+                    // Pop this thread off the current stack so that it will not
+                    // be executed again until the stack is repopulated
+                    stack.Pop();
+                    break;
                 }
-
-                // Pop this thread off the current stack so that it will not
-                // be executed again until the stack is repopulated
-                stack.Pop();
             }
 
             if(allThreadsWaiting){

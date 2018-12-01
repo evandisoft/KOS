@@ -24,7 +24,7 @@ namespace kOS.Safe
     /// Procedure exec.
     /// This class holds a store and manages the instruction pointer.
     /// </summary>
-    public class ProcedureExec:IEnumerator<Opcode> {
+    public class ProcedureCall:IEnumerator<Opcode> {
         internal VariableStore Store { get; } // manages variable storing and retrieval
 
         /// <summary>
@@ -38,7 +38,7 @@ namespace kOS.Safe
         readonly List<Opcode> Opcodes;
         int instructionPointer = 0;
 
-	    public ProcedureExec(KOSThread thread,Procedure procedure)
+	    public ProcedureCall(KOSThread thread,Procedure procedure)
         {
             Store = new VariableStore(thread.Process.ProcessManager.globalVariables);
             Store.AddClosure(procedure.Closure);
