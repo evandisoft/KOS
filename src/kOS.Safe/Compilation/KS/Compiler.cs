@@ -11,6 +11,8 @@ namespace kOS.Safe.Compilation.KS
 {
     class Compiler
     {
+        int anonymousDelegateID = 0;
+
         private CodePart part;
         private Context context;
         private List<Opcode> currentCodeSection;
@@ -1360,7 +1362,22 @@ namespace kOS.Safe.Compilation.KS
             // onto the stack as the value of this expression:
             if (node.Nodes[0].Token.Type == TokenType.instruction_block)
             {
-                Opcode skipPastFunctionBody = AddOpcode(new OpcodeBranchJump());
+                // evandisoft: Anonymous delegates need to be in their own FunctionCode
+                // block because otherwise they become difficult to extract
+                string anonymousIdentifier = "anonymousDelegate`"+(anonymousDelegateID++);
+                UserFunction userFuncObject = context.UserFunctions.GetUserFunction(
+                    anonymousIdentifier,
+                    GetContainingScopeId(node),
+                    node);
+
+                int expressionHash = anonymousIdentifier.GetHashCode();
+                var lastCodeSection = currentCodeSection;
+                // this only has to be 'unique' to this compile. It's not really
+                // unique, however, since we are tacking the hash of a string.
+                // TODO: Taking hashes of strings is not going to be necessary anymore
+                // after this.
+                currentCodeSection=userFuncObject.GetUserFunctionOpcodes(expressionHash);
+                //Opcode skipPastFunctionBody = AddOpcode(new OpcodeBranchJump());
                 string functionStartLabel = GetNextLabel(false);
                 
                 needImplicitReturn = true;
@@ -1376,8 +1393,9 @@ namespace kOS.Safe.Compilation.KS
                     AddOpcode(new OpcodeReturn(0));
                     AddOpcode(new OpcodeEOP());
                 }
+                currentCodeSection=lastCodeSection;
                 Opcode afterFunctionBody = AddOpcode(new OpcodePushDelegateRelocateLater(null,true), functionStartLabel);
-                skipPastFunctionBody.DestinationLabel = afterFunctionBody.Label;
+                //skipPastFunctionBody.DestinationLabel = afterFunctionBody.Label;
             }
             else // ordinary expression - just descend to the next level of the tree and eval the expression as normal:
             {
