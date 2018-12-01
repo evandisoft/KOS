@@ -217,10 +217,18 @@ namespace kOS.Safe
             triggerSet.Add(trigger);
         }
 
+        /// <summary>
+        /// Adds the system trigger. If a system Trigger of the same
+        /// name already exists, it first removes that trigger.
+        /// </summary>
+        /// <param name="systemTrigger">System trigger.</param>
         public void AddSystemTrigger(SystemTrigger systemTrigger){
             if (systemTrigger==null)
                 throw new Exception(
                     "SystemTriggers passed to AddSystemTrigger cannot be null");
+            if(SystemTriggerMap.ContainsKey(systemTrigger.Name)){
+                RemoveSystemTrigger(systemTrigger.Name);
+            }
             SystemTriggerMap.Add(systemTrigger.Name, systemTrigger);
             triggerSet.Add(systemTrigger);
         }

@@ -801,7 +801,18 @@ namespace kOS.Safe.Compilation.KS
                 {
                     if (isDefFunc)
                         AddOpcode(new OpcodePush(0)); // Functions must push a dummy return val when making implicit returns. Locks already leave an expr atop the stack.
-                    AddOpcode(new OpcodeReturn(implicitReturnScopeDepth));
+                    if(userFuncObject.IsSystemLock()){
+                        // TODO: To extract functions I always look for the
+                        // "return 0". I want to change this.
+                        // It's not a good way. But this is the method
+                        // I'm currently using. An alternative method
+                        // would be to add a special opcode at the end
+                        // of every function. (e.g. EOP,EOF,BOGUS, or DELIMITER)
+                        AddOpcode(new OpcodeReturn(0));
+                    }
+                    else{
+                        AddOpcode(new OpcodeReturn(implicitReturnScopeDepth));
+                    }
                 }
                 userFuncObject.ScopeNode = GetContainingBlockNode(node); // This limits the scope of the function to the instruction_block the DEFINE was in.
                 userFuncObject.IsFunction = !(isLock);

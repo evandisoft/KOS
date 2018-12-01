@@ -78,7 +78,7 @@ namespace kOS.Safe.Compilation{
                 var opcodesEnumerator = part.AllOpcodes.GetEnumerator();
                 while (opcodesEnumerator.MoveNext()) {
                     //Deb.logcompile(
-                        //"CreateMap IsRelocate.",
+                        //"CreatePushDelegatesMap.",
                         //"opcode label is ", opcodesEnumerator.Current.Label);
                     if (delegateDestinationLabels.TryGetValue(
                         opcodesEnumerator.Current.Label, out bool withClosure)) {
