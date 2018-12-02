@@ -12,12 +12,12 @@ namespace kOS.Safe.Execution {
     // Opcodes use their ProcedureCall reference in their Execute
     // function to get a reference to this.
     public class VariableStore {
-        readonly VariableScope globalScope;
+        readonly VariableScope globalVariables;
         public readonly coll.Stack<Mapping> scopeStack = new coll.Stack<Mapping>();
 
-        public VariableStore(VariableScope globalScope){
-            Deb.logmisc("Storing reference to globalScope", globalScope);
-            this.globalScope=globalScope;
+        public VariableStore(VariableScope globalVariables){
+            Deb.logmisc("Storing reference to globalScope", globalVariables);
+            this.globalVariables=globalVariables;
         }
 
         public void AddClosure(coll.List<Mapping> closure){
@@ -98,14 +98,22 @@ namespace kOS.Safe.Execution {
             }
             Deb.logmisc("Attempting to get it in global scope");
             //Variable var;
-            if (globalScope.Variables.TryGetValue(identifier, out Variable var)) {
+            if (globalVariables.Variables.TryGetValue(identifier, out Variable var)) {
                 return var;
             }
             throw new KOSUndefinedIdentifierException(identifier.TrimStart('$'), "");
         }
-        public void SetGlobal(string identifier, object value){
-            identifier = identifier.ToLower();
-            globalScope.Variables.Add(identifier, new Variable { Name=identifier, Value=value });
+        public void SetGlobal(string identifier, object value)
+        {
+            // Attempt to get it as a global.  Make a new one if it's not found.
+            // This preserves the "bound-ness" of the variable if it's a
+            // BoundVariable, whereas unconditionally making a new Variable wouldn't:
+            Variable variable = globalVariables.GetLocal(identifier);
+            if (variable == null) {
+                variable = new Variable { Name = identifier };
+                globalVariables.Add(identifier, variable);
+            }
+            variable.Value = value;
         }
         public void SetValue(string identifier, object value)
         {
@@ -120,7 +128,7 @@ namespace kOS.Safe.Execution {
                 }
             }
             Deb.logmisc("Attempting to find a place to set it in global scope");
-            if (globalScope.Variables.TryGetValue(identifier, out variable)) {
+            if (globalVariables.Variables.TryGetValue(identifier, out variable)) {
                 variable.Value=value; 
                 return;
             }

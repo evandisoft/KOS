@@ -7,6 +7,10 @@ namespace kOS.Safe.Compilation{
         static public Procedure BuildProgram(List<CodePart> parts){
             PrintCodeParts("Before Relocate and Jump Labels", parts);
 
+            // A map of destinationlabels to pushdelegate's containing
+            // their proper opcodes.
+            // This will be used to replace all the pushdelecaterelocatelater
+            // opcodes with the proper pushdelegate opcodes.
             var pushDelegatesMap = CreatePushDelegatesMap(parts);
             Deb.miscIsLogging=true;
 

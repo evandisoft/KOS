@@ -589,6 +589,7 @@ namespace kOS.Safe.Compilation.KS
             }
             else
                 return; // not one of the types of statement we're really meant to run IdentifyUserFunctions on.
+
             
             UserFunction userFuncObject =
                 context.UserFunctions.GetUserFunction(funcIdentifier, storageType == StorageModifier.GLOBAL ? (Int16)0 : GetContainingScopeId(node), node);
@@ -1003,14 +1004,14 @@ namespace kOS.Safe.Compilation.KS
             if (withPopScope)
                 AddOpcode(new OpcodePopScope());
         }
-        
+
         /// <summary>
         /// Because the compile occurs a bit out of order (doing the most deeply nested function
         /// first, then working out from there) it walks the scope nesting in the wrong order. 
         /// Therefore before doing the compile, run through in one pass just recording the nesting
         /// levels and lexical parent tree of the scoping before we begin, so we can
         /// use that information later in the parse:
-        /// </summary>
+        //declare_lock/ </summary>
         /// <param name="node"></param>
         private void TraverseScopeBranch(ParseNode node)
         {
@@ -1661,7 +1662,7 @@ namespace kOS.Safe.Compilation.KS
                 compilingSetDestination = rememberCompilingSetDestination;
                 identifierIsSuffix = rememberIsSuffix;
             }
-
+            Deb.logcompile("in visitactualfunction");
             if (isDirect)
             {
                 if (options.FuncManager.Exists(directName)){
@@ -1788,12 +1789,23 @@ namespace kOS.Safe.Compilation.KS
 
                 string firstIdentifier = "";
                 bool isUserFunc = false;
+                UserFunction userFuncObject=null;
                 if (nodeIndex == 0)
                 {
                     firstIdentifier = GetIdentifierText(suffixTerm);
-                    UserFunction userFuncObject = GetUserFunctionWithScopeWalk(firstIdentifier, node);
-                     if (userFuncObject != null && !compilingSetDestination)
+                    Deb.logcompile("In VisitSuffix. identifier is", firstIdentifier);
+                    userFuncObject = GetUserFunctionWithScopeWalk(firstIdentifier, node);
+                    // if this is a systemlock we're not going to
+                    // pollute the namespace with them anymore
+                    //if(userFuncObject!=null && userFuncObject.IsSystemLock()){
+                    //    return;
+                    //}
+                    Deb.logcompile("issystemlock?"+userFuncObject?.IsSystemLock());
+                    if (userFuncObject != null && !compilingSetDestination &&
+                         !userFuncObject.IsSystemLock()// this didn't work
+                       ) // evandisoft. SystemTriggers are in a separate scope now
                     {
+                        //Deb.logcompile("We're considering it a function");
                         firstIdentifier = userFuncObject.ScopelessPointerIdentifier;
                         isUserFunc = true;
                     }
@@ -1837,6 +1849,9 @@ namespace kOS.Safe.Compilation.KS
                     bool isFunc = (trailerTerm.Token.Type == TokenType.function_trailer);
                     bool isArray = (trailerTerm.Token.Type == TokenType.array_trailer);
                     bool thisTermIsDirect = (isDirect && trailerIndex == 1); // only the firstmost term in a chain can be direct.
+                    if(userFuncObject!=null && userFuncObject.IsSystemLock()){
+                        isFunc=false;
+                    }
 
                     if (isFunc || isUserFunc)
                     {
@@ -1854,7 +1869,9 @@ namespace kOS.Safe.Compilation.KS
                 if (suffixTerm.Nodes.Count <= 1)
                 {
                     if (isDirect && isUserFunc)
+                
                     {
+                        Deb.logcompile("Adding call for", firstIdentifier);
                         AddOpcode(new OpcodePush(new KOSArgMarkerType()));
                         AddOpcode(new OpcodeCall(firstIdentifier));
                     }
@@ -1990,8 +2007,9 @@ namespace kOS.Safe.Compilation.KS
             // that the identifier is a lock, and you'll have to use empty parens
             // to make it a real function call like var():
             UserFunction userFuncObject = GetUserFunctionWithScopeWalk(identifier, node);
-            if (isVariable && userFuncObject != null)
+            if (isVariable && userFuncObject != null && !userFuncObject.IsSystemLock())
             {
+                Deb.logcompile("isvariable and isfunc"+identifier);
                 AddOpcode(new OpcodeCall(userFuncObject.ScopelessPointerIdentifier));
             }
             else

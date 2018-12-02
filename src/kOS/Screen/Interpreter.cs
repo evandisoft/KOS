@@ -142,7 +142,8 @@ namespace kOS.Screen
                     FuncManager = Shared.FunctionManager,
                     IsCalledFromRun = false
                 };
-
+                Deb.clearCompileLog();
+                Deb.clearMiscLog();
                 List<CodePart> commandParts = Shared.ScriptHandler.Compile(new InterpreterPath(this),
                     commandHistoryIndex, commandText, InterpreterName, options);
                 if (commandParts == null) return;
@@ -150,8 +151,7 @@ namespace kOS.Screen
 				// the "new" way. If it's just a CPU, do it the old way.
 				ProcessManager processManager = Shared.Cpu as ProcessManager;
 				if (processManager!=null){
-					Deb.clearCompileLog();
-					Deb.clearMiscLog();
+					
 
 					var programProcedure = ProgramBuilder2.BuildProgram(commandParts);
 					processManager.RunProgram(programProcedure,new List<object>());
