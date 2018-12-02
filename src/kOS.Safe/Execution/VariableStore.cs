@@ -13,7 +13,7 @@ namespace kOS.Safe.Execution {
     // function to get a reference to this.
     public class VariableStore {
         readonly VariableScope globalScope;
-        internal readonly coll.Stack<Mapping> scopeStack = new coll.Stack<Mapping>();
+        public readonly coll.Stack<Mapping> scopeStack = new coll.Stack<Mapping>();
 
         public VariableStore(VariableScope globalScope){
             Deb.logmisc("Storing reference to globalScope", globalScope);

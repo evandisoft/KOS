@@ -24,7 +24,10 @@ namespace kOS.Safe.Compilation{
             if (mainProgram==null) {
                 throw new Exception("There was no MainCode section!");
             }
-            var programProcedure = new Procedure(mainProgram);
+            var procedureOpcodes = new List<Opcode>();
+            procedureOpcodes.Add(new OpcodeNOP()); // adding sentinal opcode
+            procedureOpcodes.AddRange(mainProgram);
+            var programProcedure = new Procedure(procedureOpcodes);
 
             ReplaceRelocateDelegateOpcodes(
                 programProcedure.Opcodes, pushDelegatesMap);

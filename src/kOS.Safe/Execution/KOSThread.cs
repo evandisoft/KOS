@@ -119,7 +119,8 @@ namespace kOS.Safe {
             Deb.logmisc("Current Opcode", opcode.Label, opcode);
             try{
                 opcode.Execute(this);
-                Deb.logmisc(Stack);
+                Deb.logmisc("Stack for thread",ID,"is",Stack);
+                Deb.logmisc("Stack count of Store is", CurrentStore.scopeStack.Count);
             }
             catch(Exception e){
                 Deb.logmisc(e);
