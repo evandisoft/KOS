@@ -6,16 +6,12 @@ namespace kOS.Safe.Compilation{
     public class ProgramBuilder2 {
         static public Procedure BuildProgram(List<CodePart> parts){
             PrintCodeParts("Before Relocate and Jump Labels", parts);
-            ReplaceRelocateDelegateOpcodes(parts);
 
+            var pushDelegatesMap = CreatePushDelegatesMap(parts);
             Deb.miscIsLogging=true;
 
             List<Opcode> mainProgram = null;
             foreach (var part in parts) {
-                ReplaceJumpLabels(part.FunctionsCode);
-                ReplaceJumpLabels(part.InitializationCode);
-                ReplaceJumpLabels(part.MainCode);
-
                 if (part.MainCode.Count>0) {
                     if (mainProgram!=null) {
                         throw new Exception("More than one MainCode section!");
@@ -23,12 +19,28 @@ namespace kOS.Safe.Compilation{
                     mainProgram=part.MainCode;
                 }
             }
-            PrintCodeParts("After Relocate and Jump Labels", parts);
+
+
             if (mainProgram==null) {
                 throw new Exception("There was no MainCode section!");
             }
+            var programProcedure = new Procedure(mainProgram);
 
-            return new Procedure(mainProgram);
+            ReplaceRelocateDelegateOpcodes(
+                programProcedure.Opcodes, pushDelegatesMap);
+            ReplaceJumpLabels(programProcedure.Opcodes);
+
+            foreach(var pushDelegate in pushDelegatesMap.Values){
+                ReplaceRelocateDelegateOpcodes(
+                    pushDelegate.procedureOpcodes, pushDelegatesMap);
+                ReplaceJumpLabels(pushDelegate.procedureOpcodes);
+                Deb.logcompile("Opcodes for", pushDelegate.Label);
+                foreach(var opcode in pushDelegate.procedureOpcodes){
+                    Deb.logcompile(opcode.Label, opcode);
+                }
+            }
+
+            return programProcedure;
         }
 
         // Get all the labels so that we know what functions are defined.
@@ -45,6 +57,7 @@ namespace kOS.Safe.Compilation{
         static List<Opcode> GetDelegateOpcodes(IEnumerator<Opcode> opcodesEnumerator)
         {
             List<Opcode> delegateOpcodes = new List<Opcode>();
+            delegateOpcodes.Add(new OpcodeNOP());
             do {
                 delegateOpcodes.Add(opcodesEnumerator.Current);
             } while (!IsEOP(opcodesEnumerator.Current)&&opcodesEnumerator.MoveNext());
@@ -117,22 +130,6 @@ namespace kOS.Safe.Compilation{
             }
         }
 
-        static void
-        ReplaceRelocateDelegateOpcodes(List<CodePart> parts)
-        {
-            var pushDelegatesMap = CreatePushDelegatesMap(parts);
-
-            var opcodePushDelegates = new List<OpcodePushDelegate>();
-
-            foreach (var part in parts) {
-                Deb.logcompile("Relocating Function opcodes");
-                ReplaceRelocateDelegateOpcodes(part.FunctionsCode, pushDelegatesMap);
-                Deb.logcompile("Relocating Initialization opcodes");
-                ReplaceRelocateDelegateOpcodes(part.InitializationCode, pushDelegatesMap);
-                Deb.logcompile("Relocating Mainprogram code");
-                ReplaceRelocateDelegateOpcodes(part.MainCode, pushDelegatesMap);
-            }
-        }
 
         static public void PrintCodeParts(string message, List<CodePart> parts)
         {

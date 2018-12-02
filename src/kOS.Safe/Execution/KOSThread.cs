@@ -117,7 +117,15 @@ namespace kOS.Safe {
             var opcode = CurrentProcedure.Current;
             Deb.storeOpcode(opcode);
             Deb.logmisc("Current Opcode", opcode.Label, opcode);
-            opcode.Execute(this);
+            try{
+                opcode.Execute(this);
+                Deb.logmisc(Stack);
+            }
+            catch(Exception e){
+                Deb.logmisc(e);
+                return ThreadStatus.ERROR;
+            }
+
 
             switch(opcode.Code){
             case ByteCode.WAIT:

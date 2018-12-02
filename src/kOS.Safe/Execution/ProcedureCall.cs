@@ -54,6 +54,8 @@ namespace kOS.Safe
         /// </summary>
         public bool MoveNext()
         {
+            Deb.logmisc("In Movenext. delta was", Opcodes[instructionPointer].DeltaInstructionPointer);
+
             instructionPointer+=Opcodes[instructionPointer].DeltaInstructionPointer;
             if (instructionPointer<Opcodes.Count) {
                 return true;

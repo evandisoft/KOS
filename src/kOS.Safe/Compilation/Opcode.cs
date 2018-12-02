@@ -2070,7 +2070,8 @@ namespace kOS.Safe.Compilation
         }
         public override void Execute(IExec exec)
         {
-
+            object returnVal = exec.PopValue();
+            exec.Stack.Push(Structure.FromPrimitive(returnVal));
         }
 
         public override string ToString()
@@ -2598,7 +2599,7 @@ namespace kOS.Safe.Compilation
             EntryPoint = entryPoint;
             WithClosure = withClosure;
         }
-        List<Opcode> procedureOpcodes;
+        public List<Opcode> procedureOpcodes;
         // evandisoft TODO: New way of doing this.
         public OpcodePushDelegate(List<Opcode> procedureOpcodes,bool withClosure)
         {
