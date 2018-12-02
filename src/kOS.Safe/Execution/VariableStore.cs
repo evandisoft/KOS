@@ -147,5 +147,22 @@ namespace kOS.Safe.Execution {
             }
             return retval;
         }
+
+        internal void RemoveVariable(string variableName)
+        {
+            Variable variable;
+            foreach(var level in scopeStack){
+                if(level.TryGetValue(variableName,out variable)){
+                    level.Remove(variableName);
+                    variable.Value=null;
+                    return;
+                }
+            }
+            if(globalVariables.Variables.TryGetValue(variableName,out variable)){
+                globalVariables.Variables.Remove(variableName);
+                variable.Value=null;
+                return;
+            }
+        }
     }
 }

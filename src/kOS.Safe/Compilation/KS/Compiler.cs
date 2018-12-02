@@ -2654,12 +2654,16 @@ namespace kOS.Safe.Compilation.KS
                 // add a pop to clear out the dummy return value from toggleflybywire()
                 AddOpcode(new OpcodePop());
 
+            } else{
+                AddOpcode(new OpcodePush("$"+lockObject.ScopelessIdentifier+"*"));
+                AddOpcode(new OpcodeUnset());
             }
 
             // evandisoft TODO: not sure about unlocking non-system locks
             // unlock variable
             // Really, we should unlock a variable by unsetting it's pointer var so it's an error to use it:
             //AddOpcode(new OpcodePushRelocateLater(null), lockObject.DefaultLabel);
+
             //if (allowLazyGlobal)
             //    AddOpcode(new OpcodeStore(lockObject.ScopelessPointerIdentifier));
             //else

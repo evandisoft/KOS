@@ -751,6 +751,15 @@ namespace kOS.Safe.Compilation
                 throw new KOSObsoletionException("0.17","UNSET ALL", "<not supported anymore now that we have nested scoping>", "");
             }
         }
+        public override void Execute(IExec exec)
+        {
+            object identifier = exec.Stack.Pop();
+            if (identifier != null) {
+                exec.Store.RemoveVariable(identifier.ToString());
+            } else {
+                throw new KOSObsoletionException("0.17", "UNSET ALL", "<not supported anymore now that we have nested scoping>", "");
+            }
+        }
     }
 
     /// <summary>
