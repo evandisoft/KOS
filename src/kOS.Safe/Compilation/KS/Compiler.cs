@@ -2637,30 +2637,33 @@ namespace kOS.Safe.Compilation.KS
             if (lockObject.IsSystemLock())
             {
                 // remove update trigger
-                string triggerIdentifier = "lock-" + lockObject.ScopelessIdentifier;
-                if (context.Triggers.Contains(triggerIdentifier))
-                {
-                    Trigger triggerObject = context.Triggers.GetTrigger(triggerIdentifier);
-                    AddOpcode(new OpcodePushRelocateLater(null), triggerObject.GetFunctionLabel());
-                    AddOpcode(new OpcodeRemoveTrigger());
-                }
+                //string triggerIdentifier = "lock-" + lockObject.ScopelessIdentifier;
+                //if (context.Triggers.Contains(triggerIdentifier))
+                //{
+                    //Trigger triggerObject = context.Triggers.GetTrigger(triggerIdentifier);
+                    //AddOpcode(new OpcodePushRelocateLater(null), triggerObject.GetFunctionLabel());
+                    //AddOpcode(new OpcodeRemoveTrigger());
+                AddOpcode(new OpcodePush(lockObject.ScopelessIdentifier));
+                AddOpcode(new OpcodeRemoveTrigger());
+                //}
                 // disable this FlyByWire parameter
                 AddOpcode(new OpcodePush(new KOSArgMarkerType()));
                 AddOpcode(new OpcodePush(lockObject.ScopelessIdentifier));
                 AddOpcode(new OpcodePush(false));
-                AddOpcode(new OpcodeCall("toggleflybywire()"));
+                AddOpcode(new OpcodeCall("toggleflybywire"){isBuiltin=true});
                 // add a pop to clear out the dummy return value from toggleflybywire()
                 AddOpcode(new OpcodePop());
 
             }
 
+            // evandisoft TODO: not sure about unlocking non-system locks
             // unlock variable
             // Really, we should unlock a variable by unsetting it's pointer var so it's an error to use it:
-            AddOpcode(new OpcodePushRelocateLater(null), lockObject.DefaultLabel);
-            if (allowLazyGlobal)
-                AddOpcode(new OpcodeStore(lockObject.ScopelessPointerIdentifier));
-            else
-                AddOpcode(new OpcodeStoreExist(lockObject.ScopelessPointerIdentifier));
+            //AddOpcode(new OpcodePushRelocateLater(null), lockObject.DefaultLabel);
+            //if (allowLazyGlobal)
+            //    AddOpcode(new OpcodeStore(lockObject.ScopelessPointerIdentifier));
+            //else
+                //AddOpcode(new OpcodeStoreExist(lockObject.ScopelessPointerIdentifier));
         }
 
         private void VisitOnStatement(ParseNode node)

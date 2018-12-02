@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using kOS.Safe.Encapsulation;
+using kOS.Safe.DataStructures;
 
 namespace kOS.Safe.Compilation{
     public class ProgramBuilder2 {
@@ -28,22 +29,22 @@ namespace kOS.Safe.Compilation{
             if (mainProgram==null) {
                 throw new Exception("There was no MainCode section!");
             }
-            var procedureOpcodes = new List<Opcode>();
+            var procedureOpcodes = new OpcodeList();
             procedureOpcodes.Add(new OpcodeNOP()); // adding sentinal opcode
             procedureOpcodes.AddRange(mainProgram);
+            ReplaceRelocateAndJumpLabels(
+                procedureOpcodes, pushDelegatesMap);
             var programProcedure = new Procedure(procedureOpcodes);
 
-            ReplaceRelocateDelegateOpcodes(
-                programProcedure.Opcodes, pushDelegatesMap);
-            ReplaceJumpLabels(programProcedure.Opcodes);
+
+
             Deb.logcompile("Opcodes for main program");
             foreach (var opcode in procedureOpcodes) {
                 Deb.logcompile(opcode.Label, opcode);
             }
             foreach (var pushDelegate in pushDelegatesMap.Values){
-                ReplaceRelocateDelegateOpcodes(
+                ReplaceRelocateAndJumpLabels(
                     pushDelegate.procedureOpcodes, pushDelegatesMap);
-                ReplaceJumpLabels(pushDelegate.procedureOpcodes);
                 Deb.logcompile("Opcodes for", pushDelegate.DestinationLabel);
                 foreach(var opcode in pushDelegate.procedureOpcodes){
                     Deb.logcompile(opcode.Label, opcode);
@@ -51,6 +52,15 @@ namespace kOS.Safe.Compilation{
             }
 
             return programProcedure;
+        }
+
+        static public void ReplaceRelocateAndJumpLabels(
+            OpcodeList opcodes,
+            Dictionary<string, OpcodePushDelegate> pushDelegateMap
+        )
+        {
+            ReplaceRelocateDelegateOpcodes(opcodes,pushDelegateMap);
+            ReplaceJumpLabels(opcodes);
         }
 
         // Get all the labels so that we know what functions are defined.
@@ -64,9 +74,9 @@ namespace kOS.Safe.Compilation{
         {
             return opcode is OpcodeEOP;
         }
-        static List<Opcode> GetDelegateOpcodes(IEnumerator<Opcode> opcodesEnumerator)
+        static OpcodeList GetDelegateOpcodes(IEnumerator<Opcode> opcodesEnumerator)
         {
-            List<Opcode> delegateOpcodes = new List<Opcode>();
+            OpcodeList delegateOpcodes = new OpcodeList();
             delegateOpcodes.Add(new OpcodeNOP());
             do {
                 delegateOpcodes.Add(opcodesEnumerator.Current);
@@ -120,7 +130,7 @@ namespace kOS.Safe.Compilation{
         }
         static void
         ReplaceRelocateDelegateOpcodes(
-            List<Opcode> opcodes,
+            OpcodeList opcodes,
             Dictionary<string, OpcodePushDelegate> pushDelegatesMap
         )
         {

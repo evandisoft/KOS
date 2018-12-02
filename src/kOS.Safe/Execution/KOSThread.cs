@@ -22,7 +22,7 @@ namespace kOS.Safe {
     /// This thread is the center of all computation.
     /// It passes itself to OpcodeExecute as an IExec.
     /// It manages ProcedureCall instances on a stack.
-    /// It uses ProcedureCall as an IEnumerator<Opcode>
+    /// It uses ProcedureCall as an IEnumerator Opcode
     /// to get the opcode to execute next.
     /// I'm not set on what exactly should be implementing
     /// IExec and getting passed to Opcode.Execute.

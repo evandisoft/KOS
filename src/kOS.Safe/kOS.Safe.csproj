@@ -302,6 +302,8 @@
     <Compile Include="Compilation\ProgramBuilder2.cs" />
     <Compile Include="Execution\SystemTrigger.cs" />
     <Compile Include="Execution\ProcedureCall.cs" />
+    <Compile Include="DataStructures\OpcodeList.cs" />
+    <Compile Include="DataStructures\IReadOnlyOpcodeList.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Compilation\CompiledObject-doc.md" />
@@ -340,6 +342,7 @@
     <Folder Include="Execution\interfaces\" />
     <Folder Include="Screen\interfaces\" />
     <Folder Include="Encapsulation\interfaces\" />
+    <Folder Include="DataStructures\" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>

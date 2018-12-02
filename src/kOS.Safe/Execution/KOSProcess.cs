@@ -63,8 +63,8 @@ namespace kOS.Safe
         /// eventually get filled up by the threadSet.
         /// </summary>
         readonly coll.Stack<KOSThread> threadStack = new coll.Stack<KOSThread>();
-        /// <summary>
-        /// Works similar to threadStack
+        /// <summary cref="ThreadStatus">
+        /// Works similar to threadStack.
         /// </summary>
         readonly coll.Stack<KOSThread> triggerStack = new coll.Stack<KOSThread>();
 
@@ -223,8 +223,8 @@ namespace kOS.Safe
         }
 
         /// <summary>
-        /// Adds the system trigger. If a system Trigger of the same
-        /// name already exists, it first removes that trigger.
+        /// Adds the <paramref name="systemTrigger"/>. If a system Trigger 
+        /// of the same name already exists, it first removes that trigger.
         /// </summary>
         /// <param name="systemTrigger">System trigger.</param>
         public void AddSystemTrigger(SystemTrigger systemTrigger){
@@ -238,6 +238,11 @@ namespace kOS.Safe
             triggerSet.Add(systemTrigger);
         }
 
+        /// <summary>
+        /// Removes the system trigger.
+        /// </summary>
+        /// <returns><c>true</c>, if system trigger was removed, <c>false</c> otherwise.</returns>
+        /// <param name="name">Name.</param>
         public bool RemoveSystemTrigger(string name){
             if(SystemTriggerMap.TryGetValue(name, out SystemTrigger systemTrigger)){
                 SystemTriggerMap.Remove(name);

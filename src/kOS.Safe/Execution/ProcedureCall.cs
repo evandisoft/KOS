@@ -3,23 +3,14 @@ using System.Collections.Generic;
 using kOS.Safe.Compilation;
 using kOS.Safe.Encapsulation;
 using kOS.Safe.Execution;
+using System.Collections.ObjectModel;
 using coll = System.Collections.Generic;
 using kOS.Safe.Exceptions;
 using System.Collections;
+using kOS.Safe.DataStructures;
 
 namespace kOS.Safe
 {
-    public enum ExecStatus {
-        OK,
-        FINISHED,
-        GLOBAL_INSTRUCTION_LIMIT,
-        THREAD_INSTRUCTION_LIMIT,
-        RETURN,
-        CALL,
-        ERROR,
-        WAIT,
-    }
-
     /// <summary>
     /// Procedure exec.
     /// This class holds a store and manages the instruction pointer.
@@ -35,7 +26,8 @@ namespace kOS.Safe
 
         object IEnumerator.Current => Current;
 
-        readonly List<Opcode> Opcodes;
+
+        readonly IReadOnlyOpcodeList Opcodes;
         int instructionPointer = 0;
 
 	    public ProcedureCall(KOSThread thread,Procedure procedure)
@@ -76,7 +68,7 @@ namespace kOS.Safe
         public void Reset()
         {
             throw new NotImplementedException(
-                "Reset of ProcedureExec is not implemented.");
+                "Reset of "+nameof(ProcedureCall)+" is not implemented.");
             //instructionPointer=0;
         }
 

@@ -9,6 +9,7 @@ using kOS.Safe.Exceptions;
 using kOS.Safe.Utilities;
 using kOS.Safe.Persistence;
 using coll = System.Collections.Generic;
+using kOS.Safe.DataStructures;
 
 namespace kOS.Safe.Compilation
 {
@@ -2604,9 +2605,12 @@ namespace kOS.Safe.Compilation
             EntryPoint = entryPoint;
             WithClosure = withClosure;
         }
-        public List<Opcode> procedureOpcodes;
-        // evandisoft TODO: New way of doing this.
-        public OpcodePushDelegate(List<Opcode> procedureOpcodes,bool withClosure)
+        public OpcodeList procedureOpcodes;
+        /// <summary>
+        /// If you want to change the opcodes that will get put in a procedure,
+        /// now is the last chance.
+        /// </summary>
+        public OpcodePushDelegate(OpcodeList procedureOpcodes,bool withClosure)
         {
             this.procedureOpcodes=procedureOpcodes;
             WithClosure = withClosure;
@@ -2727,12 +2731,12 @@ namespace kOS.Safe.Compilation
         public override void Execute(IExec exec)
         {
             string triggerName = Convert.ToString(exec.PopValue()); // in case it got wrapped in a ScalarIntValue
-            object poppepdval= exec.PopValue();
+            object poppedValue= exec.PopValue();
             Deb.logmisc("trigger is", triggerName);
-            Procedure procedure = poppepdval as Procedure;
+            Procedure procedure = poppedValue as Procedure;
             List<Structure> args = new List<Structure>();
             if (procedure==null)
-                throw new Exception("The stored value was not a procedure! It was a "+poppepdval.GetType());
+                throw new Exception("The stored value was not a procedure! It was a "+poppedValue.GetType());
             Deb.logmisc("Calling procedure", procedure);
             var process = exec.Thread.Process;
             var systemTrigger = new SystemTrigger(triggerName, process);
@@ -2767,6 +2771,11 @@ namespace kOS.Safe.Compilation
             var functionPointer = Convert.ToInt32(cpu.PopValueArgument()); // in case it got wrapped in a ScalarIntValue
             cpu.RemoveTrigger(functionPointer, 0);
             cpu.CancelCalledTriggers(functionPointer, 0);
+        }
+        public override void Execute(IExec exec)
+        {
+            var triggerName= Convert.ToString(exec.PopValue()); // in case it got wrapped in a ScalarIntValue
+            exec.Process.RemoveSystemTrigger(triggerName);
         }
     }
 
