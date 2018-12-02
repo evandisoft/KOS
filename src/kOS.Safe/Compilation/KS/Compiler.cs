@@ -1378,8 +1378,8 @@ namespace kOS.Safe.Compilation.KS
                 // after this.
                 currentCodeSection=userFuncObject.GetUserFunctionOpcodes(expressionHash);
                 //Opcode skipPastFunctionBody = AddOpcode(new OpcodeBranchJump());
-                string functionStartLabel = GetNextLabel(false);
-                
+                //string functionStartLabel = GetNextLabel(false);
+                forcedNextLabel=anonymousIdentifier;
                 needImplicitReturn = true;
                 nextBraceIsFunction = true;
                 VisitNode(node.Nodes[0]); // the braces of the anonymous function and its contents get compiled in-line here.
@@ -1394,7 +1394,7 @@ namespace kOS.Safe.Compilation.KS
                     AddOpcode(new OpcodeEOP());
                 }
                 currentCodeSection=lastCodeSection;
-                Opcode afterFunctionBody = AddOpcode(new OpcodePushDelegateRelocateLater(null,true), functionStartLabel);
+                Opcode afterFunctionBody = AddOpcode(new OpcodePushDelegateRelocateLater(null,true), anonymousIdentifier);
                 //skipPastFunctionBody.DestinationLabel = afterFunctionBody.Label;
             }
             else // ordinary expression - just descend to the next level of the tree and eval the expression as normal:

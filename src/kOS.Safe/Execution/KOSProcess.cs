@@ -146,7 +146,12 @@ namespace kOS.Safe
                 // it
                 case ThreadStatus.TERMINATED:
                 case ThreadStatus.ERROR:
-                    RemoveThread(currentThread);
+                    if (currentThread is SystemTrigger) {
+                        RemoveSystemTrigger(((SystemTrigger)currentThread).Name);
+                    }else{
+                        RemoveThread(currentThread);
+                    }
+
                     stack.Pop();
                     break;
                 case ThreadStatus.FINISHED:
