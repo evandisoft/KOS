@@ -36,12 +36,15 @@ namespace kOS.Safe.Compilation{
             ReplaceRelocateDelegateOpcodes(
                 programProcedure.Opcodes, pushDelegatesMap);
             ReplaceJumpLabels(programProcedure.Opcodes);
-
-            foreach(var pushDelegate in pushDelegatesMap.Values){
+            Deb.logcompile("Opcodes for main program");
+            foreach (var opcode in procedureOpcodes) {
+                Deb.logcompile(opcode.Label, opcode);
+            }
+            foreach (var pushDelegate in pushDelegatesMap.Values){
                 ReplaceRelocateDelegateOpcodes(
                     pushDelegate.procedureOpcodes, pushDelegatesMap);
                 ReplaceJumpLabels(pushDelegate.procedureOpcodes);
-                Deb.logcompile("Opcodes for", pushDelegate.Label);
+                Deb.logcompile("Opcodes for", pushDelegate.DestinationLabel);
                 foreach(var opcode in pushDelegate.procedureOpcodes){
                     Deb.logcompile(opcode.Label, opcode);
                 }

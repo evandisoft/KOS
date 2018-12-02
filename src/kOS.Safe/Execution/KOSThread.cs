@@ -21,9 +21,14 @@ namespace kOS.Safe {
     /// KOSThread.
     /// This thread is the center of all computation.
     /// It passes itself to OpcodeExecute as an IExec.
-    /// It manages ProcedureExec instances on a stack.
-    /// It uses ProcedureExec as an IEnumerator<Opcode>
+    /// It manages ProcedureCall instances on a stack.
+    /// It uses ProcedureCall as an IEnumerator<Opcode>
     /// to get the opcode to execute next.
+    /// I'm not set on what exactly should be implementing
+    /// IExec and getting passed to Opcode.Execute.
+    /// Could create some special class just to hold
+    /// the references they need and update the references 
+    /// as we go.
     /// </summary>
     public class KOSThread:IExec {
         static long IDCounter = 0;
