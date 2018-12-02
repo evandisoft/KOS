@@ -2070,8 +2070,11 @@ namespace kOS.Safe.Compilation
         }
         public override void Execute(IExec exec)
         {
+
             object returnVal = exec.PopValue();
+
             exec.Stack.Push(Structure.FromPrimitive(returnVal));
+
         }
 
         public override string ToString()
@@ -2277,9 +2280,11 @@ namespace kOS.Safe.Compilation
             if(worked){
                 object shouldBeArgMarker = exec.Stack.Peek();
                 if((shouldBeArgMarker != null) && (shouldBeArgMarker.GetType() == OpcodeCall.ArgMarkerType) ){
+                    exec.Stack.Pop();
                     return;
                 }
             }
+
             throw new KOSArgumentMismatchException("Called with too many arguments.");
             //evandisoft TODO: I dont know what this does and I'm going to ignore it atm.
         }

@@ -24,11 +24,10 @@ namespace kOS.Safe.Function
         {
             // evandisoft TODO: must make a rewrite of SafeFunctionBase's 
             // PopValueAssert that takes an "exec" and use that one here the 
-            // one in here because it can produce the function name in an error
-            Deb.logmisc("in print."); 
+            // one in here because it can produce the function name in an error 
             string textToPrint = PopValueAssert(exec).ToString();
             AssertArgBottomAndConsume(exec);
-            Deb.logmisc("arg is", textToPrint);
+            Deb.logmisc("in print arg is", textToPrint);
             exec.Shared.Screen.Print(textToPrint);
         }
     }
