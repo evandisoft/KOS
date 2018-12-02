@@ -768,12 +768,16 @@ namespace kOS.Safe.Compilation.KS
             {
                 forcedNextLabel = userFuncObject.GetUserFunctionLabel(expressionHash);
 
-                if (isLock) // locks need to behave as if they had braces even though they don't - so they get lexical scope ids for closure reasons:
+                if (isLock && !userFuncObject.IsSystemLock()){
                     BeginScope(bodyNode);
+                } // locks need to behave as if they had braces even though they don't - so they get lexical scope ids for closure reasons:
+                    
                 if (isDefFunc)
                     nextBraceIsFunction = true;
-                if (needImplicitArgBottom)
+                if (needImplicitArgBottom && !userFuncObject.IsSystemLock()){
                     AddOpcode(new OpcodeArgBottom());
+                }
+                    
 
                 VisitNode(bodyNode);
 
@@ -789,7 +793,7 @@ namespace kOS.Safe.Compilation.KS
 
 
                 if(userFuncObject.IsSystemLock()){
-                    AddOpcode(new OpcodeStore("$"+userFuncIdentifier));
+                    AddOpcode(new OpcodeStoreGlobal("$"+userFuncIdentifier));
                     // We will wait and Jump forever back to user code
                     // because systemtriggers should only terminate by
                     // explicit action
@@ -1795,14 +1799,10 @@ namespace kOS.Safe.Compilation.KS
                     firstIdentifier = GetIdentifierText(suffixTerm);
                     Deb.logcompile("In VisitSuffix. identifier is", firstIdentifier);
                     userFuncObject = GetUserFunctionWithScopeWalk(firstIdentifier, node);
-                    // if this is a systemlock we're not going to
-                    // pollute the namespace with them anymore
-                    //if(userFuncObject!=null && userFuncObject.IsSystemLock()){
-                    //    return;
-                    //}
+
                     Deb.logcompile("issystemlock?"+userFuncObject?.IsSystemLock());
-                    if (userFuncObject != null && !compilingSetDestination &&
-                         !userFuncObject.IsSystemLock()// this didn't work
+                    if (userFuncObject != null && !compilingSetDestination 
+                        &&!userFuncObject.IsSystemLock()// this didn't work
                        ) // evandisoft. SystemTriggers are in a separate scope now
                     {
                         //Deb.logcompile("We're considering it a function");
@@ -2007,7 +2007,9 @@ namespace kOS.Safe.Compilation.KS
             // that the identifier is a lock, and you'll have to use empty parens
             // to make it a real function call like var():
             UserFunction userFuncObject = GetUserFunctionWithScopeWalk(identifier, node);
-            if (isVariable && userFuncObject != null && !userFuncObject.IsSystemLock())
+            if (isVariable && userFuncObject != null 
+                && !userFuncObject.IsSystemLock()
+               )
             {
                 Deb.logcompile("isvariable and isfunc"+identifier);
                 AddOpcode(new OpcodeCall(userFuncObject.ScopelessPointerIdentifier));

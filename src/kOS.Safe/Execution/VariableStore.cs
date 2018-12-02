@@ -91,7 +91,7 @@ namespace kOS.Safe.Execution {
             identifier = identifier.ToLower();
             
             foreach (var level in scopeStack) {
-                Deb.logmisc("Checking level", level);
+                Deb.logmisc("Checking level", level,"total levels",scopeStack.Count);
                 if (level.TryGetValue(identifier, out Variable variable)) {
                     return variable;
                 }

@@ -10,7 +10,7 @@ namespace kOS.Safe {
             // evandisoft TODO: May remove this after i've found
             // a way to modify the actual code of the procedure
             // we're creating.
-            Stack.Push(new KOSArgMarkerType());
+            //Stack.Push(new KOSArgMarkerType());
         }
 
         public string Name { get; }
