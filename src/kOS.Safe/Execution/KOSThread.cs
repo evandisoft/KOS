@@ -27,7 +27,7 @@ namespace kOS.Safe {
     /// I'm not set on what exactly should be implementing
     /// IExec and getting passed to Opcode.Execute.
     /// Could create some special class just to hold
-    /// the references they need and update the references 
+    /// the references they need and update the references
     /// as we go.
     /// </summary>
     public class KOSThread:IExec {
@@ -80,7 +80,7 @@ namespace kOS.Safe {
         /// </summary>
         public ThreadStatus Execute()
         {
-            Deb.logmisc("Executing thread", ID, "ProcedureExecs", callStack.Count);
+            Deb.logmisc("Executing thread", ID, nameof(ProcedureCall), callStack.Count);
 
             if(IsWaiting()){
                 return ThreadStatus.WAIT;
@@ -160,7 +160,7 @@ namespace kOS.Safe {
 
         /// <summary>
         /// Call the specified procedure.
-        /// Create a new ProcedureExec, and add it to the stack, 
+        /// Create a new ProcedureExec, and add it to the stack,
         /// to be executed next time this thread runs.
         /// Called by OpcodeCall.Execute
         /// Used only for calls made within this thread.
@@ -206,7 +206,9 @@ namespace kOS.Safe {
         internal void Wait(double seconds)
         {
             timeToWaitInMilliseconds=Convert.ToInt64(seconds*1000);
-            waitWatch.Start();
+            if(timeToWaitInMilliseconds>0){
+                waitWatch.Start();
+            }
         }
 
 

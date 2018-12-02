@@ -730,6 +730,7 @@ namespace kOS.Safe.Compilation.KS
             {
                 currentCodeSection = userFuncObject.InitializationCode;
 
+                // evandisoft all of this code is ignored in the new system.
                 if (userFuncObject.IsSystemLock())
                 {
                     AddOpcode (new OpcodePush(userFuncObject.ScopelessPointerIdentifier));
@@ -754,7 +755,9 @@ namespace kOS.Safe.Compilation.KS
                     AddOpcode(new OpcodeNOP());
                 }
 
-                // build default dummy function to be used when this is a LOCK:
+                // evandisoft I believe all of this code is also ignored in the new system.
+
+                //// build default dummy function to be used when this is a LOCK:
                 currentCodeSection = userFuncObject.GetUserFunctionOpcodes(0);
                 AddOpcode(new OpcodeArgBottom()).Label = userFuncObject.DefaultLabel;;
                 AddOpcode(new OpcodePush("$" + userFuncObject.ScopelessIdentifier));
@@ -768,7 +771,7 @@ namespace kOS.Safe.Compilation.KS
             {
                 forcedNextLabel = userFuncObject.GetUserFunctionLabel(expressionHash);
 
-                if (isLock && !userFuncObject.IsSystemLock()){
+                if (isLock){// && !userFuncObject.IsSystemLock()){
                     BeginScope(bodyNode);
                 } // locks need to behave as if they had braces even though they don't - so they get lexical scope ids for closure reasons:
                     
@@ -777,8 +780,8 @@ namespace kOS.Safe.Compilation.KS
                 if (needImplicitArgBottom && !userFuncObject.IsSystemLock()){
                     AddOpcode(new OpcodeArgBottom());
                 }
-                    
 
+                string startOfUserExpression = GetNextLabel(false);
                 VisitNode(bodyNode);
 
                 Int16 implicitReturnScopeDepth = 0;
@@ -801,26 +804,16 @@ namespace kOS.Safe.Compilation.KS
                     AddOpcode(new OpcodeWait());
                     AddOpcode(new OpcodeBranchJump())
                         .DestinationLabel=
-                            userFuncObject.GetUserFunctionLabel(expressionHash);
+                            startOfUserExpression;
                 }
 
                 if (needImplicitReturn)
                 {
-                    if (isDefFunc)
+                    if (isDefFunc || userFuncObject.IsSystemLock())
                         AddOpcode(new OpcodePush(0)); // Functions must push a dummy return val when making implicit returns. Locks already leave an expr atop the stack.
-                    if(userFuncObject.IsSystemLock()){
-                        // TODO: To extract functions I always look for the
-                        // "return 0". I want to change this.
-                        // It's not a good way. But this is the method
-                        // I'm currently using. An alternative method
-                        // would be to add a special opcode at the end
-                        // of every function. (e.g. EOP,EOF,BOGUS, or DELIMITER)
-                        AddOpcode(new OpcodeEOP());
-                    }
-                    else{
-                        AddOpcode(new OpcodeReturn(implicitReturnScopeDepth));
-                        AddOpcode(new OpcodeEOP());
-                    }
+
+                    AddOpcode(new OpcodeReturn(implicitReturnScopeDepth));
+                    AddOpcode(new OpcodeEOP());
                 }
                 userFuncObject.ScopeNode = GetContainingBlockNode(node); // This limits the scope of the function to the instruction_block the DEFINE was in.
                 userFuncObject.IsFunction = !(isLock);
@@ -2659,8 +2652,7 @@ namespace kOS.Safe.Compilation.KS
                 AddOpcode(new OpcodeUnset());
             }
 
-            // evandisoft TODO: not sure about unlocking non-system locks
-            // unlock variable
+            
             // Really, we should unlock a variable by unsetting it's pointer var so it's an error to use it:
             //AddOpcode(new OpcodePushRelocateLater(null), lockObject.DefaultLabel);
 

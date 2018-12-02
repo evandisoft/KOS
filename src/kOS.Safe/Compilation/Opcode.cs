@@ -2080,11 +2080,9 @@ namespace kOS.Safe.Compilation
         }
         public override void Execute(IExec exec)
         {
-
             object returnVal = exec.PopValue();
 
             exec.Stack.Push(Structure.FromPrimitive(returnVal));
-
         }
 
         public override string ToString()
