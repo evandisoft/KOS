@@ -499,7 +499,8 @@ namespace kOS.Safe.Compilation.KS
         
         private void PreProcessWhenStatement(ParseNode node)
         {
-            
+            //evandisoft Don't think we need this
+            return;
 
             NodeStartHousekeeping(node);
             nextBraceIsFunction = true; // triggers aren't really functions but act like it a lot.
@@ -537,6 +538,7 @@ namespace kOS.Safe.Compilation.KS
             PopTriggerKeepName();
             AddOpcode(new OpcodePush(triggerKeepName));
             AddOpcode(new OpcodeReturn((short)0));
+            AddOpcode(new OpcodeEOP());
             nextBraceIsFunction = false;
         }
 
@@ -2695,11 +2697,18 @@ namespace kOS.Safe.Compilation.KS
             string triggerIdentifier = "when-" + expressionHash.ToString();
             Trigger triggerObject = context.Triggers.GetTrigger(triggerIdentifier);
 
-            if (triggerObject.IsInitialized())
-            {
-                AddOpcode(new OpcodePushRelocateLater(null), triggerObject.GetFunctionLabel());
-                AddOpcode(new OpcodeAddTrigger());
-            }
+            string anonymousIdentifier = "anonymousDelegate`"+(anonymousDelegateID++);
+                UserFunction userFuncObject = context.UserFunctions.GetUserFunction(
+                    anonymousIdentifier,
+                    GetContainingScopeId(node),
+                    node);
+            //int expressionHash = anonymousIdentifier.GetHashCode();
+            
+
+
+            AddOpcode(new OpcodePush(new KOSArgMarkerType()));
+            AddOpcode(new OpcodePushDelegateRelocateLater(null,true), triggerObject.GetFunctionLabel());
+            AddOpcode(new OpcodeAddTrigger());
         }
 
         private void VisitWaitStatement(ParseNode node)

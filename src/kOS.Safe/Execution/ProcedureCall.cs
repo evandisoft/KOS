@@ -22,7 +22,8 @@ namespace kOS.Safe
         /// Gets the current Opcode. 
         /// </summary>
         /// <value>The current opcode.</value>
-        public Opcode Current => Opcodes[instructionPointer];
+        Opcode currentOpcode = null;
+        public Opcode Current => currentOpcode;
 
         object IEnumerator.Current => Current;
 
@@ -46,17 +47,14 @@ namespace kOS.Safe
         /// </summary>
         public bool MoveNext()
         {
-            Deb.logmisc("In Movenext. delta was", Opcodes[instructionPointer].DeltaInstructionPointer);
-
             instructionPointer+=Opcodes[instructionPointer].DeltaInstructionPointer;
             if (instructionPointer<Opcodes.Count) {
+                Deb.logmisc("In Movenext. delta was", Opcodes[instructionPointer].DeltaInstructionPointer);
+                currentOpcode=Opcodes[instructionPointer];
+
                 return true;
             }
-            if (instructionPointer>Opcodes.Count){
-                throw new Exception(
-                    "Opcodes Size is "+Opcodes.Count+
-                    " InstructionPointerSize "+instructionPointer);
-            }
+
             return false;
         }
 
