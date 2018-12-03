@@ -115,10 +115,6 @@ namespace kOS.Safe {
                 return ThreadStatus.THREAD_INSTRUCTION_LIMIT;
             }
 
-            if (CurrentProcedure.IsFinished){
-                return PopStackAndReturnFinishedIfEmpty();
-            }
-
             Opcode opcode = null;
             try {
                 opcode = CurrentProcedure.Execute();
