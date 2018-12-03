@@ -24,19 +24,15 @@ namespace kOS.Safe.Compilation{
                     mainProgram=part.MainCode;
                 }
             }
-
-
             if (mainProgram==null) {
                 throw new Exception("There was no MainCode section!");
             }
+
+            // 
             var procedureOpcodes = new OpcodeList();
-            procedureOpcodes.Add(new OpcodeNOP()); // adding sentinal opcode
             procedureOpcodes.AddRange(mainProgram);
-            ReplaceRelocateAndJumpLabels(
-                procedureOpcodes, pushDelegatesMap);
+            ReplaceRelocateAndJumpLabels(procedureOpcodes, pushDelegatesMap);
             var programProcedure = new Procedure(procedureOpcodes);
-
-
 
             Deb.logcompile("Opcodes for main program");
             foreach (var opcode in procedureOpcodes) {
@@ -63,13 +59,7 @@ namespace kOS.Safe.Compilation{
             ReplaceJumpLabels(opcodes);
         }
 
-        // Get all the labels so that we know what functions are defined.
-        // (Anonymous functions are defined in maincode sections, unlike
-        // regular functions, which each have their own codepart
-        // and in that codepart they are placed in a FunctionCode section.)
-        // So we cannot look for the functions first. We can only find
-        // the functions after we've seen all the PushDelecateRelocateLater
-        // opcodes
+
         static Boolean IsEOP(Opcode opcode)
         {
             return opcode is OpcodeEOP;
@@ -77,12 +67,17 @@ namespace kOS.Safe.Compilation{
         static OpcodeList GetDelegateOpcodes(IEnumerator<Opcode> opcodesEnumerator)
         {
             OpcodeList delegateOpcodes = new OpcodeList();
-            delegateOpcodes.Add(new OpcodeNOP());
             do {
                 delegateOpcodes.Add(opcodesEnumerator.Current);
             } while (!IsEOP(opcodesEnumerator.Current)&&opcodesEnumerator.MoveNext());
             return delegateOpcodes;
         }
+        /// <summary>
+        /// Gets all delegate destination labels so we know what functions are
+        /// defined.
+        /// </summary>
+        /// <returns>The all delegate destination labels.</returns>
+        /// <param name="parts">Parts.</param>
         static Dictionary<string, bool>
         GetAllDelegateDestinationLabels(List<CodePart> parts)
         {
@@ -90,11 +85,7 @@ namespace kOS.Safe.Compilation{
                 new Dictionary<string, bool>();
             foreach (var part in parts) {
                 foreach (var opcode in part.AllOpcodes) {
-                    //Deb.logcompile("GetAllLabels,Perusing opcode", opcode);
                     if (opcode.Code==ByteCode.PUSHDELEGATERELOCATELATER) {
-                        //Deb.logcompile(
-                            //"IsRelocate. DestLabel is ",opcode.DestinationLabel,
-                            //"opcode label is ",opcode.Label);
                         var relopcode = opcode as OpcodePushDelegateRelocateLater;
                         delegateDestinationLabels.Add(opcode.DestinationLabel, relopcode.WithClosure);
                     }
@@ -110,17 +101,11 @@ namespace kOS.Safe.Compilation{
             foreach (var part in parts) {
                 var opcodesEnumerator = part.AllOpcodes.GetEnumerator();
                 while (opcodesEnumerator.MoveNext()) {
-                    //Deb.logcompile(
-                        //"CreatePushDelegatesMap.",
-                        //"opcode label is ", opcodesEnumerator.Current.Label);
                     if (delegateDestinationLabels.TryGetValue(
                         opcodesEnumerator.Current.Label, out bool withClosure)) {
                         var destLabel = opcodesEnumerator.Current.Label;
-                        //Deb.logcompile(
-                            //"Found dest label",opcodesEnumerator.Current.Label);
                         var delegateOpcodes = GetDelegateOpcodes(opcodesEnumerator);
-                        pushDelegatesMap.Add(
-                            destLabel,
+                        pushDelegatesMap.Add(destLabel,
                             new OpcodePushDelegate(
                                 delegateOpcodes, withClosure));
                     }

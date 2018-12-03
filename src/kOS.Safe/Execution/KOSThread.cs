@@ -20,10 +20,10 @@ namespace kOS.Safe {
     /// <summary>
     /// KOSThread.
     /// This thread is the center of all computation.
-    /// It passes itself to OpcodeExecute as an IExec.
+    /// It gets passed to OpcodeExecute as an IExec.
     /// It manages ProcedureCall instances on a stack.
-    /// It uses ProcedureCall as an IEnumerator Opcode
-    /// to get the opcode to execute next.
+    /// It calls ProcedureCall's Execute function to execute
+    /// and return an opcode.
     /// I'm not set on what exactly should be implementing
     /// IExec and getting passed to Opcode.Execute.
     /// Could create some special class just to hold
@@ -115,15 +115,13 @@ namespace kOS.Safe {
                 return ThreadStatus.THREAD_INSTRUCTION_LIMIT;
             }
 
-            if (!CurrentProcedure.MoveNext()) {
+            if (CurrentProcedure.IsFinished){
                 return PopStackAndReturnFinishedIfEmpty();
             }
 
-            var opcode = CurrentProcedure.Current;
-            Deb.storeOpcode(opcode);
-            Deb.logmisc("Current Opcode", opcode.Label, opcode);
-            try{
-                opcode.Execute(this);
+            Opcode opcode = null;
+            try {
+                opcode = CurrentProcedure.Execute();
                 Deb.logmisc("Stack for thread",ID,"is",Stack);
                 Deb.logmisc("Stack count of Store is", CurrentStore.scopeStack.Count);
             }
@@ -132,8 +130,7 @@ namespace kOS.Safe {
                 return ThreadStatus.ERROR;
             }
 
-
-            switch(opcode.Code){
+            switch (opcode.Code){
             case ByteCode.WAIT:
                 return ThreadStatus.WAIT;
             case ByteCode.RETURN:

@@ -15,47 +15,45 @@ namespace kOS.Safe
     /// Procedure exec.
     /// This class holds a store and manages the instruction pointer.
     /// </summary>
-    public class ProcedureCall:IEnumerator<Opcode> {
+    public class ProcedureCall {
         internal VariableStore Store { get; } // manages variable storing and retrieval
 
         /// <summary>
         /// Gets the current Opcode. 
         /// </summary>
         /// <value>The current opcode.</value>
-        Opcode currentOpcode = null;
-        public Opcode Current => currentOpcode;
-
-        object IEnumerator.Current => Current;
-
-
+        Opcode currentOpcode = new OpcodeNOP();
+        internal KOSThread thread;
+        public bool Finished => instructionPointer>=Opcodes.Count;
+ 
         readonly IReadOnlyOpcodeList Opcodes;
         int instructionPointer = 0;
 
 	    public ProcedureCall(KOSThread thread,Procedure procedure)
         {
+            this.thread=thread;
             Store = new VariableStore(thread.Process.ProcessManager.globalVariables);
             Store.AddClosure(procedure.Closure);
             Opcodes = procedure.Opcodes;
         }
 
         /// <summary>
-        /// Moves to the next opcode, updating the internal instruction counter
-        /// based on the current opcode's DeltaInstructionPointer.
-        /// The first opcode in a Procedure is a NOP that will be skipped over
-        /// on the first call to MoveNext. If the NOP is attempted to be executed
-        /// it will throw a NotImplementedException.
+        /// Executes the current opcode, then updates the instructionPointer.
         /// </summary>
-        public bool MoveNext()
+        public Opcode Execute()
         {
-            instructionPointer+=Opcodes[instructionPointer].DeltaInstructionPointer;
             if (instructionPointer<Opcodes.Count) {
-                Deb.logmisc("In Movenext. delta was", Opcodes[instructionPointer].DeltaInstructionPointer);
                 currentOpcode=Opcodes[instructionPointer];
+                Deb.storeOpcode(currentOpcode);
+                Deb.logmisc("Current Opcode", currentOpcode.Label, currentOpcode);
+                currentOpcode.Execute(thread);
+                Deb.logmisc("In Movenext. delta was", currentOpcode.DeltaInstructionPointer);
+                instructionPointer+=currentOpcode.DeltaInstructionPointer;
 
-                return true;
+                return currentOpcode;
             }
 
-            return false;
+            return currentOpcode;
         }
 
         /// <summary>
