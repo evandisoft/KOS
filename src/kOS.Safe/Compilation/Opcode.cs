@@ -1023,7 +1023,7 @@ namespace kOS.Safe.Compilation
         }
         public override void Execute(IExec exec)
         {
-            //AbortProgram = true;
+
         }
     }
 

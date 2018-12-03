@@ -27,8 +27,8 @@ namespace kOS.Safe.Compilation{
             if (mainProgram==null) {
                 throw new Exception("There was no MainCode section!");
             }
+            mainProgram.Add(new OpcodeEOP());
 
-            // 
             var procedureOpcodes = new OpcodeList();
             procedureOpcodes.AddRange(mainProgram);
             ReplaceRelocateAndJumpLabels(procedureOpcodes, pushDelegatesMap);
@@ -60,7 +60,7 @@ namespace kOS.Safe.Compilation{
         }
 
 
-        static Boolean IsEOP(Opcode opcode)
+        static bool IsEOP(Opcode opcode)
         {
             return opcode is OpcodeEOP;
         }

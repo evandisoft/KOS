@@ -126,6 +126,7 @@ namespace kOS.Safe {
                 switch (opcode.Code) {
                 case ByteCode.WAIT:
                     return ThreadStatus.WAIT;
+                case ByteCode.EOP:
                 case ByteCode.RETURN:
                     return PopStackAndReturnFinishedIfEmpty();
                 }

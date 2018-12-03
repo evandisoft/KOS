@@ -42,7 +42,6 @@ namespace kOS.Safe
         /// </summary>
         public Opcode Execute()
         {
-            //if (instructionPointer<Opcodes.Count) {
             currentOpcode=Opcodes[instructionPointer];
             Deb.storeOpcode(currentOpcode);
             Deb.logmisc("Current Opcode", currentOpcode.Label, currentOpcode);
@@ -51,26 +50,6 @@ namespace kOS.Safe
             instructionPointer+=currentOpcode.DeltaInstructionPointer;
 
             return currentOpcode;
-            //}
-        }
-
-        /// <summary>
-        /// At the moment this just returns "NotImplementedException.
-        /// I don't quite see a use for implementing this
-        /// at the moment.
-        /// </summary>
-        public void Reset()
-        {
-            throw new NotImplementedException(
-                "Reset of "+nameof(ProcedureCall)+" is not implemented.");
-            //instructionPointer=0;
-        }
-
-        /// <summary>
-        /// Does nothing.
-        /// </summary>
-       public void Dispose()
-        {
         }
     }
 }
