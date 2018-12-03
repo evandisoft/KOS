@@ -2737,21 +2737,46 @@ namespace kOS.Safe.Compilation
         }
         public override void Execute(IExec exec)
         {
-            string triggerName = Convert.ToString(exec.PopValue()); // in case it got wrapped in a ScalarIntValue
+            
             object poppedValue= exec.PopValue();
-            Deb.logmisc("trigger is", triggerName);
+            
             Procedure procedure = poppedValue as Procedure;
             List<Structure> args = new List<Structure>();
             if (procedure==null)
-                throw new Exception("The stored value was not a procedure! It was a "+poppedValue.GetType());
-            Deb.logmisc("Calling procedure", procedure);
+                throw new Exception(
+                    "The first arg to AddTrigger was not a procedure, it was a "+poppedValue.GetType());
             var process = exec.Thread.Process;
-            var systemTrigger = new SystemTrigger(triggerName, process);
-            Deb.logmisc("Created System Trigger", triggerName);
-            systemTrigger.Call(procedure);
-            Deb.logmisc("Called procedure on System Trigger", triggerName);
-            process.AddSystemTrigger(systemTrigger);
-            Deb.logmisc("Added System Trigger", triggerName);
+            
+            poppedValue=exec.PopValue();
+            string triggerName=poppedValue as string; 
+            if(triggerName!=null){
+                poppedValue=exec.PopValue();
+                if(!(poppedValue is KOSArgMarkerType)){
+                    throw new Exception(
+                        "Too many Arguments to AddTrigger. Last "+poppedValue.GetType()+" unnecessary.");
+                }
+                Deb.logmisc("This is a system Lock with name",triggerName);
+                Deb.logmisc("Calling procedure", procedure);
+                var systemTrigger = new SystemTrigger(triggerName, process);
+                Deb.logmisc("Created System Trigger", triggerName);
+                systemTrigger.Call(procedure);
+                Deb.logmisc("Called procedure on System Trigger", triggerName);
+                process.AddSystemTrigger(systemTrigger);
+                Deb.logmisc("Added System Trigger", triggerName);
+            }
+            else{
+                if(!(poppedValue is KOSArgMarkerType)){
+                    throw new Exception(
+                        "Wrong second argument to AddTrigger. Expected string, got "+poppedValue.GetType());
+                }
+                Deb.logmisc("This is a normal trigger.");
+                var thread=new KOSThread(process);
+                Deb.logmisc("Calling procedure", procedure);
+                thread.Call(procedure);
+                Deb.logmisc("Adding Trigger", procedure);
+                process.AddTrigger(thread);
+                Deb.logmisc("Trigger Added", procedure);
+            }
         }
 
         public override string ToString()

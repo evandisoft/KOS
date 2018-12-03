@@ -496,8 +496,11 @@ namespace kOS.Safe.Compilation.KS
             nextBraceIsFunction = false;
         }
 
+        
         private void PreProcessWhenStatement(ParseNode node)
         {
+            
+
             NodeStartHousekeeping(node);
             nextBraceIsFunction = true; // triggers aren't really functions but act like it a lot.
             
@@ -1790,12 +1793,12 @@ namespace kOS.Safe.Compilation.KS
                 if (nodeIndex == 0)
                 {
                     firstIdentifier = GetIdentifierText(suffixTerm);
-                    Deb.logcompile("In VisitSuffix. identifier is", firstIdentifier);
+                    //Deb.logcompile("In VisitSuffix. identifier is", firstIdentifier);
                     userFuncObject = GetUserFunctionWithScopeWalk(firstIdentifier, node);
 
-                    Deb.logcompile("issystemlock?"+userFuncObject?.IsSystemLock());
+                    //Deb.logcompile("issystemlock?"+userFuncObject?.IsSystemLock());
                     if (userFuncObject != null && !compilingSetDestination 
-                        &&!userFuncObject.IsSystemLock()// this didn't work
+                        &&!userFuncObject.IsSystemLock()
                        ) // evandisoft. SystemTriggers are in a separate scope now
                     {
                         //Deb.logcompile("We're considering it a function");
@@ -1842,6 +1845,11 @@ namespace kOS.Safe.Compilation.KS
                     bool isFunc = (trailerTerm.Token.Type == TokenType.function_trailer);
                     bool isArray = (trailerTerm.Token.Type == TokenType.array_trailer);
                     bool thisTermIsDirect = (isDirect && trailerIndex == 1); // only the firstmost term in a chain can be direct.
+
+                    // evandisoft TODO: I'm doing this to disable the assumption
+                    // that this variable should be treated as a function.
+                    // No longer do systemlocks prevent users from accessing
+                    // the global.
                     if(userFuncObject!=null && userFuncObject.IsSystemLock()){
                         isFunc=false;
                     }
@@ -2568,13 +2576,7 @@ namespace kOS.Safe.Compilation.KS
                 whereToStore == StorageModifier.GLOBAL ? (Int16)0 : GetContainingScopeId(node),
                 node);
 
-            string functionLabel = lockObject.GetUserFunctionLabel(expressionHash);
-            // lock variable
-            AddOpcode(new OpcodePushDelegateRelocateLater(null,true), functionLabel);
-            // We're going to try to use opcodeAddTrigger to add
-            // system triggers
-            if (!lockObject.IsSystemLock())
-                AddOpcode(CreateAppropriateStoreCode(whereToStore, allowLazyGlobal, lockObject.ScopelessPointerIdentifier));
+            string functionLabel = lockObject.GetUserFunctionLabel(expressionHash);            
 
             if (lockObject.IsSystemLock())
             {
@@ -2587,7 +2589,9 @@ namespace kOS.Safe.Compilation.KS
                     //AddOpcode(new OpcodePushDelegateRelocateLater(null,true), triggerObject.GetFunctionLabel());
                     // evandisoft AddTrigger will now expect two arguments
                     // One is the 
+                    AddOpcode(new OpcodePush(new KOSArgMarkerType()));
                     AddOpcode(new OpcodePush(lockIdentifier));
+                    AddOpcode(new OpcodePushDelegateRelocateLater(null,true), functionLabel);
                     AddOpcode(new OpcodeAddTrigger(false));
                 }
                     
@@ -2598,6 +2602,11 @@ namespace kOS.Safe.Compilation.KS
                 AddOpcode(new OpcodeCall("toggleflybywire") { isBuiltin=true });
                 // add a pop to clear out the dummy return value from toggleflybywire()
                 AddOpcode(new OpcodePop());
+            }
+            else{
+                // lock variable
+                AddOpcode(new OpcodePushDelegateRelocateLater(null,true), functionLabel);
+                AddOpcode(CreateAppropriateStoreCode(whereToStore, allowLazyGlobal, lockObject.ScopelessPointerIdentifier));
             }
         }
         
