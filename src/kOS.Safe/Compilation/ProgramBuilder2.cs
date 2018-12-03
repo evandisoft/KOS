@@ -93,6 +93,12 @@ namespace kOS.Safe.Compilation{
             }
             return delegateDestinationLabels;
         }
+        /// <summary>
+        /// Using the dictionary with all the delegate labels, create
+        /// OpcodePushDelegates with the proper lists of opcodes each.
+        /// </summary>
+        /// <returns>The push delegates map.</returns>
+        /// <param name="parts">Parts.</param>
         static Dictionary<string, OpcodePushDelegate>
         CreatePushDelegatesMap(List<CodePart> parts)
         {

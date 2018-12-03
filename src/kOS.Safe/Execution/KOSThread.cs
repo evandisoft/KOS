@@ -89,11 +89,8 @@ namespace kOS.Safe {
             if (callStack.Count == 0) { return ThreadStatus.FINISHED; }
             if (isTerminated) { return ThreadStatus.TERMINATED; }
 
-            // run the procedure.
-            var status = ThreadStatus.OK;
-            while (status==ThreadStatus.OK) {
-                status=ExecuteCurrentProcedure();
-            }
+            var status=ExecuteLoop();
+
             Deb.logmisc("Exiting thread", ID, "with status", status);
 
             return status;
@@ -104,37 +101,35 @@ namespace kOS.Safe {
         /// Checks the global instruction pointer and this threads
         /// instruction pointer.
         /// </summary>
-        ThreadStatus ExecuteCurrentProcedure()
+        ThreadStatus ExecuteLoop()
         {
-            if (!GlobalInstructionCounter.Continue()) {
-                GlobalInstructionCounter.Reset();
-                return ThreadStatus.GLOBAL_INSTRUCTION_LIMIT;
-            }
-            if (!ThreadInstructionCounter.Continue()) {
-                ThreadInstructionCounter.Reset();
-                return ThreadStatus.THREAD_INSTRUCTION_LIMIT;
-            }
+            while(true){
+                if (!GlobalInstructionCounter.Continue()) {
+                    GlobalInstructionCounter.Reset();
+                    return ThreadStatus.GLOBAL_INSTRUCTION_LIMIT;
+                }
+                if (!ThreadInstructionCounter.Continue()) {
+                    ThreadInstructionCounter.Reset();
+                    return ThreadStatus.THREAD_INSTRUCTION_LIMIT;
+                }
 
-            Opcode opcode = null;
-            try {
-                opcode = CurrentProcedure.Execute();
-                Deb.logmisc("Stack for thread",ID,"is",Stack);
-                Deb.logmisc("Stack count of Store is", CurrentStore.scopeStack.Count);
-            }
-            catch(Exception e){
-                Deb.logmisc(e);
-                return ThreadStatus.ERROR;
-            }
+                Opcode opcode = null;
+                try {
+                    opcode = CurrentProcedure.Execute();
+                    Deb.logmisc("Stack for thread", ID, "is", Stack);
+                    Deb.logmisc("Stack count of Store is", CurrentStore.scopeStack.Count);
+                } catch (Exception e) {
+                    Deb.logmisc(e);
+                    return ThreadStatus.ERROR;
+                }
 
-            switch (opcode.Code){
-            case ByteCode.WAIT:
-                return ThreadStatus.WAIT;
-            case ByteCode.RETURN:
-                return PopStackAndReturnFinishedIfEmpty();
+                switch (opcode.Code) {
+                case ByteCode.WAIT:
+                    return ThreadStatus.WAIT;
+                case ByteCode.RETURN:
+                    return PopStackAndReturnFinishedIfEmpty();
+                }
             }
-
-
-            return ThreadStatus.OK;
         }
 
         /// <summary>
