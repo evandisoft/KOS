@@ -143,7 +143,7 @@ namespace kOS.Screen
                     IsCalledFromRun = false
                 };
                 Deb.clearCompileLog();
-                Deb.clearMiscLog();
+                Deb.clearExecLog();
                 List<CodePart> commandParts = Shared.ScriptHandler.Compile(new InterpreterPath(this),
                     commandHistoryIndex, commandText, InterpreterName, options);
                 if (commandParts == null) return;

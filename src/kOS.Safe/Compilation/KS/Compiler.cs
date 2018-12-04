@@ -500,7 +500,7 @@ namespace kOS.Safe.Compilation.KS
         private void PreProcessWhenStatement(ParseNode node)
         {
             //evandisoft Don't think we need this
-            return;
+            //return;
 
             NodeStartHousekeeping(node);
             nextBraceIsFunction = true; // triggers aren't really functions but act like it a lot.
@@ -517,12 +517,13 @@ namespace kOS.Safe.Compilation.KS
             // - - - - - - - - - - - - 
 
             currentCodeSection = triggerObject.Code;
-            VisitNode(node.Nodes[1]);
-            OpcodeBranchIfTrue branchToBody = new OpcodeBranchIfTrue();
-            branchToBody.Distance = 3;
-            AddOpcode(branchToBody);
-            AddOpcode(new OpcodePush(true));       // wasn't triggered yet, so preserve.
-            AddOpcode(new OpcodeReturn((short)0)); // premature return because it wasn't triggered
+            
+            // Evandisoft 
+            // OpcodeBranchIfTrue branchToBody = new OpcodeBranchIfTrue();
+            // branchToBody.Distance = 3;
+            // AddOpcode(branchToBody);
+            // AddOpcode(new OpcodePush(true));       // wasn't triggered yet, so preserve.
+            // AddOpcode(new OpcodeReturn((short)0)); // premature return because it wasn't triggered
 
             // make flag that remembers whether to remove trigger:
             // defaults to true = removal should happen.
@@ -2702,12 +2703,34 @@ namespace kOS.Safe.Compilation.KS
                     anonymousIdentifier,
                     GetContainingScopeId(node),
                     node);
-            //int expressionHash = anonymousIdentifier.GetHashCode();
-            
+            expressionHash = anonymousIdentifier.GetHashCode();
+            var lastCodeSection=currentCodeSection;
+            currentCodeSection=userFuncObject.GetUserFunctionOpcodes(expressionHash);
+            forcedNextLabel=anonymousIdentifier;
+            BeginScope(node);
+            AddOpcode(new OpcodePushDelegateRelocateLater(null,true),triggerObject.GetFunctionLabel());
+            AddOpcode(new OpcodeStoreLocal("$"+triggerIdentifier+"*"));
+            var exprLabel=GetNextLabel(false);
+            VisitNode(node.Nodes[1]);
+            var exprBranch=AddOpcode(new OpcodeBranchIfFalse());
+            AddOpcode(new OpcodePush(new KOSArgMarkerType()));
+            AddOpcode(new OpcodeCall("$"+triggerIdentifier+"*"));
+            var endBranch=AddOpcode(new OpcodeBranchIfTrue());
+            var waitLabel=AddOpcode(new OpcodePush(0)).Label;
+            AddOpcode(new OpcodeWait());
+            var loopBranch=AddOpcode(new OpcodeBranchJump());
+            var endLabel=AddOpcode(new OpcodePush(0)).Label;
+            AddOpcode(new OpcodeReturn((short)0));
+            AddOpcode(new OpcodeEOP());
 
+            exprBranch.DestinationLabel=waitLabel;
+            endBranch.DestinationLabel=endLabel;
+            loopBranch.DestinationLabel=exprLabel;
+
+            currentCodeSection=lastCodeSection;
 
             AddOpcode(new OpcodePush(new KOSArgMarkerType()));
-            AddOpcode(new OpcodePushDelegateRelocateLater(null,true), triggerObject.GetFunctionLabel());
+            AddOpcode(new OpcodePushDelegateRelocateLater(null,true), anonymousIdentifier);
             AddOpcode(new OpcodeAddTrigger());
         }
 

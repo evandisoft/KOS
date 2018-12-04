@@ -80,7 +80,7 @@ namespace kOS.Safe {
         /// </summary>
         public ThreadStatus Execute()
         {
-            Deb.logmisc("Executing thread", ID, nameof(ProcedureCall), callStack.Count);
+            Deb.logexec("Executing thread", ID, nameof(ProcedureCall), callStack.Count);
 
             if(IsWaiting()){
                 return ThreadStatus.WAIT;
@@ -91,7 +91,7 @@ namespace kOS.Safe {
 
             var status=ExecuteLoop();
 
-            Deb.logmisc("Exiting thread", ID, "with status", status);
+            Deb.logexec("Exiting thread", ID, "with status", status);
 
             return status;
         }
@@ -116,10 +116,10 @@ namespace kOS.Safe {
                 Opcode opcode = null;
                 try {
                     opcode = CurrentProcedure.Execute();
-                    Deb.logmisc("Stack for thread", ID, "is", Stack);
-                    Deb.logmisc("Stack count of Store is", CurrentStore.scopeStack.Count);
+                    Deb.logexec("Stack for thread", ID, "is", Stack);
+                    Deb.logexec("Stack count of Store is", CurrentStore.scopeStack.Count);
                 } catch (Exception e) {
-                    Deb.logmisc(e);
+                    Deb.logexec(e);
                     return ThreadStatus.ERROR;
                 }
 
@@ -138,7 +138,7 @@ namespace kOS.Safe {
         /// otherwise returns ThreadStatus.OK.
         /// </summary>
         ThreadStatus PopStackAndReturnFinishedIfEmpty(){
-            Deb.logmisc("Removing ProcedureExec");
+            Deb.logexec("Removing ProcedureExec");
             callStack.Pop();
             if (callStack.Count==0) {
                 return ThreadStatus.FINISHED;
@@ -208,12 +208,12 @@ namespace kOS.Safe {
         {
             if (timeToWaitInMilliseconds>0){
                 if(timeToWaitInMilliseconds>waitWatch.ElapsedMilliseconds){
-                    Deb.logmisc("Thread", ID, "is waiting for",
+                    Deb.logexec("Thread", ID, "is waiting for",
                            timeToWaitInMilliseconds-waitWatch.ElapsedMilliseconds,
                            "more milliseconds");
                     return true;
                 }
-                Deb.logmisc("Thread", ID, "is no longer waiting.");
+                Deb.logexec("Thread", ID, "is no longer waiting.");
                 timeToWaitInMilliseconds=0; waitWatch.Reset();
             }
             return false;
@@ -235,9 +235,9 @@ namespace kOS.Safe {
         public object PopValue(bool barewordOkay = false)
         {
             var retval = Stack.Pop();
-            Deb.logmisc("Getting value of", retval);
+            Deb.logexec("Getting value of", retval);
             var retval2 = CurrentStore.GetValue(retval, barewordOkay);
-            Deb.logmisc("Got value of", retval2);
+            Deb.logexec("Got value of", retval2);
             return retval2;
         }
     }

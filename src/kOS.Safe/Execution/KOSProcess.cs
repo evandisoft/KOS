@@ -75,8 +75,8 @@ namespace kOS.Safe
 
         public ProcessStatus Execute()
 		{
-            Deb.logmisc("Process Execute. Threads", threadSet.Count);
-            Deb.logmisc("Process Execute. Triggers", triggerSet.Count);
+            Deb.logexec("Process Execute. Threads", threadSet.Count);
+            Deb.logexec("Process Execute. Triggers", triggerSet.Count);
             if (threadSet.Count==0){ return ProcessStatus.FINISHED; }
             ProcessStatus status;
 

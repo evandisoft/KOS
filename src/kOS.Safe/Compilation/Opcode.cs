@@ -1732,13 +1732,13 @@ namespace kOS.Safe.Compilation
         }
         public override void Execute(IExec exec)
         {
-            Deb.logmisc("calling ", Destination);
+            Deb.logexec("calling ", Destination);
             if(Direct){
                 string dest = Destination as string;
                 if (isBuiltin) {
-                    Deb.logmisc("isbuiltin");
+                    Deb.logexec("isbuiltin");
                     //object functionPointer= exec.Store.GetValue(Destination);
-                    Deb.logmisc("destination", Destination);
+                    Deb.logexec("destination", Destination);
 
                     exec.Shared.FunctionManager.CallFunction(dest, exec);
                 } else{
@@ -1748,7 +1748,7 @@ namespace kOS.Safe.Compilation
                     Procedure procedure = exec.Store.GetValue(dest) as Procedure;
                     if (procedure==null)
                         throw new Exception("The stored value was not a procedure! It was a "+dest.GetType());
-                    Deb.logmisc("Calling procedure", procedure);
+                    Deb.logexec("Calling procedure", procedure);
                     exec.Thread.Call(procedure);
                 }
             }
@@ -2645,7 +2645,7 @@ namespace kOS.Safe.Compilation
 
         public override void Execute(IExec exec)
         {
-            Deb.logmisc("Creating new procedure",exec.Store);
+            Deb.logexec("Creating new procedure",exec.Store);
             if(procedureOpcodes==null){
                 throw new Exception("Procedure Opcodes were not instantiated!");
             }
@@ -2755,27 +2755,27 @@ namespace kOS.Safe.Compilation
                     throw new Exception(
                         "Too many Arguments to AddTrigger. Last "+poppedValue.GetType()+" unnecessary.");
                 }
-                Deb.logmisc("This is a system Lock with name",triggerName);
-                Deb.logmisc("Calling procedure", procedure);
+                Deb.logexec("This is a system Lock with name",triggerName);
+                Deb.logexec("Calling procedure", procedure);
                 var systemTrigger = new SystemTrigger(triggerName, process);
-                Deb.logmisc("Created System Trigger", triggerName);
+                Deb.logexec("Created System Trigger", triggerName);
                 systemTrigger.Call(procedure);
-                Deb.logmisc("Called procedure on System Trigger", triggerName);
+                Deb.logexec("Called procedure on System Trigger", triggerName);
                 process.AddSystemTrigger(systemTrigger);
-                Deb.logmisc("Added System Trigger", triggerName);
+                Deb.logexec("Added System Trigger", triggerName);
             }
             else{
                 if(!(poppedValue is KOSArgMarkerType)){
                     throw new Exception(
                         "Wrong second argument to AddTrigger. Expected string, got "+poppedValue.GetType());
                 }
-                Deb.logmisc("This is a normal trigger.");
+                Deb.logexec("This is a normal trigger.");
                 var thread=new KOSThread(process);
-                Deb.logmisc("Calling procedure", procedure);
+                Deb.logexec("Calling procedure", procedure);
                 thread.Call(procedure);
-                Deb.logmisc("Adding Trigger", procedure);
+                Deb.logexec("Adding Trigger", procedure);
                 process.AddTrigger(thread);
-                Deb.logmisc("Trigger Added", procedure);
+                Deb.logexec("Trigger Added", procedure);
             }
         }
 

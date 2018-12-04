@@ -121,7 +121,7 @@ namespace kOS.Safe
         Boolean debugging = false;
         override internal void ContinueExecution(bool doProfiling)
         {
-            Deb.logmisc("ContinueExecution", "Processes", processes.Count);
+            Deb.logexec("ContinueExecution", "Processes", processes.Count);
 
             // TODO: this is just "getting started" code
             // it will be replaced later.
@@ -132,14 +132,14 @@ namespace kOS.Safe
 
 
             for (int i = processes.Count-1;i>= 0;i--) {
-                Deb.logmisc("i", i, "total", processes.Count);
+                Deb.logexec("i", i, "total", processes.Count);
                 var status = processes[i].Execute();
-                Deb.logmisc("From Process Execute. status", status);
+                Deb.logexec("From Process Execute. status", status);
 
                 switch (status) {
 
                 case ProcessStatus.FINISHED:
-                    Deb.logmisc("Removing process", i);
+                    Deb.logexec("Removing process", i);
                     processes.RemoveAt(i);
                     break;
 
@@ -173,7 +173,7 @@ namespace kOS.Safe
 
         public void RunProgram(Procedure Program,List<object> args=null){
             Deb.miscIsLogging=true;
-            Deb.logmisc("Creating Dummy processes");
+            Deb.logexec("Creating Dummy processes");
             KOSProcess process = new KOSProcess(this);
             processes.Add(process);
             KOSThread thread = new KOSThread(process);
@@ -185,7 +185,7 @@ namespace kOS.Safe
 
         public void IfNotActiveStopDebugging(){
             if (debugging && processes.Count==0) {
-                Deb.logmisc("Resetting program");
+                Deb.logexec("Resetting program");
 
                 debugging=false;
                 Deb.miscIsLogging=false;

@@ -27,13 +27,14 @@ namespace kOS.Safe
 
         }
         static string opcodesLogname = "Logs/kOS/opcode.log";
-        static string miscLogname = "Logs/kOS/misc.log";
+        static string execLogname = "Logs/kOS/exec.log";
         static string compileLogname = "Logs/kOS/compile.log";
 
-
+        [Conditional("DEBUG")]
         static public void logopcode(params object [] args){
             logall (opcodesLogname, args);
         }
+        [Conditional("DEBUG")]
         static public void storeOpcode(Opcode opcode)
         {
             if (opcode.Code != Compilation.ByteCode.EOF) { // Log the opcodes to the opcode queue
@@ -43,34 +44,35 @@ namespace kOS.Safe
                 CPU.OpcodeLogQueue.Enqueue(opcode);
             }
         }
+        [Conditional("DEBUG")]
         static public void clearOpcodeFile()
         {
             File.WriteAllText(opcodesLogname, String.Empty);
         }
 
         static public Boolean miscIsLogging = false;
-        //[Conditional("DEBUG")]
-        static public void logmisc(params object [] args){
+        [Conditional("DEBUG")]
+        static public void logexec(params object [] args){
             if(SafeHouse.Config.DebugEachOpcode && miscIsLogging){
-                logall(miscLogname, args);
+                logall(execLogname, args);
             }
         }
 
         static public Boolean compileIsLogging = true;
-        //[Conditional("DEBUG")]
+        [Conditional("DEBUG")]
         static public void logcompile(params object[] args)
         {
             if (SafeHouse.Config.DebugEachOpcode && compileIsLogging) {
                 logall(compileLogname, args);
             }
         }
-        //[Conditional("DEBUG")]
+        [Conditional("DEBUG")]
         static public void clearCompileLog(){
             File.WriteAllText(compileLogname, String.Empty);
         }
-        //[Conditional("DEBUG")]
-        static public void clearMiscLog(){
-            File.WriteAllText(miscLogname, String.Empty);
+        [Conditional("DEBUG")]
+        static public void clearExecLog(){
+            File.WriteAllText(execLogname, String.Empty);
         }
 
 

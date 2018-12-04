@@ -50,7 +50,7 @@ namespace kOS.Safe.Function
 
         public void CallFunction(string functionName,IExec exec)
         {
-            Deb.logmisc("In CallFunction for function",functionName);
+            Deb.logexec("In CallFunction for function",functionName);
 
             if (!functions.ContainsKey(functionName))
             {
@@ -58,9 +58,9 @@ namespace kOS.Safe.Function
             }
 
             SafeFunctionBase function = functions[functionName];
-            Deb.logmisc("got function", function);
+            Deb.logexec("got function", function);
             function.Execute(shared,exec);
-            Deb.logmisc("function.UsesAutoReturn", function.UsesAutoReturn);
+            Deb.logexec("function.UsesAutoReturn", function.UsesAutoReturn);
             if (function.UsesAutoReturn){
                 exec.Stack.Push(function.ReturnValue);
             }
