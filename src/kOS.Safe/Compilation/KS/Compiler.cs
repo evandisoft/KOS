@@ -456,30 +456,31 @@ namespace kOS.Safe.Compilation.KS
             // if this trigger has been cancelled elsewhere before we begin running it.)
             // - - - - - - - - - - - - 
 
-            currentCodeSection = triggerObject.Code;
-            // Put the old value on top of the stack for equals comparison later:
-            AddOpcode(new OpcodePush(triggerObject.OldValueIdentifier));
-            AddOpcode(new OpcodeEval());
-            // eval the expression for the new value, and leave it on the stack twice.
-            VisitNode(node.Nodes[1]);
-            AddOpcode(new OpcodeEval());
-            AddOpcode(new OpcodeDup());
-            // Put one of those two copies of the new value into the old value identifier for next time.
-            // This is local because triggers have scope and this will keep multiple instances of the
-            // same ON trigger (i.e. executing the ON statement in a loop) to each have thier own copy
-            // of thier own OldValue.
-            AddOpcode(new OpcodeStoreLocal(triggerObject.OldValueIdentifier));
-            // Use the other dup'ed copy of the new value to actually do the equals
-            // comparison with the old value that's still under it on the stack:
-            AddOpcode(new OpcodeCompareEqual());
-            OpcodeBranchIfFalse branchToBody = new OpcodeBranchIfFalse();
-            branchToBody.Distance = 3;
-            AddOpcode(branchToBody);
-            AddOpcode(new OpcodePush(true));       // wasn't triggered yet, so preserve.
-            AddOpcode(new OpcodeReturn((short)0)); // premature return because it wasn't triggered
+            // currentCodeSection = triggerObject.Code;
+            // // Put the old value on top of the stack for equals comparison later:
+            // AddOpcode(new OpcodePush(triggerObject.OldValueIdentifier));
+            // AddOpcode(new OpcodeEval());
+            // // eval the expression for the new value, and leave it on the stack twice.
+            // VisitNode(node.Nodes[1]);
+            // AddOpcode(new OpcodeEval());
+            // AddOpcode(new OpcodeDup());
+            // // Put one of those two copies of the new value into the old value identifier for next time.
+            // // This is local because triggers have scope and this will keep multiple instances of the
+            // // same ON trigger (i.e. executing the ON statement in a loop) to each have thier own copy
+            // // of thier own OldValue.
+            // AddOpcode(new OpcodeStoreLocal(triggerObject.OldValueIdentifier));
+            // // Use the other dup'ed copy of the new value to actually do the equals
+            // // comparison with the old value that's still under it on the stack:
+            // AddOpcode(new OpcodeCompareEqual());
+            // OpcodeBranchIfFalse branchToBody = new OpcodeBranchIfFalse();
+            // branchToBody.Distance = 3;
+            // AddOpcode(branchToBody);
+            // AddOpcode(new OpcodePush(true));       // wasn't triggered yet, so preserve.
+            // AddOpcode(new OpcodeReturn((short)0)); // premature return because it wasn't triggered
 
             // make flag that remembers whether to remove trigger:
             // defaults to true = removal should happen.
+            currentCodeSection = triggerObject.Code;
             string triggerKeepName = "$keep-" + triggerIdentifier;
             PushTriggerKeepName(triggerKeepName);
             AddOpcode(new OpcodePush(false));
@@ -518,7 +519,7 @@ namespace kOS.Safe.Compilation.KS
 
             currentCodeSection = triggerObject.Code;
             
-            // Evandisoft 
+            // Evandisoft: This stuff has been added to 
             // OpcodeBranchIfTrue branchToBody = new OpcodeBranchIfTrue();
             // branchToBody.Distance = 3;
             // AddOpcode(branchToBody);
@@ -2676,19 +2677,71 @@ namespace kOS.Safe.Compilation.KS
 
         private void VisitOnStatement(ParseNode node)
         {
+            // NodeStartHousekeeping(node);
+            // int expressionHash = ConcatenateNodes(node).GetHashCode();
+            // string triggerIdentifier = "on-" + expressionHash.ToString();
+            // Trigger triggerObject = context.Triggers.GetTrigger(triggerIdentifier);
+
+            // if (triggerObject.IsInitialized())
+            // {
+            //     // Store the current value into the old value to prep for the first use of the ON trigger:
+            //     VisitNode(node.Nodes[1]); // the expression in the on statement.
+            //     AddOpcode(new OpcodeStore(triggerObject.OldValueIdentifier));
+            //     AddOpcode(new OpcodePushRelocateLater(null), triggerObject.GetFunctionLabel());
+            //     AddOpcode(new OpcodeAddTrigger());
+            // }
+
             NodeStartHousekeeping(node);
             int expressionHash = ConcatenateNodes(node).GetHashCode();
             string triggerIdentifier = "on-" + expressionHash.ToString();
             Trigger triggerObject = context.Triggers.GetTrigger(triggerIdentifier);
 
-            if (triggerObject.IsInitialized())
-            {
-                // Store the current value into the old value to prep for the first use of the ON trigger:
-                VisitNode(node.Nodes[1]); // the expression in the on statement.
-                AddOpcode(new OpcodeStore(triggerObject.OldValueIdentifier));
-                AddOpcode(new OpcodePushRelocateLater(null), triggerObject.GetFunctionLabel());
-                AddOpcode(new OpcodeAddTrigger());
-            }
+            string anonymousIdentifier = "anonymousDelegate`"+(anonymousDelegateID++);
+                UserFunction userFuncObject = context.UserFunctions.GetUserFunction(
+                    anonymousIdentifier,
+                    GetContainingScopeId(node),
+                    node);
+            expressionHash = anonymousIdentifier.GetHashCode();
+            var lastCodeSection=currentCodeSection;
+            currentCodeSection=userFuncObject.GetUserFunctionOpcodes(expressionHash);
+            forcedNextLabel=anonymousIdentifier;
+            BeginScope(node);
+            AddOpcode(new OpcodePushDelegateRelocateLater(null,true),triggerObject.GetFunctionLabel());
+            AddOpcode(new OpcodeStoreLocal("$"+triggerIdentifier+"*"));
+            VisitNode(node.Nodes[1]);
+            AddOpcode(new OpcodeStoreLocal(triggerObject.OldValueIdentifier));
+            AddOpcode(new OpcodePush(0));
+            AddOpcode(new OpcodeWait());
+            var exprLabel=GetNextLabel(false);
+            AddOpcode(new OpcodePush(triggerObject.OldValueIdentifier));
+            AddOpcode(new OpcodeEval());
+            VisitNode(node.Nodes[1]);
+            AddOpcode(new OpcodeEval());
+            AddOpcode(new OpcodeDup());
+            AddOpcode(new OpcodeStoreLocal(triggerObject.OldValueIdentifier));
+            AddOpcode(new OpcodeCompareEqual());
+            var exprBranch=AddOpcode(new OpcodeBranchIfTrue());
+            AddOpcode(new OpcodePush(new KOSArgMarkerType()));
+            AddOpcode(new OpcodeCall("$"+triggerIdentifier+"*"));
+            var endBranch=AddOpcode(new OpcodeBranchIfFalse());
+            var waitLabel=AddOpcode(new OpcodePush(0)).Label;
+            AddOpcode(new OpcodeWait());
+            var loopBranch=AddOpcode(new OpcodeBranchJump());
+            EndScope(node);
+            var endLabel=AddOpcode(new OpcodePush(0)).Label;
+            
+            AddOpcode(new OpcodeReturn((short)0));
+            AddOpcode(new OpcodeEOP());
+            
+            exprBranch.DestinationLabel=waitLabel;
+            endBranch.DestinationLabel=endLabel;
+            loopBranch.DestinationLabel=exprLabel;
+
+            currentCodeSection=lastCodeSection;
+
+            AddOpcode(new OpcodePush(new KOSArgMarkerType()));
+            AddOpcode(new OpcodePushDelegateRelocateLater(null,true), anonymousIdentifier);
+            AddOpcode(new OpcodeAddTrigger());
         }
 
         private void VisitWhenStatement(ParseNode node)
@@ -2719,6 +2772,7 @@ namespace kOS.Safe.Compilation.KS
             var waitLabel=AddOpcode(new OpcodePush(0)).Label;
             AddOpcode(new OpcodeWait());
             var loopBranch=AddOpcode(new OpcodeBranchJump());
+            EndScope(node);
             var endLabel=AddOpcode(new OpcodePush(0)).Label;
             AddOpcode(new OpcodeReturn((short)0));
             AddOpcode(new OpcodeEOP());

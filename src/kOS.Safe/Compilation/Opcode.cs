@@ -471,6 +471,10 @@ namespace kOS.Safe.Compilation
         {
             return Structure.FromPrimitive(PopValueAssert(cpu, barewordOkay));
         }
+        protected object PopValueAssertEncapsulated(IExec exec, bool barewordOkay = false)
+        {
+            return Structure.FromPrimitive(PopValueAssert(exec, barewordOkay));
+        }
 
         /// <summary>
         /// A utility function that will do the same as a cpu.PopStructureEncapsulated, but with an additional check to ensure
@@ -503,6 +507,18 @@ namespace kOS.Safe.Compilation
             Operands = operands;
             object result = ExecuteCalculation(calc);
             cpu.PushArgumentStack(result);
+        }
+        public override void Execute(IExec exec)
+        {
+            object right = exec.PopValue();
+            object left = exec.PopValue();
+
+            var operands = new OperandPair(left, right);
+
+            Calculator calc = Calculator.GetCalculator(operands);
+            Operands = operands;
+            object result = ExecuteCalculation(calc);
+            exec.Stack.Push(result);
         }
 
         protected virtual object ExecuteCalculation(Calculator calc)
@@ -2375,6 +2391,12 @@ namespace kOS.Safe.Compilation
             cpu.PushArgumentStack(value);
             cpu.PushArgumentStack(value);
         }
+        public override void Execute(IExec exec)
+        {
+            object value = exec.Stack.Pop();
+            exec.Stack.Push(value);
+            exec.Stack.Push(value);
+        }
     }
 
     /// <summary>
@@ -2436,6 +2458,10 @@ namespace kOS.Safe.Compilation
         public override void Execute(ICpu cpu)
         {
             cpu.PushArgumentStack(cpu.PopValueEncapsulatedArgument(barewordOkay));
+        }
+        public override void Execute(IExec exec)
+        {
+            exec.Stack.Push(PopValueAssertEncapsulated(exec,barewordOkay));
         }
     }
 
