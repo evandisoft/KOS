@@ -50,7 +50,8 @@ namespace kOS.Safe.Execution {
         {
             var lower_identifier = identifier.ToLower();
             Deb.logexec("Setting new local", lower_identifier,"to",value);
-            scopeStack.Peek().Add(lower_identifier, new Variable { Name=lower_identifier, Value=value });
+            var local = scopeStack.Peek();
+            local[lower_identifier]=new Variable { Name=lower_identifier, Value=value };
         }
 
 

@@ -2715,7 +2715,7 @@ namespace kOS.Safe.Compilation.KS
             var exprBranch=AddOpcode(new OpcodeBranchIfFalse());
             AddOpcode(new OpcodePush(new KOSArgMarkerType()));
             AddOpcode(new OpcodeCall("$"+triggerIdentifier+"*"));
-            var endBranch=AddOpcode(new OpcodeBranchIfTrue());
+            var endBranch=AddOpcode(new OpcodeBranchIfFalse());
             var waitLabel=AddOpcode(new OpcodePush(0)).Label;
             AddOpcode(new OpcodeWait());
             var loopBranch=AddOpcode(new OpcodeBranchJump());
