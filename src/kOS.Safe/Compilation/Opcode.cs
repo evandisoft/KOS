@@ -828,7 +828,7 @@ namespace kOS.Safe.Compilation
                 // it wasn't a method (i.e. leaving the parentheses off the call).  The
                 // member returned is a delegate that needs to be called to get its actual
                 // value.  Borrowing the same routine that OpcodeCall uses for its method calls:
-
+                
                 cpu.PushArgumentStack(result);
                 cpu.PushArgumentStack(new KOSArgMarkerType());
                 OpcodeCall.StaticExecute(cpu, false, "", false); // this will push the return value on the stack for us.
@@ -849,6 +849,46 @@ namespace kOS.Safe.Compilation
                     // will actually execute this.
                     
                     cpu.PushArgumentStack(result);
+                }
+            }
+        }
+        public override void Execute(IExec exec)
+        {
+            object popValue = PopValueAssertEncapsulated(exec);
+
+            var specialValue = popValue as ISuffixed;
+
+            if (specialValue == null) {
+                throw new Exception(string.Format("Values of type {0} cannot have suffixes", popValue.GetType()));
+            }
+
+            ISuffixResult result = specialValue.GetSuffix(Identifier);
+
+            // If the result is a suffix that is still in need of being invoked and hasn't resolved to a value yet:
+            if (result != null && !IsMethodCallAttempt && !result.HasValue) {
+                // This is what happens when someone tries to call a suffix method as if
+                // it wasn't a method (i.e. leaving the parentheses off the call).  The
+                // member returned is a delegate that needs to be called to get its actual
+                // value.  Borrowing the same routine that OpcodeCall uses for its method calls:
+
+                //exec.Stack.Push(result);
+                //exec.Stack.Push(new KOSArgMarkerType());
+                result.Invoke(exec);
+                exec.Stack.Push(result.Value);
+                //throw new NotImplementedException("Have not implemented suffix method calls");
+                //OpcodeCall.StaticExecute(exec, false, "", false); // this will push the return value on the stack for us.
+            } else {
+                if (result.HasValue) {
+                    // Push the already calculated value.
+
+                    exec.Stack.Push(result.Value);
+                } else {
+                    // Push the indirect suffix delegate, but don't execute it yet
+                    // because we need to put the upcoming arg list above it on the stack.
+                    // Eventually an <indirect> OpcodeCall will occur further down the program which
+                    // will actually execute this.
+
+                    exec.Stack.Push(result);
                 }
             }
         }
@@ -931,6 +971,28 @@ namespace kOS.Safe.Compilation
             // SetSuffix method while relying on unboxing the object rahter than using Convert
             if (!specialValue.SetSuffix(Identifier, Structure.ToPrimitive(value)))
             {
+                throw new Exception(string.Format("Suffix {0} not found on object", Identifier));
+            }
+        }
+        public override void Execute(IExec exec)
+        {
+            Structure value = PopStructureAssertEncapsulated(exec);         // new value to set it to
+            Structure popValue = PopStructureAssertEncapsulated(exec);      // object to which the suffix is attached.
+
+            // We aren't converting the popValue to a Scalar, Boolean, or String structure here because
+            // the referenced variable wouldn't be updated.  The primitives themselves are treated as value
+            // types instead of reference types.  This is also why I removed the string unboxing
+            // from the ISuffixed check below.
+
+            var specialValue = popValue as ISuffixed;
+            if (specialValue == null) {
+                throw new Exception(string.Format("Values of type {0} cannot have suffixes", popValue.GetType()));
+            }
+
+            // TODO: When we refactor to make every structure use the new suffix style, this conversion
+            // to primative can be removed.  Right now there are too many structures that override the
+            // SetSuffix method while relying on unboxing the object rahter than using Convert
+            if (!specialValue.SetSuffix(Identifier, Structure.ToPrimitive(value))) {
                 throw new Exception(string.Format("Suffix {0} not found on object", Identifier));
             }
         }

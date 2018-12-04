@@ -29,7 +29,11 @@ namespace kOS.Safe.Encapsulation.Suffixes
         {
             throw new NotImplementedException();
         }
-        
+        public void Invoke(IExec exec)
+        {
+            throw new NotImplementedException();
+        }
+
         // Not something the user should ever see, but still useful for our debugging when we dump the stack:
         public override string ToString()
         {

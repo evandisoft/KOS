@@ -149,6 +149,108 @@ namespace kOS.Safe.Encapsulation.Suffixes
                 value = Structure.FromPrimitiveWithAssert(val);
             }
         }
+        public void Invoke(IExec exec)
+        {
+            var args = new List<object>();
+            var paramArrayArgs = new List<Structure>();
+
+            // Will be true iff the lastmost parameter of the delegate is using the C# 'param' keyword and thus
+            // expects the remainder of the arguments marshalled together into one array object.
+            bool isParamArrayArg = false;
+
+            //CpuUtility.ReverseStackArgs(exec, false);
+            for (int i = 0; i < delInfo.Parameters.Length; ++i)
+            {
+                DelegateParameter paramInfo = delInfo.Parameters[i];
+
+                object arg = exec.PopValue();
+                Type argType = arg.GetType();
+                isParamArrayArg = i == delInfo.Parameters.Length - 1 && delInfo.Parameters[i].IsParams;
+
+                if (arg != null && arg.GetType() == CpuUtility.ArgMarkerType)
+                {
+                    if (isParamArrayArg)
+                        break; // with param arguments, you want to consume everything to the arg bottom - it's normal.
+                    else
+                        throw new KOSArgumentMismatchException(delInfo.Parameters.Length, delInfo.Parameters.Length - (i + 1));
+                }
+
+                // Either the expected type of this one parameter, or if it's a 'param' array as the last arg, then
+                // the expected type of that array's elements:
+                Type paramType = (paramInfo.IsParams ? paramInfo.ParameterType.GetElementType() : paramInfo.ParameterType);
+
+                // Parameter type-safe checking:
+                bool inheritable = paramType.IsAssignableFrom(argType);
+                if (!inheritable)
+                {
+                    bool castError = false;
+                    // If it's not directly assignable to the expected type, maybe it's "castable" to it:
+                    try
+                    {
+                        arg = Convert.ChangeType(arg, Type.GetTypeCode(paramType));
+                    }
+                    catch (InvalidCastException)
+                    {
+                        throw new KOSCastException(argType, paramType);
+                    }
+                    catch (FormatException)
+                    {
+                        castError = true;
+                    }
+                    if (castError)
+                    {
+                        throw new Exception(string.Format("Argument {0}({1}) to method {2} should be {3} instead of {4}.", (delInfo.Parameters.Length - i), arg, delInfo.Name, paramType.Name, argType));
+                    }
+                }
+
+                if (isParamArrayArg)
+                {
+                    paramArrayArgs.Add(Structure.FromPrimitiveWithAssert(arg));
+                    --i; // keep hitting the last item in the param list again and again until a forced break because of arg bottom marker.
+                }
+                else
+                {
+                    args.Add(Structure.FromPrimitiveWithAssert(arg));
+                }
+            }
+            if (isParamArrayArg)
+            {
+                // collect the param array args that were at the end into the one single
+                // array item that will be sent to the method when invoked:
+                args.Add(paramArrayArgs.ToArray());
+            }
+            // Consume the bottom marker under the args, which had better be
+            // immediately under the args we just popped, or the count was off.
+            if (!isParamArrayArg) // A param array arg will have already consumed the arg bottom mark.
+            {
+                bool foundArgMarker = false;
+                int numExtraArgs = 0;
+                while (exec.Stack.CountArgs() > 0 && !foundArgMarker)
+                {
+                    object marker = exec.PopValue();
+                    if (marker != null && marker.GetType() == CpuUtility.ArgMarkerType)
+                        foundArgMarker = true;
+                    else
+                        ++numExtraArgs;
+                }
+                if (numExtraArgs > 0)
+                    throw new KOSArgumentMismatchException(delInfo.Parameters.Length, delInfo.Parameters.Length + numExtraArgs);
+            }
+
+            // Delegate.DynamicInvoke expects a null, rather than an array of zero length, when
+            // there are no arguments to pass:
+            object[] argArray = (args.Count > 0) ? args.ToArray() : null;
+
+            object val = call(argArray);
+            if (delInfo.ReturnType == typeof(void))
+            {
+                value = ScalarValue.Create(0);
+            }
+            else
+            {
+                value = Structure.FromPrimitiveWithAssert(val);
+            }
+        }
 
         // Not something the user should ever see, but still useful for our debugging when we dump the stack:
         public override string ToString()

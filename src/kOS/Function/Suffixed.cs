@@ -44,6 +44,16 @@ namespace kOS.Function
             var result = new Vector(x, y, z);
             ReturnValue = result;
         }
+        public override void Execute(SharedObjects shared,IExec exec)
+        {
+            double z = GetDouble(PopValueAssert(exec));
+            double y = GetDouble(PopValueAssert(exec));
+            double x = GetDouble(PopValueAssert(exec));
+            AssertArgBottomAndConsume(exec);
+
+            var result = new Vector(x, y, z);
+            ReturnValue = result;
+        }
     }
 
     [Function("r")]

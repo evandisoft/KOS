@@ -10,5 +10,6 @@ namespace kOS.Safe.Encapsulation.Suffixes
         bool HasValue { get; }
 
         void Invoke(ICpu cpu);
+        void Invoke(IExec exec);
     }
 }
