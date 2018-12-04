@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using kOS.Safe.Utilities;
 using kOS.Safe.Function;
+using kOS.Safe.Execution;
 
 namespace kOS.Safe.Encapsulation
 {
@@ -24,6 +25,16 @@ namespace kOS.Safe.Encapsulation
                 for (int i = argArray.Length - 1; i >= 0; --i)
                     argArray[i] = PopStructureAssertEncapsulated(shared); // fill array in reverse order because .. stack args.
                 AssertArgBottomAndConsume(shared);
+                var lexicon = new Lexicon(argArray.ToList());
+                ReturnValue = lexicon;
+            }
+            public override void Execute(SafeSharedObjects shared,IExec exec)
+            {
+
+                Structure[] argArray = new Structure[exec.Stack.CountArgs()];
+                for (int i = argArray.Length - 1;i >= 0;--i)
+                    argArray[i] = PopStructureAssertEncapsulated(exec); // fill array in reverse order because .. stack args.
+                AssertArgBottomAndConsume(exec);
                 var lexicon = new Lexicon(argArray.ToList());
                 ReturnValue = lexicon;
             }

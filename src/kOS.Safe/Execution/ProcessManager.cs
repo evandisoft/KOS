@@ -121,7 +121,7 @@ namespace kOS.Safe
         Boolean debugging = false;
         override internal void ContinueExecution(bool doProfiling)
         {
-            Deb.logexec("ContinueExecution", "Processes", processes.Count);
+            Deb.storeExec("ContinueExecution", "Processes", processes.Count);
 
             // TODO: this is just "getting started" code
             // it will be replaced later.
@@ -132,14 +132,14 @@ namespace kOS.Safe
 
 
             for (int i = processes.Count-1;i>= 0;i--) {
-                Deb.logexec("i", i, "total", processes.Count);
+                Deb.storeExec("i", i, "total", processes.Count);
                 var status = processes[i].Execute();
-                Deb.logexec("From Process Execute. status", status);
+                Deb.storeExec("From Process Execute. status", status);
 
                 switch (status) {
 
                 case ProcessStatus.FINISHED:
-                    Deb.logexec("Removing process", i);
+                    Deb.storeExec("Removing process", i);
                     processes.RemoveAt(i);
                     break;
 
@@ -147,33 +147,8 @@ namespace kOS.Safe
             }
         }
 
-
-
-
-        //// This is only here temporarily. Can be put somewhere else later
-        //static public Procedure CreateProgramProcedure(List<CodePart> parts){
-        //    Procedure programProcedure = ProgramBuilder2.BuildProgram(parts);
-        //    //Deb.logmisc("creating new builder");
-        //    //ProgramBuilder builder = new ProgramBuilder();
-        //    //Deb.logmisc("adding parts");
-        //    //builder.AddRange(parts);
-        //    //Deb.logmisc("building program");
-        //    //List<Opcode> newProgram = builder.BuildProgram();
-        //    //Deb.logmisc("running program");
-
-        //    //foreach (var opcode in newProgram) {
-        //    //    (opcode as OpcodePushDelegate)?.EncapsulateProcedure(newProgram);
-        //    //}
-        //    //foreach (var opcode in newProgram) {
-        //    //    Deb.logcompile(opcode.Label, opcode);
-        //    //}
-        //    return programProcedure;
-        //}
-
-
         public void RunProgram(Procedure Program,List<object> args=null){
-            Deb.miscIsLogging=true;
-            Deb.logexec("Creating Dummy processes");
+            Deb.storeExec("Creating Dummy processes");
             KOSProcess process = new KOSProcess(this);
             processes.Add(process);
             KOSThread thread = new KOSThread(process);
@@ -185,15 +160,11 @@ namespace kOS.Safe
 
         public void IfNotActiveStopDebugging(){
             if (debugging && processes.Count==0) {
-                Deb.logexec("Resetting program");
-
+                Deb.rawlog("Stopping debugging");
+                Deb.logall();
+                Deb.clearQueues();
                 debugging=false;
-                Deb.miscIsLogging=false;
-                Deb.clearOpcodeFile();
-                foreach (var currentOpcode in CPU.OpcodeLogQueue) {
-                    Deb.logopcode(currentOpcode.Label, currentOpcode); // evandisoft
-                }
-                CPU.OpcodeLogQueue.Clear();
+                Deb.loggingEnabled = false;
             }
         }
     }

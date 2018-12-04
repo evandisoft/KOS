@@ -22,35 +22,30 @@ namespace kOS.Safe
         /// Gets the current Opcode. 
         /// </summary>
         /// <value>The current opcode.</value>
-        Opcode currentOpcode;
-        internal KOSThread thread;
+        //Opcode currentOpcode = new OpcodeNOP();
         public bool IsFinished => instructionPointer>=Opcodes.Count;
  
         readonly IReadOnlyOpcodeList Opcodes;
         int instructionPointer = 0;
+        KOSThread thread = null;
 
 	    public ProcedureCall(KOSThread thread,Procedure procedure)
         {
-            this.thread=thread;
             Store = new VariableStore(thread.Process.ProcessManager.globalVariables);
             Store.AddClosure(procedure.Closure);
             Opcodes = procedure.Opcodes;
+            this.thread = thread;
+            CurrentOpcode=Opcodes[0];
         }
 
-        /// <summary>
-        /// Executes the current opcode, updates the instructionPointer, and
-        /// returns the opcode that was executed.
-        /// </summary>
-        public Opcode Execute()
-        {
-            currentOpcode=Opcodes[instructionPointer];
-            Deb.storeOpcode(currentOpcode);
-            Deb.logexec("Current Opcode", currentOpcode.Label, currentOpcode);
-            currentOpcode.Execute(thread);
-            Deb.logexec("In Execute. delta was", currentOpcode.DeltaInstructionPointer);
-            instructionPointer+=currentOpcode.DeltaInstructionPointer;
+        public Opcode CurrentOpcode { get; private set; }
 
-            return currentOpcode;
+        public void Execute()
+        {
+            CurrentOpcode.Execute(thread);
+            Deb.storeExec("In Update. delta was", CurrentOpcode.DeltaInstructionPointer);
+            instructionPointer+=CurrentOpcode.DeltaInstructionPointer;
+            CurrentOpcode=Opcodes[instructionPointer];
         }
     }
 }

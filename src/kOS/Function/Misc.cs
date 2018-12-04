@@ -91,6 +91,18 @@ namespace kOS.Function
                 throw new KOSCommandInvalidHereException(LineCol.Unknown(), "STAGE", "a non-active SHIP, KSP does not support this", "Core is on the active vessel");
             }
         }
+        public override void Execute(SharedObjects shared,IExec exec)
+        {
+            AssertArgBottomAndConsume(exec);
+            if (StageManager.CanSeparate && shared.Vessel.isActiveVessel) {
+                StageManager.ActivateNextStage();
+                exec.Thread.Wait(0);//shared.Cpu.YieldProgram(new YieldFinishedNextTick());
+            } else if (!StageManager.CanSeparate) {
+                SafeHouse.Logger.Log("FAIL SILENT: Stage is called before it is ready, Use STAGE:READY to check first if staging rapidly");
+            } else if (!shared.Vessel.isActiveVessel) {
+                throw new KOSCommandInvalidHereException(LineCol.Unknown(), "STAGE", "a non-active SHIP, KSP does not support this", "Core is on the active vessel");
+            }
+        }
     }
 
     [Function("add")]

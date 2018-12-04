@@ -12,6 +12,7 @@ using kOS.Sound;
 using kOS.Utilities;
 using FinePrint;
 using kOS.Safe;
+using kOS.Safe.Execution;
 
 namespace kOS.Function
 {

@@ -1666,7 +1666,7 @@ namespace kOS.Safe.Compilation.KS
                 compilingSetDestination = rememberCompilingSetDestination;
                 identifierIsSuffix = rememberIsSuffix;
             }
-            Deb.logcompile("in visitactualfunction");
+            //Deb.logcompile("in visitactualfunction");
             if (isDirect)
             {
                 if (options.FuncManager.Exists(directName)){
@@ -1885,7 +1885,7 @@ namespace kOS.Safe.Compilation.KS
                     if (isDirect && isUserFunc)
                 
                     {
-                        Deb.logcompile("Adding call for", firstIdentifier);
+                        Deb.storeCompile("Adding call for", firstIdentifier);
                         AddOpcode(new OpcodePush(new KOSArgMarkerType()));
                         AddOpcode(new OpcodeCall(firstIdentifier));
                     }
@@ -2025,7 +2025,7 @@ namespace kOS.Safe.Compilation.KS
                 && !userFuncObject.IsSystemLock()
                )
             {
-                Deb.logcompile("isvariable and isfunc"+identifier);
+                Deb.storeCompile("isvariable and isfunc"+identifier);
                 AddOpcode(new OpcodeCall(userFuncObject.ScopelessPointerIdentifier));
             }
             else
@@ -3052,7 +3052,7 @@ namespace kOS.Safe.Compilation.KS
         {
             NodeStartHousekeeping(node);
             AddOpcode(new OpcodePush(new KOSArgMarkerType()));
-            AddOpcode(new OpcodeCall("stage()"));
+            AddOpcode(new OpcodeCall("stage") { isBuiltin=true });
             AddOpcode(new OpcodePop()); // all functions now return a value even if it's a dummy we ignore.
         }
 
@@ -3325,7 +3325,7 @@ namespace kOS.Safe.Compilation.KS
                 AddOpcode(new OpcodePush(new KOSArgMarkerType()));
                 VisitNode(node.Nodes[1]);
                 // build list
-                AddOpcode(new OpcodeCall("buildlist()"));
+                AddOpcode(new OpcodeCall("buildlist") { isBuiltin=true });
                 if (allowLazyGlobal)
                     AddOpcode(new OpcodeStore(varName));
                 else

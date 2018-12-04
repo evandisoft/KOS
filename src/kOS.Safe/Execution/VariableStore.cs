@@ -16,7 +16,7 @@ namespace kOS.Safe.Execution {
         public readonly coll.Stack<Mapping> scopeStack = new coll.Stack<Mapping>();
 
         public VariableStore(VariableScope globalVariables){
-            Deb.logexec("Storing reference to globalScope", globalVariables);
+            Deb.storeExec("Storing reference to globalScope", globalVariables);
             this.globalVariables=globalVariables;
         }
 
@@ -33,15 +33,15 @@ namespace kOS.Safe.Execution {
 
         public void PushNewScope()
         {
-            Deb.logexec("Pushing new scope");
+            Deb.storeExec("Pushing new scope");
 			scopeStack.Push(new Mapping());
         }
 
         internal void PopScope(short numLevels)
         {
-            Deb.logexec("Popping scope. Numlevels",numLevels);
+            Deb.storeExec("Popping scope. Numlevels",numLevels);
             for (int i = 0;i<numLevels;i++){
-                Deb.logexec("Popping scope. i", i);
+                Deb.storeExec("Popping scope. i", i);
                 scopeStack.Pop();
             }
         }
@@ -49,7 +49,7 @@ namespace kOS.Safe.Execution {
         internal void SetNewLocal(string identifier, object value)
         {
             var lower_identifier = identifier.ToLower();
-            Deb.logexec("Setting new local", lower_identifier,"to",value);
+            Deb.storeExec("Setting new local", lower_identifier,"to",value);
             var local = scopeStack.Peek();
             local[lower_identifier]=new Variable { Name=lower_identifier, Value=value };
         }
@@ -57,7 +57,7 @@ namespace kOS.Safe.Execution {
 
         public object GetValue(object testValue, bool barewordOkay = false)
         {
-            Deb.logexec("GettingValue", testValue,"barewordOkay",barewordOkay);
+            Deb.storeExec("GettingValue", testValue,"barewordOkay",barewordOkay);
             // $cos     cos named variable
             // cos()    cos trigonometric function
             // cos      string literal "cos"
@@ -74,30 +74,30 @@ namespace kOS.Safe.Execution {
             }
             //evandisoft TODO: just hardwiring this in there to get it to not
             // treat the Procedure as an identifier
-            Deb.logexec("the type of testvalue is", testValue.GetType());
+            Deb.storeExec("the type of testvalue is", testValue.GetType());
             if (testValue.GetType()==typeof(Procedure)){
-                Deb.logexec("returning the procedure");
+                Deb.storeExec("returning the procedure");
                 return testValue; 
             }
 
 
             Variable variable = GetVariable(identifier, barewordOkay);
-            Deb.logexec("Got variable", variable,"value",variable!=null?variable.Value:null);
+            Deb.storeExec("Got variable", variable,"value",variable!=null?variable.Value:null);
             return variable.Value;
         }
 
         internal Variable GetVariable(string identifier, bool barewordOkay)
         {
-            Deb.logexec("GetVariable called for", identifier, "barewordOkay", barewordOkay);
+            Deb.storeExec("GetVariable called for", identifier, "barewordOkay", barewordOkay);
             identifier = identifier.ToLower();
             
             foreach (var level in scopeStack) {
-                Deb.logexec("Checking level", level,"total levels",scopeStack.Count);
+                Deb.storeExec("Checking level", level,"total levels",scopeStack.Count);
                 if (level.TryGetValue(identifier, out Variable variable)) {
                     return variable;
                 }
             }
-            Deb.logexec("Attempting to get it in global scope");
+            Deb.storeExec("Attempting to get it in global scope");
             //Variable var;
             if (globalVariables.Variables.TryGetValue(identifier, out Variable var)) {
                 return var;
@@ -119,22 +119,22 @@ namespace kOS.Safe.Execution {
         public void SetValue(string identifier, object value)
         {
             Variable variable;
-            Deb.logexec("value is of type", value.GetType());
+            Deb.storeExec("value is of type", value.GetType());
             identifier = identifier.ToLower();
-            Deb.logexec("Attempting to find a place to set it in local scope");
+            Deb.storeExec("Attempting to find a place to set it in local scope");
             foreach (var level in scopeStack){
                 if (level.TryGetValue(identifier, out variable)) {
                     variable.Value=value; 
                     return;
                 }
             }
-            Deb.logexec("Attempting to find a place to set it in global scope");
+            Deb.storeExec("Attempting to find a place to set it in global scope");
             if (globalVariables.Variables.TryGetValue(identifier, out variable)) {
                 variable.Value=value; 
                 return;
             }
 
-            Deb.logexec("Setting it in new global variable");
+            Deb.storeExec("Setting it in new global variable");
             SetGlobal(identifier, value);
         }
 

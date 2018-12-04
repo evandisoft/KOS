@@ -13,7 +13,6 @@ namespace kOS.Safe.Compilation{
             // This will be used to replace all the pushdelecaterelocatelater
             // opcodes with the proper pushdelegate opcodes.
             var pushDelegatesMap = CreatePushDelegatesMap(parts);
-            Deb.miscIsLogging=true;
 
             List<Opcode> mainProgram = null;
             foreach (var part in parts) {
@@ -34,16 +33,16 @@ namespace kOS.Safe.Compilation{
             ReplaceRelocateAndJumpLabels(procedureOpcodes, pushDelegatesMap);
             var programProcedure = new Procedure(procedureOpcodes);
 
-            Deb.logcompile("Opcodes for main program");
+            Deb.storeCompile("Opcodes for main program");
             foreach (var opcode in procedureOpcodes) {
-                Deb.logcompile(opcode.Label, opcode);
+                Deb.storeCompile(opcode);
             }
             foreach (var pushDelegate in pushDelegatesMap.Values){
                 ReplaceRelocateAndJumpLabels(
                     pushDelegate.procedureOpcodes, pushDelegatesMap);
-                Deb.logcompile("Opcodes for", pushDelegate.DestinationLabel);
+                Deb.storeCompile("Opcodes for", pushDelegate.DestinationLabel);
                 foreach(var opcode in pushDelegate.procedureOpcodes){
-                    Deb.logcompile(opcode.Label, opcode);
+                    Deb.storeCompile(opcode);
                 }
             }
 
@@ -144,22 +143,22 @@ namespace kOS.Safe.Compilation{
 
         static public void PrintCodeParts(string message, List<CodePart> parts)
         {
-            Deb.logcompile("Examining codeparts "+message);
+            Deb.storeCompile("Examining codeparts "+message);
             foreach (var part in parts) {
-                Deb.logcompile("Function opcodes");
+                Deb.storeCompile("Function opcodes");
                 foreach (var opcode in part.FunctionsCode) {
-                    Deb.logcompile(opcode.Label, opcode);
+                    Deb.storeCompile(opcode);
                 }
-                Deb.logcompile("Initialization opcodes");
+                Deb.storeCompile("Initialization opcodes");
                 foreach (var opcode in part.InitializationCode) {
-                    Deb.logcompile(opcode.Label, opcode);
+                    Deb.storeCompile(opcode);
                 }
-                Deb.logcompile("Mainprogram code");
+                Deb.storeCompile("Mainprogram code");
                 foreach (var opcode in part.MainCode) {
-                    Deb.logcompile(opcode.Label, opcode);
+                    Deb.storeCompile(opcode);
                 }
             }
-            Deb.logcompile("End of Codeparts "+message);
+            Deb.storeCompile("End of Codeparts "+message);
         }
 
         static void ReplaceJumpLabels(List<Opcode> opcodes){

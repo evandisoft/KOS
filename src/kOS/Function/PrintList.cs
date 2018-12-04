@@ -12,6 +12,7 @@ using kOS.Utilities;
 using Math = System.Math;
 using System.Linq;
 using kOS.Safe;
+using kOS.Safe.Execution;
 
 namespace kOS.Function
 {

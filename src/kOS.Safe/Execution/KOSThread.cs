@@ -80,7 +80,7 @@ namespace kOS.Safe {
         /// </summary>
         public ThreadStatus Execute()
         {
-            Deb.logexec("Executing thread", ID, nameof(ProcedureCall), callStack.Count);
+            Deb.storeExec("Executing thread", ID, nameof(ProcedureCall), callStack.Count);
 
             if(IsWaiting()){
                 return ThreadStatus.WAIT;
@@ -91,7 +91,7 @@ namespace kOS.Safe {
 
             var status=ExecuteLoop();
 
-            Deb.logexec("Exiting thread", ID, "with status", status);
+            Deb.storeExec("Exiting thread", ID, "with status", status);
 
             return status;
         }
@@ -115,11 +115,26 @@ namespace kOS.Safe {
 
                 Opcode opcode = null;
                 try {
-                    opcode = CurrentProcedure.Execute();
-                    Deb.logexec("Stack for thread", ID, "is", Stack);
-                    Deb.logexec("Stack count of Store is", CurrentStore.scopeStack.Count);
+                    // Need to get this reference for the switch statement below
+                    // as well as for printing out the current opcode prior
+                    // to any errors.
+                    opcode = CurrentProcedure.CurrentOpcode;
+                    Deb.storeExec("Current Opcode", opcode.Label, opcode);
+                    Deb.storeExec("Stack for thread", ID, "is", Stack);
+                    Deb.storeExec("Stack count of Store is", CurrentStore.scopeStack.Count);
+                    Deb.storeOpcode(opcode);
+
+                    // DO NOT CALL the opcode.Execute directly in this thread. If you
+                    // do so, the instruction pointer will not be updated properly.
+                    CurrentProcedure.Execute();
                 } catch (Exception e) {
-                    Deb.logexec(e);
+                    Deb.storeExec(e);
+                    Deb.storeException("Stack for thread", ID, "is", Stack);
+                    Deb.storeException("Stack count of Store is", CurrentStore.scopeStack.Count);
+                    Deb.storeException(e);
+                    Deb.logall();
+                    Deb.clearQueues();
+                    //Deb.logall();
                     return ThreadStatus.ERROR;
                 }
 
@@ -138,7 +153,7 @@ namespace kOS.Safe {
         /// otherwise returns ThreadStatus.OK.
         /// </summary>
         ThreadStatus PopStackAndReturnFinishedIfEmpty(){
-            Deb.logexec("Removing ProcedureExec");
+            Deb.storeExec("Removing ProcedureExec");
             callStack.Pop();
             if (callStack.Count==0) {
                 return ThreadStatus.FINISHED;
@@ -192,7 +207,7 @@ namespace kOS.Safe {
         /// Make this thread wait the specified number of seconds.
         /// </summary>
         /// <param name="seconds">Argument.</param>
-        internal void Wait(double seconds)
+        public void Wait(double seconds)
         {
             timeToWaitInMilliseconds=Convert.ToInt64(seconds*1000);
             if(timeToWaitInMilliseconds>0){
@@ -208,12 +223,12 @@ namespace kOS.Safe {
         {
             if (timeToWaitInMilliseconds>0){
                 if(timeToWaitInMilliseconds>waitWatch.ElapsedMilliseconds){
-                    Deb.logexec("Thread", ID, "is waiting for",
+                    Deb.storeExec("Thread", ID, "is waiting for",
                            timeToWaitInMilliseconds-waitWatch.ElapsedMilliseconds,
                            "more milliseconds");
                     return true;
                 }
-                Deb.logexec("Thread", ID, "is no longer waiting.");
+                Deb.storeExec("Thread", ID, "is no longer waiting.");
                 timeToWaitInMilliseconds=0; waitWatch.Reset();
             }
             return false;
@@ -235,9 +250,9 @@ namespace kOS.Safe {
         public object PopValue(bool barewordOkay = false)
         {
             var retval = Stack.Pop();
-            Deb.logexec("Getting value of", retval);
+            Deb.storeExec("Getting value of", retval);
             var retval2 = CurrentStore.GetValue(retval, barewordOkay);
-            Deb.logexec("Got value of", retval2);
+            Deb.storeExec("Got value of", retval2);
             return retval2;
         }
     }

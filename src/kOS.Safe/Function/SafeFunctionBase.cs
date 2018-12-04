@@ -58,7 +58,10 @@ namespace kOS.Safe.Function
             UsesAutoReturn = true;
         }
 
-        public abstract void Execute(SafeSharedObjects shared);
+        public virtual void Execute(SafeSharedObjects shared)
+        {
+            throw new NotImplementedException("This builtin is not yet implemented.");
+        }
         public virtual void Execute(SafeSharedObjects shared,IExec exec){
             throw new NotImplementedException("This builtin is not yet implemented.");
         }
@@ -147,6 +150,10 @@ namespace kOS.Safe.Function
             else
                 return -1;
         }
+        protected int CountRemainingArgs(IExec exec)
+        {
+            return exec.Stack.CountArgs();
+        }
 
         /// <summary>
         /// A utility function that a function's Execute() should use in place of cpu.PopValue(),
@@ -191,6 +198,11 @@ namespace kOS.Safe.Function
         protected Structure PopStructureAssertEncapsulated(SafeSharedObjects shared, bool barewordOkay = false)
         {
             object returnValue = PopValueAssert(shared, barewordOkay);
+            return Structure.FromPrimitiveWithAssert(returnValue);
+        }
+        protected Structure PopStructureAssertEncapsulated(IExec exec, bool barewordOkay = false)
+        {
+            object returnValue = PopValueAssert(exec, barewordOkay);
             return Structure.FromPrimitiveWithAssert(returnValue);
         }
 

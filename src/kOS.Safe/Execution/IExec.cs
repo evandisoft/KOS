@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using kOS.Safe.Compilation;
 using kOS.Safe.Encapsulation;
-using kOS.Safe.Execution;
 using coll = System.Collections.Generic;
 using kOS.Safe.Exceptions;
 using System.Collections;
 
-namespace kOS.Safe
+namespace kOS.Safe.Execution
 {
     /// <summary>
     /// Interface to be passed to Opcodes, allowing them to access or execute

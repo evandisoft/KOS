@@ -4,12 +4,16 @@ using kOS.Suffixed;
 using System;
 using TimeSpan = kOS.Suffixed.TimeSpan;
 using kOS.Safe;
+using kOS.Safe.Execution;
 
 namespace kOS.Function
 {
     public abstract class FunctionBase : SafeFunctionBase
     {
-        public abstract void Execute(SharedObjects shared);
+        public virtual void Execute(SharedObjects shared)
+        {
+            throw new NotImplementedException("FunctionBase Execute");
+        }
 
         public override void Execute(Safe.SafeSharedObjects shared)
         {

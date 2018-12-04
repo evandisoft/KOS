@@ -27,7 +27,7 @@ namespace kOS.Safe.Function
             // one in here because it can produce the function name in an error 
             string textToPrint = PopValueAssert(exec).ToString();
             AssertArgBottomAndConsume(exec);
-            Deb.logexec("in print arg is", textToPrint);
+            Deb.storeExec("in print arg is", textToPrint);
             exec.Shared.Screen.Print(textToPrint);
         }
     }

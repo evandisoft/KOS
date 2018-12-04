@@ -1,16 +1,17 @@
 ﻿using System;
 using kOS.Safe.Encapsulation;
 using kOS.Safe.Exceptions;
+using kOS.Safe.Execution;
 
 namespace kOS.Safe.Function
 {
     [Function("abs")]
     public class FunctionAbs : SafeFunctionBase
     {
-        public override void Execute(SafeSharedObjects shared)
+        public override void Execute(SafeSharedObjects shared, IExec exec)
         {
-            double argument = GetDouble(PopValueAssert(shared));
-            AssertArgBottomAndConsume(shared);
+            double argument = GetDouble(PopValueAssert(exec));
+            AssertArgBottomAndConsume(exec);
             double result = Math.Abs(argument);
             ReturnValue = result;
         }
@@ -19,11 +20,11 @@ namespace kOS.Safe.Function
     [Function("mod")]
     public class FunctionMod : SafeFunctionBase
     {
-        public override void Execute(SafeSharedObjects shared)
+        public override void Execute(SafeSharedObjects shared, IExec exec)
         {
-            double divisor = GetDouble(PopValueAssert(shared));
-            double dividend = GetDouble(PopValueAssert(shared));
-            AssertArgBottomAndConsume(shared);
+            double divisor = GetDouble(PopValueAssert(exec));
+            double dividend = GetDouble(PopValueAssert(exec));
+            AssertArgBottomAndConsume(exec);
             double result = dividend % divisor;
             ReturnValue = result;
         }
@@ -32,10 +33,10 @@ namespace kOS.Safe.Function
     [Function("floor")]
     public class FunctionFloor : SafeFunctionBase
     {
-        public override void Execute(SafeSharedObjects shared)
+        public override void Execute(SafeSharedObjects shared, IExec exec)
         {
-            double argument = GetDouble(PopValueAssert(shared));
-            AssertArgBottomAndConsume(shared);
+            double argument = GetDouble(PopValueAssert(exec));
+            AssertArgBottomAndConsume(exec);
             double result = Math.Floor(argument);
             ReturnValue = result;
         }
@@ -44,10 +45,10 @@ namespace kOS.Safe.Function
     [Function("ceiling")]
     public class FunctionCeiling : SafeFunctionBase
     {
-        public override void Execute(SafeSharedObjects shared)
+        public override void Execute(SafeSharedObjects shared, IExec exec)
         {
-            double argument = GetDouble(PopValueAssert(shared));
-            AssertArgBottomAndConsume(shared);
+            double argument = GetDouble(PopValueAssert(exec));
+            AssertArgBottomAndConsume(exec);
             double result = Math.Ceiling(argument);
             ReturnValue = result;
         }
@@ -56,10 +57,10 @@ namespace kOS.Safe.Function
     [Function("round")]
     public class FunctionRound : SafeFunctionBase
     {
-        public override void Execute(SafeSharedObjects shared)
+        public override void Execute(SafeSharedObjects shared, IExec exec)
         {
             int decimals;
-            int argCount = CountRemainingArgs(shared);
+            int argCount = CountRemainingArgs(exec);
 
             switch (argCount)
             {
@@ -67,14 +68,14 @@ namespace kOS.Safe.Function
                 decimals = 0;
                 break;
             case 2:
-                decimals = GetInt(PopValueAssert(shared));
+                decimals = GetInt(PopValueAssert(exec));
                 break;
             default:
                 throw new KOSArgumentMismatchException(new []{1,2}, argCount);
             }
 
-            double argument = GetDouble(PopValueAssert(shared));
-            AssertArgBottomAndConsume(shared);
+            double argument = GetDouble(PopValueAssert(exec));
+            AssertArgBottomAndConsume(exec);
             double result = Math.Round(argument, decimals);
             ReturnValue = result;
         }
@@ -83,10 +84,10 @@ namespace kOS.Safe.Function
     [Function("sqrt")]
     public class FunctionSqrt : SafeFunctionBase
     {
-        public override void Execute(SafeSharedObjects shared)
+        public override void Execute(SafeSharedObjects shared, IExec exec)
         {
-            double argument = GetDouble(PopValueAssert(shared));
-            AssertArgBottomAndConsume(shared);
+            double argument = GetDouble(PopValueAssert(exec));
+            AssertArgBottomAndConsume(exec);
             double result = Math.Sqrt(argument);
             ReturnValue = result;
         }
@@ -96,10 +97,10 @@ namespace kOS.Safe.Function
     [Function("ln")]
     public class FunctionLn : SafeFunctionBase
     {
-        public override void Execute(SafeSharedObjects shared)
+        public override void Execute(SafeSharedObjects shared, IExec exec)
         {
-            double argument = GetDouble(PopValueAssert(shared));
-            AssertArgBottomAndConsume(shared);
+            double argument = GetDouble(PopValueAssert(exec));
+            AssertArgBottomAndConsume(exec);
             double result = Math.Log(argument);
             ReturnValue = result;
         }
@@ -108,10 +109,10 @@ namespace kOS.Safe.Function
     [Function("log10")]
     public class FunctionLog10 : SafeFunctionBase
     {
-        public override void Execute(SafeSharedObjects shared)
+        public override void Execute(SafeSharedObjects shared, IExec exec)
         {
-            double argument = GetDouble(PopValueAssert(shared));
-            AssertArgBottomAndConsume(shared);
+            double argument = GetDouble(PopValueAssert(exec));
+            AssertArgBottomAndConsume(exec);
             double result = Math.Log10(argument);
             ReturnValue = result;
         }
@@ -120,11 +121,11 @@ namespace kOS.Safe.Function
     [Function("min")]
     public class FunctionMin : SafeFunctionBase
     {
-        public override void Execute(SafeSharedObjects shared)
+        public override void Execute(SafeSharedObjects shared, IExec exec)
         {
-            Structure argument1 = PopStructureAssertEncapsulated(shared);
-            Structure argument2 = PopStructureAssertEncapsulated(shared);
-            AssertArgBottomAndConsume(shared);
+            Structure argument1 = PopStructureAssertEncapsulated(exec);
+            Structure argument2 = PopStructureAssertEncapsulated(exec);
+            AssertArgBottomAndConsume(exec);
             Type scalarCompare = typeof(ScalarValue);
             Type stringCompare = typeof(StringValue);
             if (scalarCompare.IsInstanceOfType(argument1) && scalarCompare.IsInstanceOfType(argument2))
@@ -150,11 +151,11 @@ namespace kOS.Safe.Function
     [Function("max")]
     public class FunctionMax : SafeFunctionBase
     {
-        public override void Execute(SafeSharedObjects shared)
+        public override void Execute(SafeSharedObjects shared, IExec exec)
         {
-            Structure argument1 = PopStructureAssertEncapsulated(shared);
-            Structure argument2 = PopStructureAssertEncapsulated(shared);
-            AssertArgBottomAndConsume(shared);
+            Structure argument1 = PopStructureAssertEncapsulated(exec);
+            Structure argument2 = PopStructureAssertEncapsulated(exec);
+            AssertArgBottomAndConsume(exec);
             Type scalarCompare = typeof(ScalarValue);
             Type stringCompare = typeof(StringValue);
             if (scalarCompare.IsInstanceOfType(argument1) && scalarCompare.IsInstanceOfType(argument2))
@@ -182,9 +183,9 @@ namespace kOS.Safe.Function
     {
         private readonly Random random = new Random();
 
-        public override void Execute(SafeSharedObjects shared)
+        public override void Execute(SafeSharedObjects shared, IExec exec)
         {
-            AssertArgBottomAndConsume(shared);
+            AssertArgBottomAndConsume(exec);
             ReturnValue = Structure.FromPrimitive(random.NextDouble());
         }
     }
@@ -192,10 +193,10 @@ namespace kOS.Safe.Function
     [Function("char")]
     public class FunctionChar : SafeFunctionBase
     {
-        public override void Execute(SafeSharedObjects shared)
+        public override void Execute(SafeSharedObjects shared, IExec exec)
         {
-            double argument = GetDouble(PopValueAssert(shared));
-            AssertArgBottomAndConsume(shared);
+            double argument = GetDouble(PopValueAssert(exec));
+            AssertArgBottomAndConsume(exec);
             string result = new string((char) argument, 1);
             ReturnValue = new StringValue(result);
         }
@@ -204,10 +205,10 @@ namespace kOS.Safe.Function
     [Function("unchar")]
     public class FunctionUnchar : SafeFunctionBase
     {
-        public override void Execute(SafeSharedObjects shared)
+        public override void Execute(SafeSharedObjects shared, IExec exec)
         {
-            string argument = PopValueAssert(shared).ToString();
-            AssertArgBottomAndConsume(shared);
+            string argument = PopValueAssert(exec).ToString();
+            AssertArgBottomAndConsume(exec);
             char result = argument.ToCharArray()[0];
             ReturnValue = ScalarValue.Create((int)result);
         }
