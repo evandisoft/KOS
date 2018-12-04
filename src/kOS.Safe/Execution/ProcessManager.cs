@@ -162,9 +162,8 @@ namespace kOS.Safe
             if (debugging && processes.Count==0) {
                 Deb.rawlog("Stopping debugging");
                 Deb.logall();
-                Deb.clearQueues();
                 debugging=false;
-                Deb.loggingEnabled = false;
+                Deb.disableLogging();
             }
         }
     }

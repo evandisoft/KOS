@@ -42,10 +42,11 @@ namespace kOS.Safe
 
         public void Execute()
         {
+            CurrentOpcode = Opcodes[instructionPointer];
             CurrentOpcode.Execute(thread);
-            Deb.storeExec("In Update. delta was", CurrentOpcode.DeltaInstructionPointer);
+            Deb.storeExec("In Execute. delta was", CurrentOpcode.DeltaInstructionPointer);
             instructionPointer+=CurrentOpcode.DeltaInstructionPointer;
-            CurrentOpcode=Opcodes[instructionPointer];
+
         }
     }
 }

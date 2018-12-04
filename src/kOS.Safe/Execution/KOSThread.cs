@@ -133,8 +133,6 @@ namespace kOS.Safe {
                     Deb.storeException("Stack count of Store is", CurrentStore.scopeStack.Count);
                     Deb.storeException(e);
                     Deb.logall();
-                    Deb.clearQueues();
-                    //Deb.logall();
                     return ThreadStatus.ERROR;
                 }
 

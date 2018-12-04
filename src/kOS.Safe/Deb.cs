@@ -20,28 +20,39 @@ namespace kOS.Safe
         const string logBasename = "Logs/kOS/";
         static Dictionary<QueueLogType,Queue<object[]>>
             logQueueDictionary=new Dictionary<QueueLogType,Queue<object[]>>();
-        static public bool loggingEnabled = false;
-        //static Dictionary<QueueLogType, bool>
-            //enabledDictionary= new Dictionary<QueueLogType, bool>();
+        static bool loggingEnabled = false;
+        static public void enableLogging() {
+            rawlog("Logging enabled");
+            loggingEnabled = true;
+        }
+        static public void disableLogging() {
+            rawlog("Logging disabled");
+            loggingEnabled = false;
+        }
         static public int LogLength=10000;
         static void log(QueueLogType logType, Queue<object[]> objectArrays) {
-            rawlog("Logging " + logType + " to disk, of size "+objectArrays.Count);
             string logFilename = logname(logType);
+            rawlog("Logging " + logType + " to "+logFilename+", of size "+objectArrays.Count);
+
             foreach(var objArray in objectArrays) {
-                File.AppendAllText(logFilename, ToString(objArray)+"\n");
+                //rawlog("Attempting Object Array To string");
+                string toWrite = ToString(objArray) + "\n";
+                //rawlog("writing " + toWrite + " to disk");
+                File.AppendAllText(logFilename, toWrite);
             }
+            //rawlog("Clearing queue " + logType);
+            objectArrays.Clear();
         }
         static string logname(QueueLogType queueLogType) {
             return logBasename + queueLogType.ToString().ToLower() + ".log";
         }
         static public void clearLogs() {
-            foreach(var logType in logQueueDictionary.Keys) {
-                File.WriteAllText(logname(logType), "");
-            }
-        }
-        static public void clearQueues() {
-            foreach (var queue in logQueueDictionary.Values) {
-                queue.Clear();
+            rawlog("Clearing All Logs");
+            foreach(var item in logQueueDictionary) {
+                rawlog("Clearing Log " + item.Key);
+                File.WriteAllText(logname(item.Key), "");
+                //rawlog("Clearing queue " + item.Key);
+                item.Value.Clear();
             }
         }
         static void store(QueueLogType logType,object[] obj){
@@ -74,7 +85,7 @@ namespace kOS.Safe
         }
         static string ToString(object obj) {
             if (obj is string) {
-                return ((string)obj);
+                return obj as string;
             }
             if (obj is Opcode) {
                 var opcode = obj as Opcode;
@@ -86,11 +97,14 @@ namespace kOS.Safe
             return obj.ToString();
         }
         static string ToString(object[] objs) {
+            //rawlog("Object Array To string");
             StringBuilder stringBuilder = new StringBuilder();
             foreach(var obj in objs) {
+                //rawlog("writing object " + obj+" ToString("+ToString(obj));
                 stringBuilder.Append(ToString(obj));
                 stringBuilder.Append(",");
             }
+            //rawlog("final result " + stringBuilder.ToString());
             return stringBuilder.ToString();
         }
         static public void storeOpcode(params object[] objs) {
@@ -105,24 +119,5 @@ namespace kOS.Safe
         static public void storeCompile(params object[] objs) {
             store(QueueLogType.COMPILE, objs);
         }
-        //static public void enable(QueueLogType logType) {
-        //    enabledDictionary[logType] = true;
-        //}
-        //static public void disable(QueueLogType logType) {
-        //    enabledDictionary[logType] = false;
-        //}
-
-        //static public void enableAll() {
-        //    rawlog("enabling all");
-        //    foreach (var logType in enabledDictionary.Keys) {
-        //        enabledDictionary[logType] = true;
-        //    }
-        //}
-        //static public void disableAll() {
-        //    rawlog("disabling all");
-        //    foreach (var logType in enabledDictionary.Keys) {
-        //        enabledDictionary[logType] = false;
-        //    }
-        //}
     }
 }
