@@ -863,7 +863,7 @@ namespace kOS.Safe.Compilation
             }
 
             ISuffixResult result = specialValue.GetSuffix(Identifier);
-
+            //Deb.logexec("ismethocallattmpet"+IsMethodCallAttempt);
             // If the result is a suffix that is still in need of being invoked and hasn't resolved to a value yet:
             if (result != null && !IsMethodCallAttempt && !result.HasValue) {
                 // This is what happens when someone tries to call a suffix method as if
@@ -924,6 +924,11 @@ namespace kOS.Safe.Compilation
         {
             IsMethodCallAttempt = true;
             base.Execute(cpu);
+        }
+        public override void Execute(IExec exec)
+        {
+            IsMethodCallAttempt = true;
+            base.Execute(exec);
         }
     }
 
@@ -1831,7 +1836,23 @@ namespace kOS.Safe.Compilation
                 }
             }
             else{
-                throw new NotImplementedException("This type of call is not implemented.");
+                foreach(var stackItem in exec.Stack){
+                    Deb.logexec("looking through arguments in stack for object to call");
+                    Deb.logexec("Stack is ",exec.Stack);
+                    if(stackItem is Procedure){
+                        var procedure=stackItem as Procedure;
+                        Deb.logexec("Calling procedure", procedure);
+                        exec.Thread.Call(procedure);
+                        break;
+                    } 
+                    else if(stackItem is ISuffixResult){
+                        var suffix = stackItem as ISuffixResult;
+                        Deb.logexec("Invoking suffixresult", suffix);
+                        suffix.Invoke(exec);
+                        exec.Stack.Push(suffix.Value);
+                        break;
+                    }
+                }
             }
         }
 

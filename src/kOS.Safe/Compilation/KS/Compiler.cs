@@ -1631,7 +1631,7 @@ namespace kOS.Safe.Compilation.KS
         /// OpcodeCall's argument itself.</param>
         /// <param name="directName">In the case where it's a direct function, what's the name of it?  In the case
         /// where it's not direct, this argument doesn't matter.</param>
-        private void VisitActualFunction(ParseNode node, bool isDirect, string directName = "")
+        private void VisitActualFunction(ParseNode node, bool isDirect, bool isMethod, bool isMember, string directName = "")
         {
             NodeStartHousekeeping(node);
 
@@ -1821,6 +1821,8 @@ namespace kOS.Safe.Compilation.KS
 
                 // Push this term on the stack unless it's the name of the user function or built-in function or a suffix:
                 bool isDirect = true;
+                bool isMember = false;
+                bool isMethod = false;
 
                 if (usingSetMember && suffixTerm.Nodes.Count == 1)
                 {
@@ -1832,6 +1834,12 @@ namespace kOS.Safe.Compilation.KS
                     string suffixName = GetIdentifierText(suffixTerm.Nodes[0]);
                     AddOpcode(startsWithFunc ? new OpcodeGetMethod(suffixName) : new OpcodeGetMember(suffixName));
                     isDirect = false;
+                    //if (startsWithFunc) {
+                    //    isMethod=true;
+                    //} else {
+                    //    isMember=true;
+                    //    AddOpcode(new OpcodeGetMember(suffixName));
+                    //}
                 }
                 else if (!isUserFunc && (nodeIndex > 0 || !startsWithFunc))
                 {
@@ -1862,7 +1870,8 @@ namespace kOS.Safe.Compilation.KS
                     {
                         // direct if it's just one term like foo(aaa) but indirect
                         // if it's a list of suffixes like foo:bar(aaa):
-                        VisitActualFunction(trailerTerm, thisTermIsDirect, firstIdentifier);
+
+                        VisitActualFunction(trailerTerm, thisTermIsDirect, isMethod, isMember, firstIdentifier);
                     }
                     if (isArray)
                     {
