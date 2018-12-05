@@ -131,8 +131,15 @@ namespace kOS.Safe.Function
 
             var programProcedure = ProgramBuilder2.BuildProgram(commandParts);
             //Deb.miscIsLogging=false;
-            exec.Stack.Push(0); // the "return" value
-            exec.Thread.CallWithArgs(programProcedure,progArgs);
+            exec.Stack.Push(0);
+            if (processManager.InterpreterActive()) {
+                processManager.RunInNewProcess(programProcedure, progArgs);
+            } else {
+                exec.Stack.Push(0); // the "return" value
+                exec.Thread.CallWithArgs(programProcedure, progArgs);
+            }
+
+            UsesAutoReturn = false;
             //processManager.RunProgram(new Procedure(newProgram), progArgs);
 
             // clear the "program" compilation context
@@ -159,7 +166,7 @@ namespace kOS.Safe.Function
             // Because run() returns FIRST, and THEN the CPU jumps to the new program's first instruction that it set up,
             // it needs to put the return stack in a weird order.  Its return value needs to be buried UNDER the args to the
             // program it's calling:
-            UsesAutoReturn = false;
+
 
             //exec.Stack.Push(0); // dummy return that all functions have.
 

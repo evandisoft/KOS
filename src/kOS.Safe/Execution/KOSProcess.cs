@@ -11,8 +11,8 @@ namespace kOS.Safe
         OK,
         FINISHED,
         GLOBAL_INSTRUCTION_LIMIT,
-        STACK_EMPTY,
         WAIT,
+        ERROR,
     }
 
     /// <summary>
@@ -39,6 +39,9 @@ namespace kOS.Safe
     /// is reached. It is executed in a loop and refilled if ever empty.
     /// </summary>
     public class KOSProcess {
+        static long IDCounter = 0;
+        public readonly long ID = IDCounter++;
+
         /// <summary>
         /// Maps SystemTrigger names to SystemTriggers, so that we can remove
         /// them later.
@@ -73,46 +76,49 @@ namespace kOS.Safe
             ProcessManager=processManager;
         }
 
-        public ProcessStatus Execute()
+        public ProcessStatus Status { get; set; } = ProcessStatus.OK;
+
+        public void Execute()
 		{
             Deb.EnqueueExec("Process Execute. Threads", threadSet.Count);
             Deb.EnqueueExec("Process Execute. Triggers", triggerSet.Count);
-            if (threadSet.Count==0){ return ProcessStatus.FINISHED; }
-            ProcessStatus status;
+            if (threadSet.Count==0){ 
+                Status=ProcessStatus.FINISHED;
+                return;
+            }
 
             FillTriggerStackIfEmpty();
-            status = ExecuteThreads(triggerStack);
+            ExecuteThreads(triggerStack);
 
-            switch(status){
+            switch(Status){
             case ProcessStatus.OK:
                 break;
                 // We don't care if all the triggers are waiting.
                 // Only the threads run in a loop until GLOBAL_INSTRUCTION_LIMIT
                 // is reached.
             case ProcessStatus.WAIT:
-                status=ProcessStatus.OK;
+                Status = ProcessStatus.OK;
                 break;
             default:
-                return status;
+                return;
             }
 
             // execute all threads until GLOBAL_INSTRUCTION_LIMIT is
             // exceeded
-            while(status==ProcessStatus.OK){
+            while(Status == ProcessStatus.OK){
                 FillThreadStackIfEmpty();
-                status = ExecuteThreads(threadStack);
+                ExecuteThreads(threadStack);
                 // If there are no normal threads left, then end
                 // this process
                 if (threadSet.Count==0) {
-                    return ProcessStatus.FINISHED;
+                    Status=ProcessStatus.FINISHED;
                 }
             }
 
-            return status;
         }
 
-        ProcessStatus ExecuteThreads(coll.Stack<KOSThread> stack){
-            if (stack.Count==0) return ProcessStatus.OK;
+        void ExecuteThreads(coll.Stack<KOSThread> stack){
+            if (stack.Count == 0) return;
             // Keep track of whether all the threads were waiting.
             // If they were all waiting, then effectively the process
             // is waiting.
@@ -142,19 +148,30 @@ namespace kOS.Safe
                 // thread after the update is over. (Don't pop the current
                 // thread/trigger from its stack)
                 case ThreadStatus.GLOBAL_INSTRUCTION_LIMIT:
-                    return ProcessStatus.GLOBAL_INSTRUCTION_LIMIT;
+                    Status=ProcessStatus.GLOBAL_INSTRUCTION_LIMIT;
+                    return;
                 // if this thread has an error, or has been terminated, remove
                 // it
                 case ThreadStatus.TERMINATED:
-                case ThreadStatus.ERROR:
                     if (currentThread is SystemTrigger) {
                         RemoveSystemTrigger(((SystemTrigger)currentThread).Name);
-                    }else{
+                    } else {
                         RemoveThread(currentThread);
                     }
-
                     stack.Pop();
                     break;
+                case ThreadStatus.ERROR:
+                    Status = ProcessStatus.ERROR;
+                    return;
+
+                    //if (currentThread is SystemTrigger) {
+                    //    RemoveSystemTrigger(((SystemTrigger)currentThread).Name);
+                    //}else{
+                    //    RemoveThread(currentThread);
+                    //}
+
+                    //stack.Pop();
+                    //break;
                 case ThreadStatus.FINISHED:
                     if (currentThread is SystemTrigger){
                         RemoveSystemTrigger(((SystemTrigger)currentThread).Name);
@@ -174,9 +191,8 @@ namespace kOS.Safe
             }
 
             if(allThreadsWaiting){
-                return ProcessStatus.WAIT;
+                Status=ProcessStatus.WAIT;
             }
-            return ProcessStatus.OK;
         }
 
         /// <summary>

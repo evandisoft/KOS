@@ -104,6 +104,10 @@ namespace kOS.Safe {
                     }
                     StopWaiting();
                     break;
+                case ThreadStatus.GLOBAL_INSTRUCTION_LIMIT:
+                case ThreadStatus.THREAD_INSTRUCTION_LIMIT:
+                    Status = ThreadStatus.OK;
+                    break;
                 case ThreadStatus.FINISHED:
                 case ThreadStatus.ERROR:
                 case ThreadStatus.TERMINATED:

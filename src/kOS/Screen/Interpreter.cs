@@ -157,7 +157,7 @@ namespace kOS.Screen
 					
 
 					var programProcedure = ProgramBuilder2.BuildProgram(commandParts);
-					processManager.RunProgram(programProcedure,new List<object>());
+					processManager.RunInInterpreter(programProcedure,new List<object>());
 				} else{
 					var interpreterContext = ((CPU)Shared.Cpu).GetInterpreterContext();
 					interpreterContext.AddParts(commandParts);

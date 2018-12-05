@@ -43,7 +43,7 @@ namespace kOS.Safe
         }
     }
 
-
+   
 
     /// <summary>
     /// Process manager. - Replacement for the CPU
@@ -56,12 +56,98 @@ namespace kOS.Safe
     /// </summary>
     public class ProcessManager:CPU
     {
-        readonly List<KOSProcess> processes = new List<KOSProcess> ();
+        readonly Stack<KOSProcess> processes = new Stack<KOSProcess> ();
         internal InstructionCounter GlobalInstructionCounter = new InstructionCounter();
+        internal KOSProcess CurrentProcess => processes.Peek();
+        internal KOSProcess InterpreterProcess;
 
         public ProcessManager(SafeSharedObjects safeSharedObjects):base(safeSharedObjects)
         {
-            
+            var newProcess = new KOSProcess(this);
+            processes.Push(newProcess);
+            InterpreterProcess = newProcess;
+        }
+
+
+        public bool debugging = false;
+        override internal void ContinueExecution(bool doProfiling)
+        {
+            Deb.EnqueueExec("ContinueExecution", "Processes", processes.Count);
+
+
+            // If there are no processes being ran, stop displaying debug
+            // information.
+            IfNotActiveStopDebugging();
+
+            Deb.EnqueueExec("Executing Process", CurrentProcess.ID);
+            CurrentProcess.Execute();
+
+            switch (CurrentProcess.Status) {
+            case ProcessStatus.FINISHED:
+                PopIfCurrentProcessNotInterpreter();
+                return;
+            case ProcessStatus.ERROR:
+                PopIfCurrentProcessNotInterpreter();
+                return;
+            case ProcessStatus.WAIT:
+                return;
+            case ProcessStatus.GLOBAL_INSTRUCTION_LIMIT:
+                return;
+            }
+
+
+        }
+
+        void PopIfCurrentProcessNotInterpreter() {
+            if (!InterpreterIsCurrent()) {
+                Deb.EnqueueExec("Removing process", CurrentProcess.ID);
+                processes.Pop();
+            }
+        }
+
+        public void RunInInterpreter(Procedure Program, List<object> args = null) {
+            KOSThread thread = new KOSThread(InterpreterProcess);
+            InterpreterProcess.AddThread(thread);
+            thread.CallWithArgs(Program, args);
+
+            debugging = true;
+        }
+
+        public void RunInNewProcess(Procedure Program, List<object> args = null) {
+            KOSProcess process = new KOSProcess(this);
+            processes.Push(process);
+            KOSThread thread = new KOSThread(process);
+            process.AddThread(thread);
+            thread.CallWithArgs(Program, args);
+
+            debugging = true;
+        }
+
+        public bool InterpreterIsCurrent() {
+            return InterpreterProcess == CurrentProcess;
+        }
+
+        public bool ExecutionIsActive() {
+            if (!InterpreterIsCurrent()) {
+                return true;
+            }
+            switch (CurrentProcess.Status) {
+            case ProcessStatus.OK:
+            case ProcessStatus.WAIT:
+                return true;
+            }
+            return false;
+        }
+
+
+
+        public void IfNotActiveStopDebugging(){
+            if (debugging && CurrentProcess.Status!=ProcessStatus.OK) {
+                Deb.RawLog("Stopping debugging");
+                Deb.LogQueues();
+                debugging=false;
+                Deb.DisableLogging();
+            }
         }
 
         /// <summary>
@@ -76,9 +162,10 @@ namespace kOS.Safe
 
             debugging = false;
             Deb.DisableLogging();
+
         }
 
-        public  void Boot(){
+        public void Boot() {
             globalVariables.Clear();
             //if (shared.GameEventDispatchManager != null) shared.GameEventDispatchManager.Clear();
 
@@ -102,8 +189,7 @@ namespace kOS.Safe
             // Check to make sure the boot file name is valid, and then that the boot file exists.
             if (path == null) {
                 SafeHouse.Logger.Log("Boot file name is empty, skipping boot script");
-            } 
-            else {
+            } else {
                 // Boot is only called once right after turning the processor on,
                 // the volume cannot yet have been changed from that set based on
                 // Config.StartOnArchive, and Processor.CheckCanBoot() has already
@@ -135,53 +221,5 @@ namespace kOS.Safe
             }
         }
 
-        public bool debugging = false;
-        override internal void ContinueExecution(bool doProfiling)
-        {
-            Deb.EnqueueExec("ContinueExecution", "Processes", processes.Count);
-
-            // TODO: this is just "getting started" code
-            // it will be replaced later.
-
-            // If there are no processes being ran, stop displaying debug
-            // information.
-            IfNotActiveStopDebugging();
-
-
-            for (int i = processes.Count-1;i>= 0;i--) {
-                Deb.EnqueueExec("i", i, "total", processes.Count);
-                var status = processes[i].Execute();
-                Deb.EnqueueExec("From Process Execute. status", status);
-
-                switch (status) {
-
-                case ProcessStatus.FINISHED:
-                    Deb.EnqueueExec("Removing process", i);
-                    processes.RemoveAt(i);
-                    break;
-
-                }
-            }
-        }
-
-        public void RunProgram(Procedure Program,List<object> args=null){
-            Deb.EnqueueExec("Creating Dummy processes");
-            KOSProcess process = new KOSProcess(this);
-            processes.Add(process);
-            KOSThread thread = new KOSThread(process);
-            process.AddThread(thread);
-            thread.CallWithArgs(Program,args);
-
-            debugging=true;
-        }
-
-        public void IfNotActiveStopDebugging(){
-            if (debugging && processes.Count==0) {
-                Deb.RawLog("Stopping debugging");
-                Deb.LogQueues();
-                debugging=false;
-                Deb.DisableLogging();
-            }
-        }
     }
 }

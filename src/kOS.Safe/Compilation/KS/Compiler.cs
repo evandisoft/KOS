@@ -2260,6 +2260,9 @@ namespace kOS.Safe.Compilation.KS
                 string identifier = GetIdentifierText(setThis);
 
                 UserFunction userFuncObject = GetUserFunctionWithScopeWalk(identifier, setThis);
+                if (UserFunction.StaticIsSystemLock(identifier)) {
+
+                }
                 if (userFuncObject != null)
                 {
                     UnlockIdentifier(userFuncObject);
@@ -2644,6 +2647,10 @@ namespace kOS.Safe.Compilation.KS
                 }
                 UnlockIdentifier(lockObject);
             }
+        }
+
+        private void UnlockSystemLock(string identifier) {
+
         }
 
         private void UnlockIdentifier(UserFunction lockObject)
