@@ -304,6 +304,7 @@
     <Compile Include="Execution\ProcedureCall.cs" />
     <Compile Include="DataStructures\OpcodeList.cs" />
     <Compile Include="DataStructures\IReadOnlyOpcodeList.cs" />
+    <Compile Include="Execution\KOSTrigger.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Compilation\CompiledObject-doc.md" />

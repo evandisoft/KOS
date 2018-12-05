@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 // i'm using this alias because this project redefines 'Stack'
 // and I don't want that to lead to weird behavior
-using coll=System.Collections.Generic;
+using coll = System.Collections.Generic;
 using System;
+using kOS.Safe.Execution;
 
 namespace kOS.Safe
 {
@@ -124,9 +125,7 @@ namespace kOS.Safe
 
         void ExecuteThreads(coll.Stack<KOSThread> stack){
             if (stack.Count == 0) return;
-            // Keep track of whether all the threads were waiting.
-            // If they were all waiting, then effectively the process
-            // is waiting.
+
             bool allThreadsWaiting = true;
             while (stack.Count>0) {
                 var currentThread = stack.Peek();
@@ -139,8 +138,6 @@ namespace kOS.Safe
 
                 switch (status) {
 
-                // If the thread limit was reached, start executing the next
-                // thread.
                 case ThreadStatus.THREAD_INSTRUCTION_LIMIT:
                 case ThreadStatus.WAIT:
                     stack.Pop();
@@ -151,36 +148,20 @@ namespace kOS.Safe
                 case ThreadStatus.GLOBAL_INSTRUCTION_LIMIT:
                     Status=ProcessStatus.GLOBAL_INSTRUCTION_LIMIT;
                     return;
-                // if this thread has an error, or has been terminated, remove
-                // it
                 case ThreadStatus.TERMINATED:
-                    if (currentThread is SystemTrigger) {
-                        RemoveSystemTrigger(((SystemTrigger)currentThread).Name);
-                    } else {
-                        RemoveThread(currentThread);
-                    }
+                    RemoveThread(currentThread);
                     stack.Pop();
                     break;
                 case ThreadStatus.ERROR:
-                    Status = ProcessStatus.ERROR;
-                    return;
-
-                    //if (currentThread is SystemTrigger) {
-                    //    RemoveSystemTrigger(((SystemTrigger)currentThread).Name);
-                    //}else{
-                    //    RemoveThread(currentThread);
-                    //}
-
-                    //stack.Pop();
-                    //break;
+                    RemoveThread(currentThread);
+                    stack.Pop();
+                    break;
                 case ThreadStatus.FINISHED:
+                    RemoveThread(currentThread);
                     if (currentThread is SystemTrigger){
-                        RemoveSystemTrigger(((SystemTrigger)currentThread).Name);
                         throw new Exception(
                             "SystemTrigger thread should not have 'FINISHED'.");
                     }
-                    RemoveThread(currentThread);
-
                     stack.Pop();
                     break;
                 default:
@@ -194,6 +175,20 @@ namespace kOS.Safe
             if(allThreadsWaiting){
                 Status=ProcessStatus.WAIT;
             }
+        }
+
+        /// <summary>
+        /// Remove the thread/trigger/systemtrigger properly.
+        /// </summary>
+        /// <param name="thread">Thread.</param>
+        void RemoveThread(KOSThread thread) {
+            if(thread is SystemTrigger) {
+                RemoveSystemTrigger(((SystemTrigger)thread).Name);
+            }
+            if(thread is KOSTrigger) {
+                RemoveTrigger((KOSTrigger)thread);
+            }
+            threadSet.Remove(thread);
         }
 
         /// <summary>
@@ -218,11 +213,6 @@ namespace kOS.Safe
                     threadStack.Push(thread);
                 }
             }
-        }
-
-        public void RemoveThread(KOSThread thread){
-            threadSet.Remove(thread);
-            triggerSet.Remove(thread);
         }
 
         public void AddThread(KOSThread thread)
@@ -266,6 +256,10 @@ namespace kOS.Safe
                 return triggerSet.Remove(systemTrigger);
             }
             return false;
+        }
+
+        internal void RemoveTrigger(KOSTrigger kOSTrigger) {
+            triggerSet.Remove(kOSTrigger);
         }
     }
 }

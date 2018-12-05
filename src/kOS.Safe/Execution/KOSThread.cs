@@ -242,6 +242,5 @@ namespace kOS.Safe {
             return retval2;
         }
 
-
     }
 }
