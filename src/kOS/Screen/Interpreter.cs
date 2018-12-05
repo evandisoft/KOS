@@ -143,10 +143,10 @@ namespace kOS.Screen
                     FuncManager = Shared.FunctionManager,
                     IsCalledFromRun = false
                 };
-                Deb.clearrawlog();
-                Deb.enableLogging();
-                Deb.clearLogs();
-                Deb.rawlog("Running program.");
+                Deb.ClearRawLog();
+                Deb.EnableLogging();
+                Deb.ClearLogs();
+                Deb.RawLog("Running program.");
                 List<CodePart> commandParts = Shared.ScriptHandler.Compile(new InterpreterPath(this),
                     commandHistoryIndex, commandText, InterpreterName, options);
                 if (commandParts == null) return;

@@ -256,7 +256,7 @@ namespace kOS.Safe.Compilation
         }
         public virtual void Execute(IExec exec)
         {
-
+            throw new NotImplementedException("Default opcode Execute");
         }
 
         public override string ToString()
@@ -871,7 +871,7 @@ namespace kOS.Safe.Compilation
                 // member returned is a delegate that needs to be called to get its actual
                 // value.  Borrowing the same routine that OpcodeCall uses for its method calls:
 
-                //exec.Stack.Push(result);
+                exec.Stack.Push(result);
                 exec.Stack.Push(new KOSArgMarkerType());
                 
                 result.Invoke(exec);
@@ -1077,7 +1077,7 @@ namespace kOS.Safe.Compilation
         }
         public override void Execute(IExec exec)
         {
-
+            exec.Thread.Return();
         }
     }
 
@@ -1088,7 +1088,9 @@ namespace kOS.Safe.Compilation
     {
         protected override string Name { get { return "nop"; } }
         public override ByteCode Code { get { return ByteCode.NOP; } }
+        public override void Execute(IExec exec) {
 
+        }
     }
 
     
@@ -1781,13 +1783,13 @@ namespace kOS.Safe.Compilation
         }
         public override void Execute(IExec exec)
         {
-            Deb.storeExec("calling ", Destination);
+            Deb.EnqueueExec("calling ", Destination);
             if(Direct){
                 string dest = Destination as string;
                 if (isBuiltin) {
-                    Deb.storeExec("isbuiltin");
+                    Deb.EnqueueExec("isbuiltin");
                     //object functionPointer= exec.Store.GetValue(Destination);
-                    Deb.storeExec("destination", Destination);
+                    Deb.EnqueueExec("destination", Destination);
 
                     exec.Shared.FunctionManager.CallFunction(dest, exec);
                 } else{
@@ -1797,25 +1799,27 @@ namespace kOS.Safe.Compilation
                     Procedure procedure = exec.Store.GetValue(dest) as Procedure;
                     if (procedure==null)
                         throw new Exception("The stored value was not a procedure! It was a "+dest.GetType());
-                    Deb.storeExec("Calling procedure", procedure);
+                    CpuUtility.ReverseStackArgs(exec, true);
+                    Deb.EnqueueExec("Calling procedure", procedure);
                     exec.Thread.Call(procedure);
                 }
             }
             else{
                 bool foundArgMarker = false;
                 foreach(var stackItem in exec.Stack){
-                    Deb.storeExec("looking through arguments in stack for object to call");
-                    Deb.storeExec("Stack is ",exec.Stack);
+                    Deb.EnqueueExec("looking through arguments in stack for object to call");
+                    Deb.EnqueueExec("Stack is ",exec.Stack);
                     if (foundArgMarker) {
                         if (stackItem is Procedure) {
                             var procedure = stackItem as Procedure;
-                            Deb.storeExec("Calling procedure", procedure);
+                            CpuUtility.ReverseStackArgs(exec, false);
+                            Deb.EnqueueExec("Calling procedure", procedure);
                             exec.Thread.Call(procedure);
                             return;
                         }
                         if (stackItem is ISuffixResult) {
                             var suffix = stackItem as ISuffixResult;
-                            Deb.storeExec("Invoking suffixresult", suffix);
+                            Deb.EnqueueExec("Invoking suffixresult", suffix);
                             suffix.Invoke(exec);
                             exec.Stack.Push(suffix.Value);
                             return;
@@ -2154,8 +2158,8 @@ namespace kOS.Safe.Compilation
         public override void Execute(IExec exec)
         {
             object returnVal = exec.PopValue();
-
             exec.Stack.Push(Structure.FromPrimitive(returnVal));
+            exec.Thread.Return();
         }
 
         public override string ToString()
@@ -2398,6 +2402,16 @@ namespace kOS.Safe.Compilation
             else
             {
                 cpu.PushArgumentStack(true); // these are internally used, so no Strucutre.FromPrimitive wrapper call.
+            }
+        }
+        public override void Execute(IExec exec) {
+            bool worked;
+            object shouldBeArgMarker = exec.Stack.Peek(0, out worked);
+
+            if (!worked || (shouldBeArgMarker == null) || (shouldBeArgMarker.GetType() != OpcodeCall.ArgMarkerType)) {
+                exec.Stack.Push(false); // these are internally used, so no Strucutre.FromPrimitive wrapper call.
+            } else {
+                exec.Stack.Push(true); // these are internally used, so no Strucutre.FromPrimitive wrapper call.
             }
         }
     }
@@ -2728,7 +2742,7 @@ namespace kOS.Safe.Compilation
 
         public override void Execute(IExec exec)
         {
-            Deb.storeExec("Creating new procedure",exec.Store);
+            Deb.EnqueueExec("Creating new procedure",exec.Store);
             if(procedureOpcodes==null){
                 throw new Exception("Procedure Opcodes were not instantiated!");
             }
@@ -2838,27 +2852,27 @@ namespace kOS.Safe.Compilation
                     throw new Exception(
                         "Too many Arguments to AddTrigger. Last "+poppedValue.GetType()+" unnecessary.");
                 }
-                Deb.storeExec("This is a system Lock with name",triggerName);
-                Deb.storeExec("Calling procedure", procedure);
+                Deb.EnqueueExec("This is a system Lock with name",triggerName);
+                Deb.EnqueueExec("Calling procedure", procedure);
                 var systemTrigger = new SystemTrigger(triggerName, process);
-                Deb.storeExec("Created System Trigger", triggerName);
+                Deb.EnqueueExec("Created System Trigger", triggerName);
                 systemTrigger.Call(procedure);
-                Deb.storeExec("Called procedure on System Trigger", triggerName);
+                Deb.EnqueueExec("Called procedure on System Trigger", triggerName);
                 process.AddSystemTrigger(systemTrigger);
-                Deb.storeExec("Added System Trigger", triggerName);
+                Deb.EnqueueExec("Added System Trigger", triggerName);
             }
             else{
                 if(!(poppedValue is KOSArgMarkerType)){
                     throw new Exception(
                         "Wrong second argument to AddTrigger. Expected string, got "+poppedValue.GetType());
                 }
-                Deb.storeExec("This is a normal trigger.");
+                Deb.EnqueueExec("This is a normal trigger.");
                 var thread=new KOSThread(process);
-                Deb.storeExec("Calling procedure", procedure);
+                Deb.EnqueueExec("Calling procedure", procedure);
                 thread.Call(procedure);
-                Deb.storeExec("Adding Trigger", procedure);
+                Deb.EnqueueExec("Adding Trigger", procedure);
                 process.AddTrigger(thread);
-                Deb.storeExec("Trigger Added", procedure);
+                Deb.EnqueueExec("Trigger Added", procedure);
             }
         }
 

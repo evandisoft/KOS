@@ -158,7 +158,7 @@ namespace kOS.Safe.Encapsulation.Suffixes
             // expects the remainder of the arguments marshalled together into one array object.
             bool isParamArrayArg = false;
 
-            //CpuUtility.ReverseStackArgs(exec, false);
+            CpuUtility.ReverseStackArgs(exec, false);
             for (int i = 0; i < delInfo.Parameters.Length; ++i)
             {
                 DelegateParameter paramInfo = delInfo.Parameters[i];

@@ -18,49 +18,48 @@ namespace kOS.Safe
             OPCODE,
             BUILD,
         }
+
         static QueueLogType[] queueLogTypes ={
             QueueLogType.EXEC,QueueLogType.OPCODE,QueueLogType.COMPILE,
             QueueLogType.EXCEPTION, QueueLogType.BUILD };
+
         const string logBasename = "Logs/kOS/";
         static Dictionary<QueueLogType,Queue<object[]>>
             logQueueDictionary=new Dictionary<QueueLogType,Queue<object[]>>();
+
         static bool loggingEnabled = false;
-        static public void enableLogging() {
-            rawlog("Logging enabled");
+        static public void EnableLogging() {
+            RawLog("Logging enabled");
             loggingEnabled = true;
         }
-        static public void disableLogging() {
-            rawlog("Logging disabled");
+        static public void DisableLogging() {
+            RawLog("Logging disabled");
             loggingEnabled = false;
         }
         static public int LogLength=10000;
-        static void log(QueueLogType logType, Queue<object[]> objectArrays) {
-            string logFilename = logname(logType);
-            rawlog("Logging " + logType + " to "+logFilename+", of size "+objectArrays.Count);
+        static void Log(QueueLogType logType, Queue<object[]> objectArrays) {
+            string logFilename = Logname(logType);
+            RawLog("Logging " + logType + " to "+logFilename+", of size "+objectArrays.Count);
             File.WriteAllText(logFilename, "");
             foreach(var objArray in objectArrays) {
-                //rawlog("Attempting Object Array To string");
                 string toWrite = ToString(objArray) + "\n";
-                //rawlog("writing " + toWrite + " to disk");
                 File.AppendAllText(logFilename, toWrite);
             }
-            //rawlog("Clearing queue " + logType);
-            //objectArrays.Clear();
         }
-        static string logname(QueueLogType queueLogType) {
+        static string Logname(QueueLogType queueLogType) {
             return logBasename + queueLogType.ToString().ToLower() + ".log";
         }
-        static public void clearLogs() {
-            rawlog("Clearing All Logs");
+        static public void ClearLogs() {
+            RawLog("Clearing All Logs");
             foreach(var logType in queueLogTypes) {
                 if(logQueueDictionary.TryGetValue(logType,out Queue<object[]> objs)){
                     objs.Clear();
                 }
-                rawlog("Clearing Log " + logType);
-                File.WriteAllText(logname(logType), "");
+                RawLog("Clearing Log " + logType);
+                File.WriteAllText(Logname(logType), "");
             }
         }
-        static void store(QueueLogType logType,object[] obj){
+        static void Store(QueueLogType logType,object[] obj){
             if (loggingEnabled) {
                 Queue<object[]> queue=new Queue<object[]>();
                 if (logQueueDictionary.TryGetValue(logType, out Queue<object[]> q)) {
@@ -74,18 +73,18 @@ namespace kOS.Safe
                 queue.Enqueue(obj);
             }
         }
-        static public void logall(){
-            rawlog("Logging all. There are "+logQueueDictionary.Count+" log queues");
+        static public void LogQueues(){
+            RawLog("Logging all. There are "+logQueueDictionary.Count+" log queues");
             foreach(var logItem in logQueueDictionary) {
-                log(logItem.Key,logItem.Value);
+                Log(logItem.Key,logItem.Value);
             }
         }
 
         const string rawlogfilename= logBasename + "raw.log";
-        static public void rawlog(object obj) {
+        static public void RawLog(object obj) {
             File.AppendAllText(rawlogfilename, obj+"\n");
         }
-        static public void clearrawlog() {
+        static public void ClearRawLog() {
             File.WriteAllText(rawlogfilename, "");
         }
         static string ToString(object obj) {
@@ -102,30 +101,27 @@ namespace kOS.Safe
             return obj.ToString();
         }
         static string ToString(object[] objs) {
-            //rawlog("Object Array To string");
             StringBuilder stringBuilder = new StringBuilder();
             foreach(var obj in objs) {
-                //rawlog("writing object " + obj+" ToString("+ToString(obj));
                 stringBuilder.Append(ToString(obj));
                 stringBuilder.Append(" ");
             }
-            //rawlog("final result " + stringBuilder.ToString());
             return stringBuilder.ToString();
         }
-        static public void storeOpcode(params object[] objs) {
-            store(QueueLogType.OPCODE, objs);
+        static public void EnqueueOpcode(params object[] objs) {
+            Store(QueueLogType.OPCODE, objs);
         }
-        static public void storeException(params object[] objs) {
-            store(QueueLogType.EXCEPTION, objs);
+        static public void EnqueueException(params object[] objs) {
+            Store(QueueLogType.EXCEPTION, objs);
         }
-        static public void storeExec(params object[] objs) {
-            store(QueueLogType.EXEC, objs);
+        static public void EnqueueExec(params object[] objs) {
+            Store(QueueLogType.EXEC, objs);
         }
-        static public void storeCompile(params object[] objs) {
-            store(QueueLogType.COMPILE, objs);
+        static public void EnqueueCompile(params object[] objs) {
+            Store(QueueLogType.COMPILE, objs);
         }
-        static public void storeBuild(params object[] objs) {
-            store(QueueLogType.BUILD, objs);
+        static public void EnqueueBuild(params object[] objs) {
+            Store(QueueLogType.BUILD, objs);
         }
     }
 }

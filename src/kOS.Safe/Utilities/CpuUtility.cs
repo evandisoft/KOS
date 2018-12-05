@@ -46,5 +46,33 @@ namespace kOS.Safe.Utilities
             foreach (object item in args)
                 cpu.PushArgumentStack(item);
         }
+        public static void ReverseStackArgs(IExec exec, bool direct)
+        {
+            List<object> args = new List<object>();
+            //object arg = exec.PopValue();
+
+            object arg;
+            while (!((arg=exec.PopValue()) is KOSArgMarkerType))
+            {
+                args.Add(arg);
+
+                // It's important to dereference with PopValue, not using PopArgumentStack, because the function
+                // being called might not even be able to see the variable in scope anyway.
+                // In other words, if calling a function like so:
+                //     declare foo to 3.
+                //     myfunc(foo).
+                // The code inside myfunc needs to see that as being identical to just saying:
+                //     myfunc(3).
+                // It has to be unaware of the fact that the name of the argument was 'foo'.  It just needs to
+                // see the contents that were inside foo.
+            }
+            if (! direct)
+                exec.Stack.Pop(); // throw away the delegate or KOSDelegate info - we already snarfed it by now.
+            // Push the arg marker back on again.
+            exec.Stack.Push(new KOSArgMarkerType());
+            // Push the arguments back on again, which will invert their order:
+            foreach (object item in args)
+                exec.Stack.Push(item);
+        }
     }
 }

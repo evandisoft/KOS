@@ -33,16 +33,16 @@ namespace kOS.Safe.Compilation{
             ReplaceRelocateAndJumpLabels(procedureOpcodes, pushDelegatesMap);
             var programProcedure = new Procedure(procedureOpcodes);
 
-            Deb.storeBuild("Opcodes for main program");
+            Deb.EnqueueBuild("Opcodes for main program");
             foreach (var opcode in procedureOpcodes) {
-                Deb.storeBuild(opcode);
+                Deb.EnqueueBuild(opcode);
             }
             foreach (var pushDelegate in pushDelegatesMap.Values){
                 ReplaceRelocateAndJumpLabels(
                     pushDelegate.procedureOpcodes, pushDelegatesMap);
-                Deb.storeBuild("Opcodes for", pushDelegate.DestinationLabel);
+                Deb.EnqueueBuild("Opcodes for", pushDelegate.DestinationLabel);
                 foreach(var opcode in pushDelegate.procedureOpcodes){
-                    Deb.storeBuild(opcode);
+                    Deb.EnqueueBuild(opcode);
                 }
             }
 
@@ -144,17 +144,17 @@ namespace kOS.Safe.Compilation{
         static public void PrintCodeParts(string message, List<CodePart> parts)
         {
             foreach (var part in parts) {
-                Deb.storeCompile("Function opcodes");
+                Deb.EnqueueCompile("Function opcodes");
                 foreach (var opcode in part.FunctionsCode) {
-                    Deb.storeCompile(opcode);
+                    Deb.EnqueueCompile(opcode);
                 }
-                Deb.storeCompile("Initialization opcodes");
+                Deb.EnqueueCompile("Initialization opcodes");
                 foreach (var opcode in part.InitializationCode) {
-                    Deb.storeCompile(opcode);
+                    Deb.EnqueueCompile(opcode);
                 }
-                Deb.storeCompile("Mainprogram code");
+                Deb.EnqueueCompile("Mainprogram code");
                 foreach (var opcode in part.MainCode) {
-                    Deb.storeCompile(opcode);
+                    Deb.EnqueueCompile(opcode);
                 }
             }
         }

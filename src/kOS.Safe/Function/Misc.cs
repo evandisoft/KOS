@@ -27,7 +27,7 @@ namespace kOS.Safe.Function
             // one in here because it can produce the function name in an error 
             string textToPrint = PopValueAssert(exec).ToString();
             AssertArgBottomAndConsume(exec);
-            Deb.storeExec("in print arg is", textToPrint);
+            Deb.EnqueueExec("in print arg is", textToPrint);
             exec.Shared.Screen.Print(textToPrint);
         }
     }
@@ -118,7 +118,7 @@ namespace kOS.Safe.Function
             CompilerOptions options = new CompilerOptions {
                 LoadProgramsInSameAddressSpace = false,
                 FuncManager = shared.FunctionManager,
-                IsCalledFromRun = false
+                IsCalledFromRun = true
             };
             // evandisoft TODO: this is not a full reimplementation of run
             // yet. This is just a basic version

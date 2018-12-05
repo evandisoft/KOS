@@ -16,7 +16,7 @@ namespace kOS.Safe
     /// This class holds a store and manages the instruction pointer.
     /// </summary>
     public class ProcedureCall {
-        internal VariableStore Store { get; } // manages variable storing and retrieval
+        public VariableStore Store { get; } // manages variable storing and retrieval
 
         /// <summary>
         /// Gets the current Opcode. 
@@ -27,22 +27,30 @@ namespace kOS.Safe
  
         readonly IReadOnlyOpcodeList Opcodes;
         int instructionPointer = 0;
-        KOSThread thread = null;
+        public KOSThread Thread = null;
 
-	    public ProcedureCall(KOSThread thread,Procedure procedure)
+
+        public ProcedureCall(KOSThread thread,Procedure procedure)
         {
             Store = new VariableStore(thread.Process.ProcessManager.globalVariables);
             Store.AddClosure(procedure.Closure);
             Opcodes = procedure.Opcodes;
-            this.thread = thread;
+            Thread = thread;
         }
 
         public Opcode CurrentOpcode => Opcodes[instructionPointer];
 
-        public void Execute()
+        /// <summary>
+        /// Execute one instruction, and update the instructionPointers.
+        /// </summary>
+        public void ExecuteNextInstruction()
         {
-            CurrentOpcode.Execute(thread);
-            Deb.storeExec("In Execute. delta was", CurrentOpcode.DeltaInstructionPointer);
+            CurrentOpcode.Execute(Thread);
+            Deb.EnqueueExec("Current Opcode", CurrentOpcode);
+            Deb.EnqueueExec("Stack for thread", "(" + Thread.ID, "is", Thread.Stack+ ")");
+            Deb.EnqueueExec("Store is", Store.scopeStack.Count);
+            Deb.EnqueueOpcode(CurrentOpcode, "(ID:", Thread.ID + ")", "(Stack:", Thread.Stack.ToString() + ")");
+            Deb.EnqueueExec("In Execute. delta was", CurrentOpcode.DeltaInstructionPointer);
             instructionPointer+=CurrentOpcode.DeltaInstructionPointer;
         }
     }

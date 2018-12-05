@@ -1884,7 +1884,7 @@ namespace kOS.Safe.Compilation.KS
                     if (isDirect && isUserFunc)
                 
                     {
-                        Deb.storeCompile("Adding call for", firstIdentifier);
+                        Deb.EnqueueCompile("Adding call for", firstIdentifier);
                         AddOpcode(new OpcodePush(new KOSArgMarkerType()));
                         AddOpcode(new OpcodeCall(firstIdentifier));
                     }
@@ -2024,7 +2024,7 @@ namespace kOS.Safe.Compilation.KS
                 && !userFuncObject.IsSystemLock()
                )
             {
-                Deb.storeCompile("isvariable and isfunc"+identifier);
+                Deb.EnqueueCompile("isvariable and isfunc"+identifier);
                 AddOpcode(new OpcodeCall(userFuncObject.ScopelessPointerIdentifier));
             }
             else

@@ -46,7 +46,8 @@ namespace kOS.Safe
 
 
     /// <summary>
-    /// Process manager. TODO: This is not really implemented fully yet.
+    /// Process manager. - Replacement for the CPU
+    /// TODO: This is not really implemented fully yet.
     /// Currently, threads in a particular process will
     /// eat up all the rest of the GLOBAL_INSTRUCTION_LIMIT and prevent
     /// triggers in other processes from running on each update. But currently
@@ -69,10 +70,12 @@ namespace kOS.Safe
         /// <param name="manual">If set to <c>true</c> manual.</param>
         public override void BreakExecution(bool manual) {
             processes.Clear();
-            Deb.logall();
+            if (debugging) {
+                Deb.LogQueues();
+            }
+
             debugging = false;
-            Deb.disableLogging();
-            base.BreakExecution(manual);
+            Deb.DisableLogging();
         }
 
         public  void Boot(){
@@ -135,7 +138,7 @@ namespace kOS.Safe
         public bool debugging = false;
         override internal void ContinueExecution(bool doProfiling)
         {
-            Deb.storeExec("ContinueExecution", "Processes", processes.Count);
+            Deb.EnqueueExec("ContinueExecution", "Processes", processes.Count);
 
             // TODO: this is just "getting started" code
             // it will be replaced later.
@@ -146,14 +149,14 @@ namespace kOS.Safe
 
 
             for (int i = processes.Count-1;i>= 0;i--) {
-                Deb.storeExec("i", i, "total", processes.Count);
+                Deb.EnqueueExec("i", i, "total", processes.Count);
                 var status = processes[i].Execute();
-                Deb.storeExec("From Process Execute. status", status);
+                Deb.EnqueueExec("From Process Execute. status", status);
 
                 switch (status) {
 
                 case ProcessStatus.FINISHED:
-                    Deb.storeExec("Removing process", i);
+                    Deb.EnqueueExec("Removing process", i);
                     processes.RemoveAt(i);
                     break;
 
@@ -162,7 +165,7 @@ namespace kOS.Safe
         }
 
         public void RunProgram(Procedure Program,List<object> args=null){
-            Deb.storeExec("Creating Dummy processes");
+            Deb.EnqueueExec("Creating Dummy processes");
             KOSProcess process = new KOSProcess(this);
             processes.Add(process);
             KOSThread thread = new KOSThread(process);
@@ -174,10 +177,10 @@ namespace kOS.Safe
 
         public void IfNotActiveStopDebugging(){
             if (debugging && processes.Count==0) {
-                Deb.rawlog("Stopping debugging");
-                Deb.logall();
+                Deb.RawLog("Stopping debugging");
+                Deb.LogQueues();
                 debugging=false;
-                Deb.disableLogging();
+                Deb.DisableLogging();
             }
         }
     }

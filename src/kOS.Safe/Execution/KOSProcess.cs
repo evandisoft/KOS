@@ -75,8 +75,8 @@ namespace kOS.Safe
 
         public ProcessStatus Execute()
 		{
-            Deb.storeExec("Process Execute. Threads", threadSet.Count);
-            Deb.storeExec("Process Execute. Triggers", triggerSet.Count);
+            Deb.EnqueueExec("Process Execute. Threads", threadSet.Count);
+            Deb.EnqueueExec("Process Execute. Triggers", triggerSet.Count);
             if (threadSet.Count==0){ return ProcessStatus.FINISHED; }
             ProcessStatus status;
 
@@ -119,7 +119,8 @@ namespace kOS.Safe
             bool allThreadsWaiting = true;
             while (stack.Count>0) {
                 var currentThread = stack.Peek();
-                var status = currentThread.Execute();
+                currentThread.Execute();
+                var status = currentThread.Status;
 
                 if(status!=ThreadStatus.WAIT){
                     allThreadsWaiting=false;
@@ -155,8 +156,6 @@ namespace kOS.Safe
                     stack.Pop();
                     break;
                 case ThreadStatus.FINISHED:
-
-                    stack.Pop();
                     if (currentThread is SystemTrigger){
                         RemoveSystemTrigger(((SystemTrigger)currentThread).Name);
                         throw new Exception(
@@ -164,6 +163,7 @@ namespace kOS.Safe
                     }
                     RemoveThread(currentThread);
 
+                    stack.Pop();
                     break;
                 default:
                     // Pop this thread off the current stack so that it will not

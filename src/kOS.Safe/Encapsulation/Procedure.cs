@@ -42,7 +42,7 @@ namespace kOS.Safe.Encapsulation
                     Closure.Add(level);
                 }
             }
-            Deb.storeExec("closure in Procedure constructor is", closure);
+            Deb.EnqueueExec("closure in Procedure constructor is", closure);
         }
 
         public ProcedureCall Call(KOSThread thread){

@@ -30,13 +30,16 @@ namespace kOS.Safe {
     /// the references they need and update the references
     /// as we go.
     /// </summary>
-    public class KOSThread:IExec {
+    public class KOSThread : IExec {
         static long IDCounter = 0;
         public readonly long ID = IDCounter++;
-        bool isTerminated = false;
 
-        internal KOSProcess Process { get; }
-        internal ArgumentStack Stack { get; }
+        public SafeSharedObjects Shared { get; }
+        public ProcessManager ProcessManager { get; }
+        public KOSProcess Process { get; }
+        KOSThread IExec.Thread => this;
+        public ArgumentStack Stack { get; }
+        VariableStore IExec.Store => CurrentProcedure.Store;
 
         /// <summary>
         /// Gets the current procedure.
@@ -68,97 +71,100 @@ namespace kOS.Safe {
         /// Initializes a new instance of the <see cref="T:kOS.Safe.KOSThread"/> class.
         /// </summary>
         /// <param name="process">Process.</param>
-        public KOSThread(KOSProcess process)
-        {
-            Process=process;
-            Stack=new ArgumentStack();
-            GlobalInstructionCounter=Process.ProcessManager.GlobalInstructionCounter;
+        public KOSThread(KOSProcess process) {
+            Process = process;
+            ProcessManager = Process.ProcessManager;
+            Stack = new ArgumentStack();
+            GlobalInstructionCounter = Process.ProcessManager.GlobalInstructionCounter;
+            Shared = Process.ProcessManager.shared;
         }
+
+        public ThreadStatus Status { get; set; } = ThreadStatus.OK;
 
         /// <summary>
         /// Execute this instance.
         /// </summary>
-        public ThreadStatus Execute()
-        {
-            Deb.storeExec("Executing thread", ID, nameof(ProcedureCall), callStack.Count);
+        public void Execute() {
+            Deb.EnqueueExec("Executing thread", ID, nameof(ProcedureCall), callStack.Count);
 
-            if(IsWaiting()){
-                return ThreadStatus.WAIT;
-            }
+            ExecuteLoop();
 
-            if (callStack.Count == 0) { return ThreadStatus.FINISHED; }
-            if (isTerminated) { return ThreadStatus.TERMINATED; }
-
-            var status=ExecuteLoop();
-
-            Deb.storeExec("Exiting thread", ID, "with status", status);
-
-            return status;
+            Deb.EnqueueExec("Exiting thread", ID, "with status", Status);
         }
 
-        /// <summary>
-        /// Executes the current procedure's current opcode.
-        /// Checks the global instruction pointer and this threads
-        /// instruction pointer.
-        /// </summary>
-        ThreadStatus ExecuteLoop()
-        {
-            while(true){
+        void ExecuteLoop() {
+            while (true) {
+                // These cases are not just to handle the first iteration
+                // of this loop, but to also handle any changes in status
+                // created by the execution of the Procedure below.
+                switch (Status) {
+                case ThreadStatus.WAIT:
+                    if (StillWaiting()) {
+                        return;
+                    }
+                    StopWaiting();
+                    break;
+                case ThreadStatus.FINISHED:
+                case ThreadStatus.ERROR:
+                case ThreadStatus.TERMINATED:
+                    return;
+                }
+
                 if (!GlobalInstructionCounter.Continue()) {
                     GlobalInstructionCounter.Reset();
-                    return ThreadStatus.GLOBAL_INSTRUCTION_LIMIT;
+                    Status = ThreadStatus.GLOBAL_INSTRUCTION_LIMIT;
+                    return;
                 }
                 if (!ThreadInstructionCounter.Continue()) {
                     ThreadInstructionCounter.Reset();
-                    return ThreadStatus.THREAD_INSTRUCTION_LIMIT;
+                    Status = ThreadStatus.THREAD_INSTRUCTION_LIMIT;
+                    return;
                 }
 
-                Opcode opcode = null;
                 try {
-                    // Need to get this reference for the switch statement below
-                    // as well as for printing out the current opcode prior
-                    // to any errors.
-                    opcode = CurrentProcedure.CurrentOpcode;
-                    Deb.storeExec("Current Opcode", opcode);
-                    Deb.storeExec("Stack for thread", "("+ID, "is", Stack.ToString()+")");
-                    Deb.storeExec("Store is", CurrentStore.scopeStack.Count);
-                    Deb.storeOpcode(opcode,"(ID:",ID+")","(Stack:",Stack.ToString() + ")");
-
-                    // DO NOT CALL the opcode.Execute directly in this thread. If you
-                    // do so, the instruction pointer will not be updated properly.
-                    CurrentProcedure.Execute();
+                    // This call may lead to the "CurrentProcedure"
+                    // being popped off the stack. In this case
+                    // any code we add between this call and continue;
+                    // that assumes "CurrentProcedure" remains the same as
+                    // the one we just executed would be incorrect.
+                    // Also if this call leads to the last ProcedureCall
+                    // being popped off the stack, CurrentProcedure will
+                    // cause an error if you attempt to access it again.
+                    CurrentProcedure.ExecuteNextInstruction();
+                    continue;
+                    // Don't put anything between 
+                    // 'CurrentProcedure.ExecuteNextInstruction();'
+                    // and
+                    // 'continue;'
                 } catch (Exception e) {
-                    Deb.storeExec(e);
-                    //Deb.storeException("Stack for thread", ID, "is", Stack);
-                    //Deb.storeException("Stack count of Store is", CurrentStore.scopeStack.Count);
-                    Deb.storeException(e);
+                    Deb.EnqueueExec(e);
+                    Deb.EnqueueException(e);
                     Process.ProcessManager.BreakExecution(false);
-                    return ThreadStatus.ERROR;
+                    Status = ThreadStatus.ERROR;
+                    throw;
                 }
-
-                switch (opcode.Code) {
-                case ByteCode.WAIT:
-                    return ThreadStatus.WAIT;
-                case ByteCode.EOP:
-                case ByteCode.RETURN:
-                    return PopStackAndReturnFinishedIfEmpty();
-                }
+                // Do not put code here. See Above
             }
         }
 
-        /// <summary>
-        /// Pops the callStack. If it is empty, returns ThreadStatus.FINISHED,
-        /// otherwise returns ThreadStatus.OK.
-        /// </summary>
-        ThreadStatus PopStackAndReturnFinishedIfEmpty(){
-            Deb.storeExec("Removing ProcedureExec");
-            callStack.Pop();
-            if (callStack.Count==0) {
-                return ThreadStatus.FINISHED;
+        bool StillWaiting() {
+            if (timeToWaitInMilliseconds > waitWatch.ElapsedMilliseconds) {
+                Deb.EnqueueExec(
+                    "Thread", ID, "is waiting for",
+                    timeToWaitInMilliseconds - waitWatch.ElapsedMilliseconds,
+                    "more milliseconds"
+                    );
+                return true;
             }
-            return ThreadStatus.OK;
+            return false;
         }
 
+        void StopWaiting() {
+            Deb.EnqueueExec("Thread", ID, "is no longer waiting.");
+            timeToWaitInMilliseconds = 0; 
+            waitWatch.Reset();
+            Status = ThreadStatus.OK;
+        }
 
         /// <summary>
         /// Call the specified procedure.
@@ -170,12 +176,10 @@ namespace kOS.Safe {
         /// the stack that is local to this thread.
         /// </summary>
         /// <param name="procedure">Procedure.</param>
-        public void Call(Procedure procedure)
-        {
+        public void Call(Procedure procedure) {
             ProcedureCall call = procedure.Call(this);
             callStack.Push(call);
         }
-
 
         /// <summary>
         /// Calls the procedure with arguments.
@@ -183,12 +187,11 @@ namespace kOS.Safe {
         /// </summary>
         /// <param name="procedure">Procedure.</param>
         /// <param name="args">Arguments.</param>
-        public void CallWithArgs(Procedure procedure, coll.List<object> args)
-        {
+        public void CallWithArgs(Procedure procedure, coll.List<object> args) {
             ProcedureCall call = procedure.Call(this);
             callStack.Push(call);
             Stack.Push(new KOSArgMarkerType());
-            for (int i = args.Count-1;i>=0;i--) {
+            for (int i = args.Count - 1;i >= 0;i--) {
                 Stack.Push(args[i]);
             }
         }
@@ -196,62 +199,45 @@ namespace kOS.Safe {
         /// <summary>
         /// Terminate this thread.
         /// </summary>
-        public void Terminate()
-        {
-            isTerminated=true;
+        public void Terminate() {
+            Status = ThreadStatus.TERMINATED;
         }
 
         /// <summary>
         /// Make this thread wait the specified number of seconds.
         /// </summary>
         /// <param name="seconds">Argument.</param>
-        public void Wait(double seconds)
-        {
-            timeToWaitInMilliseconds=Convert.ToInt64(seconds*1000);
-            if(timeToWaitInMilliseconds>0){
+        public void Wait(double seconds) {
+            timeToWaitInMilliseconds = Convert.ToInt64(seconds * 1000);
+            if (timeToWaitInMilliseconds > 0) {
                 waitWatch.Start();
             }
+            Status = ThreadStatus.WAIT;
         }
 
-
-        /// <summary>
-        /// Returns true if the thread is Waiting.
-        /// </summary>
-        bool IsWaiting()
-        {
-            if (timeToWaitInMilliseconds>0){
-                if(timeToWaitInMilliseconds>waitWatch.ElapsedMilliseconds){
-                    Deb.storeExec("Thread", ID, "is waiting for",
-                           timeToWaitInMilliseconds-waitWatch.ElapsedMilliseconds,
-                           "more milliseconds");
-                    return true;
-                }
-                Deb.storeExec("Thread", ID, "is no longer waiting.");
-                timeToWaitInMilliseconds=0; waitWatch.Reset();
+        public void Return() {
+            Deb.EnqueueExec("Removing " + nameof(ProcedureCall));
+            callStack.Pop();
+            if (callStack.Count == 0) {
+                Status = ThreadStatus.FINISHED;
+                return;
             }
-            return false;
         }
 
-        // Implementation of IExec
-        SafeSharedObjects IExec.Shared => Process.ProcessManager.shared;
-        ProcessManager IExec.ProcessManager => Process.ProcessManager;
-        KOSProcess IExec.Process => Process;
-        KOSThread IExec.Thread => this;
-        ArgumentStack IExec.Stack => Stack;
-        VariableStore IExec.Store => CurrentStore;
 
         /// <summary>
         /// Pops the value from the Stack, looking it up in the Store if it's
         /// a variable.
         /// </summary>
         /// <returns>The value.</returns>
-        public object PopValue(bool barewordOkay = false)
-        {
+        public object PopValue(bool barewordOkay = false) {
             var retval = Stack.Pop();
-            Deb.storeExec("Getting value of", retval);
+            Deb.EnqueueExec("Getting value of", retval);
             var retval2 = CurrentStore.GetValue(retval, barewordOkay);
-            Deb.storeExec("Got value of", retval2);
+            Deb.EnqueueExec("Got value of", retval2);
             return retval2;
         }
+
+
     }
 }

@@ -35,8 +35,8 @@ namespace kOS.Safe.Compilation.KS
                 }
                 catch (KOSCompileException e)
                 {
-                    Deb.storeCompile();
-                    Deb.logall(); 
+                    Deb.EnqueueCompile();
+                    Deb.LogQueues(); 
                     e.AddSourceText((short)startLineNum, scriptText);
                     throw;
                 }

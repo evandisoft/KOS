@@ -30,5 +30,16 @@ namespace kOS.Safe.Execution {
             }
             return sb.ToString();
         }
+
+        public object Peek(int depth,out bool success) {
+            success = false;
+            foreach(var item in this) {
+                if (depth-- == 0) {
+                    success = true;
+                    return item;
+                }
+            }
+            return null;
+        }
     }
 }
