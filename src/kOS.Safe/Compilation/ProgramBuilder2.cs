@@ -33,16 +33,16 @@ namespace kOS.Safe.Compilation{
             ReplaceRelocateAndJumpLabels(procedureOpcodes, pushDelegatesMap);
             var programProcedure = new Procedure(procedureOpcodes);
 
-            Deb.storeCompile("Opcodes for main program");
+            Deb.storeBuild("Opcodes for main program");
             foreach (var opcode in procedureOpcodes) {
-                Deb.storeCompile(opcode);
+                Deb.storeBuild(opcode);
             }
             foreach (var pushDelegate in pushDelegatesMap.Values){
                 ReplaceRelocateAndJumpLabels(
                     pushDelegate.procedureOpcodes, pushDelegatesMap);
-                Deb.storeCompile("Opcodes for", pushDelegate.DestinationLabel);
+                Deb.storeBuild("Opcodes for", pushDelegate.DestinationLabel);
                 foreach(var opcode in pushDelegate.procedureOpcodes){
-                    Deb.storeCompile(opcode);
+                    Deb.storeBuild(opcode);
                 }
             }
 
@@ -143,7 +143,6 @@ namespace kOS.Safe.Compilation{
 
         static public void PrintCodeParts(string message, List<CodePart> parts)
         {
-            Deb.storeCompile("Examining codeparts "+message);
             foreach (var part in parts) {
                 Deb.storeCompile("Function opcodes");
                 foreach (var opcode in part.FunctionsCode) {
@@ -158,7 +157,6 @@ namespace kOS.Safe.Compilation{
                     Deb.storeCompile(opcode);
                 }
             }
-            Deb.storeCompile("End of Codeparts "+message);
         }
 
         static void ReplaceJumpLabels(List<Opcode> opcodes){

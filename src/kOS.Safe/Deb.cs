@@ -16,7 +16,11 @@ namespace kOS.Safe
             EXEC,
             EXCEPTION,
             OPCODE,
+            BUILD,
         }
+        static QueueLogType[] queueLogTypes ={
+            QueueLogType.EXEC,QueueLogType.OPCODE,QueueLogType.COMPILE,
+            QueueLogType.EXCEPTION, QueueLogType.BUILD };
         const string logBasename = "Logs/kOS/";
         static Dictionary<QueueLogType,Queue<object[]>>
             logQueueDictionary=new Dictionary<QueueLogType,Queue<object[]>>();
@@ -33,7 +37,7 @@ namespace kOS.Safe
         static void log(QueueLogType logType, Queue<object[]> objectArrays) {
             string logFilename = logname(logType);
             rawlog("Logging " + logType + " to "+logFilename+", of size "+objectArrays.Count);
-
+            File.WriteAllText(logFilename, "");
             foreach(var objArray in objectArrays) {
                 //rawlog("Attempting Object Array To string");
                 string toWrite = ToString(objArray) + "\n";
@@ -41,18 +45,19 @@ namespace kOS.Safe
                 File.AppendAllText(logFilename, toWrite);
             }
             //rawlog("Clearing queue " + logType);
-            objectArrays.Clear();
+            //objectArrays.Clear();
         }
         static string logname(QueueLogType queueLogType) {
             return logBasename + queueLogType.ToString().ToLower() + ".log";
         }
         static public void clearLogs() {
             rawlog("Clearing All Logs");
-            foreach(var item in logQueueDictionary) {
-                rawlog("Clearing Log " + item.Key);
-                File.WriteAllText(logname(item.Key), "");
-                //rawlog("Clearing queue " + item.Key);
-                item.Value.Clear();
+            foreach(var logType in queueLogTypes) {
+                if(logQueueDictionary.TryGetValue(logType,out Queue<object[]> objs)){
+                    objs.Clear();
+                }
+                rawlog("Clearing Log " + logType);
+                File.WriteAllText(logname(logType), "");
             }
         }
         static void store(QueueLogType logType,object[] obj){
@@ -102,7 +107,7 @@ namespace kOS.Safe
             foreach(var obj in objs) {
                 //rawlog("writing object " + obj+" ToString("+ToString(obj));
                 stringBuilder.Append(ToString(obj));
-                stringBuilder.Append(",");
+                stringBuilder.Append(" ");
             }
             //rawlog("final result " + stringBuilder.ToString());
             return stringBuilder.ToString();
@@ -118,6 +123,9 @@ namespace kOS.Safe
         }
         static public void storeCompile(params object[] objs) {
             store(QueueLogType.COMPILE, objs);
+        }
+        static public void storeBuild(params object[] objs) {
+            store(QueueLogType.BUILD, objs);
         }
     }
 }

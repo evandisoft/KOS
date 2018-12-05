@@ -35,18 +35,15 @@ namespace kOS.Safe
             Store.AddClosure(procedure.Closure);
             Opcodes = procedure.Opcodes;
             this.thread = thread;
-            CurrentOpcode=Opcodes[0];
         }
 
-        public Opcode CurrentOpcode { get; private set; }
+        public Opcode CurrentOpcode => Opcodes[instructionPointer];
 
         public void Execute()
         {
-            CurrentOpcode = Opcodes[instructionPointer];
             CurrentOpcode.Execute(thread);
             Deb.storeExec("In Execute. delta was", CurrentOpcode.DeltaInstructionPointer);
             instructionPointer+=CurrentOpcode.DeltaInstructionPointer;
-
         }
     }
 }

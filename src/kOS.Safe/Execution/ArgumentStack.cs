@@ -22,7 +22,11 @@ namespace kOS.Safe.Execution {
         {
             StringBuilder sb = new StringBuilder();
             foreach(var item in this){
-                sb.Append(item+",");
+                if (item == null) {
+                    sb.Append("null" + ",");
+                } else {
+                    sb.Append(item + ",");
+                }
             }
             return sb.ToString();
         }

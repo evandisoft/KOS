@@ -252,11 +252,11 @@ namespace kOS.Safe.Compilation
         
         public virtual void Execute(ICpu cpu)
         {
-            throw new NotImplementedException("(Opcode.Execute(ICpu cpu))");
+
         }
         public virtual void Execute(IExec exec)
         {
-            throw new NotImplementedException("(Opcode.Execute(ProcedureExec exec))");
+
         }
 
         public override string ToString()
@@ -873,6 +873,7 @@ namespace kOS.Safe.Compilation
 
                 //exec.Stack.Push(result);
                 exec.Stack.Push(new KOSArgMarkerType());
+                
                 result.Invoke(exec);
                 exec.Stack.Push(result.Value);
                 //throw new NotImplementedException("Have not implemented suffix method calls");
@@ -1088,11 +1089,6 @@ namespace kOS.Safe.Compilation
         protected override string Name { get { return "nop"; } }
         public override ByteCode Code { get { return ByteCode.NOP; } }
 
-        public override void Execute(IExec exec)
-        {
-            throw new NotImplementedException(
-                "OpcodeNOP cannot be executed.");
-        }
     }
 
     

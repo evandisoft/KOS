@@ -932,7 +932,6 @@ namespace kOS.Safe.Compilation.KS
                         // by comparing the nest level where the break statement was to
                         // the nest level where the break context started:
                         popScopeOp.NumLevels = (Int16)(popScopeOp.NumLevels - list.NestLevel);
-
                     else // assume all others are branch opcodes of some sort:
                         opcode.DestinationLabel = label;
                 }
@@ -3475,6 +3474,7 @@ namespace kOS.Safe.Compilation.KS
             jump.DestinationLabel = conditionLabel;
 
             // end of loop, give NOP destination to land at for breaks and end-loop condition:
+
             Opcode endLoop = AddOpcode(new OpcodeNOP());
             PopBreakList(endLoop.Label);
 

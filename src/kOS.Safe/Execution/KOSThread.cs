@@ -119,20 +119,20 @@ namespace kOS.Safe {
                     // as well as for printing out the current opcode prior
                     // to any errors.
                     opcode = CurrentProcedure.CurrentOpcode;
-                    Deb.storeExec("Current Opcode", opcode.Label, opcode);
-                    Deb.storeExec("Stack for thread", ID, "is", Stack);
-                    Deb.storeExec("Stack count of Store is", CurrentStore.scopeStack.Count);
-                    Deb.storeOpcode(opcode);
+                    Deb.storeExec("Current Opcode", opcode);
+                    Deb.storeExec("Stack for thread", "("+ID, "is", Stack.ToString()+")");
+                    Deb.storeExec("Store is", CurrentStore.scopeStack.Count);
+                    Deb.storeOpcode(opcode,"(ID:",ID+")","(Stack:",Stack.ToString() + ")");
 
                     // DO NOT CALL the opcode.Execute directly in this thread. If you
                     // do so, the instruction pointer will not be updated properly.
                     CurrentProcedure.Execute();
                 } catch (Exception e) {
                     Deb.storeExec(e);
-                    Deb.storeException("Stack for thread", ID, "is", Stack);
-                    Deb.storeException("Stack count of Store is", CurrentStore.scopeStack.Count);
+                    //Deb.storeException("Stack for thread", ID, "is", Stack);
+                    //Deb.storeException("Stack count of Store is", CurrentStore.scopeStack.Count);
                     Deb.storeException(e);
-                    Deb.logall();
+                    Process.ProcessManager.BreakExecution(false);
                     return ThreadStatus.ERROR;
                 }
 

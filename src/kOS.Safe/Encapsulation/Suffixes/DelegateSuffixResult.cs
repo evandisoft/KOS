@@ -225,7 +225,9 @@ namespace kOS.Safe.Encapsulation.Suffixes
             {
                 bool foundArgMarker = false;
                 int numExtraArgs = 0;
-                while (exec.Stack.CountArgs() > 0 && !foundArgMarker)
+                int numargs=exec.Stack.CountArgs();
+
+                while (numargs > 0 && !foundArgMarker)
                 {
                     object marker = exec.PopValue();
                     if (marker != null && marker.GetType() == CpuUtility.ArgMarkerType)
@@ -235,6 +237,9 @@ namespace kOS.Safe.Encapsulation.Suffixes
                 }
                 if (numExtraArgs > 0)
                     throw new KOSArgumentMismatchException(delInfo.Parameters.Length, delInfo.Parameters.Length + numExtraArgs);
+                if(numargs==0){
+                    exec.Stack.Pop();
+                }
             }
 
             // Delegate.DynamicInvoke expects a null, rather than an array of zero length, when

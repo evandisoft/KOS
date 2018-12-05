@@ -43,6 +43,8 @@ namespace kOS.Safe
         }
     }
 
+
+
     /// <summary>
     /// Process manager. TODO: This is not really implemented fully yet.
     /// Currently, threads in a particular process will
@@ -59,6 +61,17 @@ namespace kOS.Safe
         public ProcessManager(SafeSharedObjects safeSharedObjects):base(safeSharedObjects)
         {
             
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="manual">If set to <c>true</c> manual.</param>
+        public override void BreakExecution(bool manual) {
+            processes.Clear();
+            Deb.logall();
+            debugging = false;
+            base.BreakExecution(manual);
         }
 
         public  void Boot(){
@@ -118,7 +131,7 @@ namespace kOS.Safe
             }
         }
 
-        Boolean debugging = false;
+        public bool debugging = false;
         override internal void ContinueExecution(bool doProfiling)
         {
             Deb.storeExec("ContinueExecution", "Processes", processes.Count);

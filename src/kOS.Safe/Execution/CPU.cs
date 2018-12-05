@@ -467,7 +467,7 @@ namespace kOS.Safe.Execution
             PushContext(newContext);
         }
 
-        public void BreakExecution(bool manual)
+        virtual public void BreakExecution(bool manual)
         {
             SafeHouse.Logger.Log(string.Format("Breaking Execution {0} Contexts: {1}", manual ? "Manually" : "Automatically", contexts.Count));
             if (contexts.Count > 1)
