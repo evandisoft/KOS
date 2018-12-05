@@ -61,40 +61,36 @@ namespace kOS.Safe
         internal KOSProcess CurrentProcess => processes.Peek();
         internal KOSProcess InterpreterProcess;
 
-        public ProcessManager(SafeSharedObjects safeSharedObjects):base(safeSharedObjects)
-        {
+        public ProcessManager(SafeSharedObjects safeSharedObjects) : base(safeSharedObjects) {
+            Init();
+        }
+
+        public void Init() {
+            processes.Clear();
             var newProcess = new KOSProcess(this);
             processes.Push(newProcess);
             InterpreterProcess = newProcess;
         }
-
 
         public bool debugging = false;
         override internal void ContinueExecution(bool doProfiling)
         {
             Deb.EnqueueExec("ContinueExecution", "Processes", processes.Count);
 
-
-            // If there are no processes being ran, stop displaying debug
-            // information.
-            IfNotActiveStopDebugging();
+            EnableOrDisableDebugging();
 
             Deb.EnqueueExec("Executing Process", CurrentProcess.ID);
             CurrentProcess.Execute();
 
             switch (CurrentProcess.Status) {
             case ProcessStatus.FINISHED:
-                PopIfCurrentProcessNotInterpreter();
-                return;
             case ProcessStatus.ERROR:
                 PopIfCurrentProcessNotInterpreter();
                 return;
             case ProcessStatus.WAIT:
-                return;
             case ProcessStatus.GLOBAL_INSTRUCTION_LIMIT:
                 return;
             }
-
 
         }
 
@@ -109,8 +105,6 @@ namespace kOS.Safe
             KOSThread thread = new KOSThread(InterpreterProcess);
             InterpreterProcess.AddThread(thread);
             thread.CallWithArgs(Program, args);
-
-            debugging = true;
         }
 
         public void RunInNewProcess(Procedure Program, List<object> args = null) {
@@ -119,8 +113,20 @@ namespace kOS.Safe
             KOSThread thread = new KOSThread(process);
             process.AddThread(thread);
             thread.CallWithArgs(Program, args);
+        }
 
-            debugging = true;
+        public bool IsActiveStatus(ProcessStatus status) {
+            switch (status) {
+            case ProcessStatus.FINISHED:
+            case ProcessStatus.ERROR:
+            case ProcessStatus.TERMINATED:
+                return false;
+            case ProcessStatus.OK:
+            case ProcessStatus.GLOBAL_INSTRUCTION_LIMIT:
+            case ProcessStatus.WAIT:
+                return true;
+            }
+            throw new Exception("ProcessStatus type of " + status + " not found");
         }
 
         public bool InterpreterIsCurrent() {
@@ -131,38 +137,33 @@ namespace kOS.Safe
             if (!InterpreterIsCurrent()) {
                 return true;
             }
-            switch (CurrentProcess.Status) {
-            case ProcessStatus.OK:
-            case ProcessStatus.WAIT:
-                return true;
-            }
-            return false;
+            return IsActiveStatus(InterpreterProcess.Status);
         }
 
-
-
-        public void IfNotActiveStopDebugging(){
-            if (debugging && CurrentProcess.Status!=ProcessStatus.OK) {
+        /// <summary>
+        /// Enables or disables debugging based on whether ExecutionIsActive
+        /// </summary>
+        public void EnableOrDisableDebugging() {
+            if (ExecutionIsActive()) {
+                Deb.RawLog("Starting debugging");
+                Deb.EnableLogging();
+                debugging = true;
+            } else {
                 Deb.RawLog("Stopping debugging");
-                Deb.LogQueues();
-                debugging=false;
                 Deb.DisableLogging();
+                debugging = false;
             }
         }
 
         /// <summary>
-        /// 
+        /// Doesn't yet handle removing toggleflybywire properly.
         /// </summary>
         /// <param name="manual">If set to <c>true</c> manual.</param>
         public override void BreakExecution(bool manual) {
-            processes.Clear();
+            Init();
             if (debugging) {
                 Deb.LogQueues();
             }
-
-            debugging = false;
-            Deb.DisableLogging();
-
         }
 
         public void Boot() {

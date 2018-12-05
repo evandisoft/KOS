@@ -13,6 +13,7 @@ namespace kOS.Safe
         GLOBAL_INSTRUCTION_LIMIT,
         WAIT,
         ERROR,
+        TERMINATED,
     }
 
     /// <summary>
@@ -82,36 +83,40 @@ namespace kOS.Safe
 		{
             Deb.EnqueueExec("Process Execute. Threads", threadSet.Count);
             Deb.EnqueueExec("Process Execute. Triggers", triggerSet.Count);
-            if (threadSet.Count==0){ 
-                Status=ProcessStatus.FINISHED;
+
+            switch (Status) {
+            case ProcessStatus.GLOBAL_INSTRUCTION_LIMIT:
+            case ProcessStatus.WAIT:
+                Status = ProcessStatus.OK;
+                break;
+            case ProcessStatus.TERMINATED:
+            case ProcessStatus.ERROR:
+            case ProcessStatus.FINISHED:
                 return;
             }
 
             FillTriggerStackIfEmpty();
             ExecuteThreads(triggerStack);
 
-            switch(Status){
-            case ProcessStatus.OK:
-                break;
-                // We don't care if all the triggers are waiting.
-                // Only the threads run in a loop until GLOBAL_INSTRUCTION_LIMIT
-                // is reached.
+            switch (Status) {
             case ProcessStatus.WAIT:
                 Status = ProcessStatus.OK;
                 break;
-            default:
+            case ProcessStatus.GLOBAL_INSTRUCTION_LIMIT:
+            case ProcessStatus.TERMINATED:
+            case ProcessStatus.ERROR:
+            case ProcessStatus.FINISHED:
                 return;
             }
 
             // execute all threads until GLOBAL_INSTRUCTION_LIMIT is
             // exceeded
-            while(Status == ProcessStatus.OK){
+            while (Status == ProcessStatus.OK){
                 FillThreadStackIfEmpty();
                 ExecuteThreads(threadStack);
-                // If there are no normal threads left, then end
-                // this process
-                if (threadSet.Count==0) {
-                    Status=ProcessStatus.FINISHED;
+
+                if (threadSet.Count == 0) {
+                    Status = ProcessStatus.FINISHED;
                 }
             }
 
@@ -137,10 +142,6 @@ namespace kOS.Safe
                 // If the thread limit was reached, start executing the next
                 // thread.
                 case ThreadStatus.THREAD_INSTRUCTION_LIMIT:
-                    stack.Pop();
-                    break;
-                // If the thread is waiting, start executing the next
-                // thread.
                 case ThreadStatus.WAIT:
                     stack.Pop();
                     break;

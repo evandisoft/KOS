@@ -39,14 +39,14 @@ namespace kOS.Safe {
         public KOSProcess Process { get; }
         KOSThread IExec.Thread => this;
         public ArgumentStack Stack { get; }
-        VariableStore IExec.Store => CurrentProcedure.Store;
+        VariableStore IExec.Store => CurrentProcedureCall.Store;
 
         /// <summary>
         /// Gets the current procedure.
         /// </summary>
         /// <value>The current procedure.</value>
-        ProcedureCall CurrentProcedure => callStack.Peek();
-        VariableStore CurrentStore => CurrentProcedure.Store;
+        ProcedureCall CurrentProcedureCall => callStack.Peek();
+        VariableStore CurrentStore => CurrentProcedureCall.Store;
 
         readonly coll.Stack<ProcedureCall> callStack = new coll.Stack<ProcedureCall>();
 
@@ -96,7 +96,7 @@ namespace kOS.Safe {
             while (true) {
                 // These cases are not just to handle the first iteration
                 // of this loop, but to also handle any changes in status
-                // created by the execution of the Procedure below.
+                // created by the execution of the CurrentProcedureCall below.
                 switch (Status) {
                 case ThreadStatus.WAIT:
                     if (StillWaiting()) {
@@ -132,12 +132,12 @@ namespace kOS.Safe {
                     // that assumes "CurrentProcedure" remains the same as
                     // the one we just executed would be incorrect.
                     // Also if this call leads to the last ProcedureCall
-                    // being popped off the stack, CurrentProcedure will
+                    // being popped off the stack, CurrentProcedureCall will
                     // cause an error if you attempt to access it again.
-                    CurrentProcedure.ExecuteNextInstruction();
+                    CurrentProcedureCall.ExecuteNextInstruction();
                     continue;
                     // Don't put anything between 
-                    // 'CurrentProcedure.ExecuteNextInstruction();'
+                    // 'CurrentProcedureCall.ExecuteNextInstruction();'
                     // and
                     // 'continue;'
                 } catch (Exception e) {

@@ -132,7 +132,7 @@ namespace kOS.Safe.Function
             var programProcedure = ProgramBuilder2.BuildProgram(commandParts);
             //Deb.miscIsLogging=false;
             exec.Stack.Push(0);
-            if (processManager.InterpreterActive()) {
+            if (processManager.InterpreterIsCurrent()) {
                 processManager.RunInNewProcess(programProcedure, progArgs);
             } else {
                 exec.Stack.Push(0); // the "return" value
