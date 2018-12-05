@@ -71,6 +71,7 @@ namespace kOS.Safe
             processes.Clear();
             Deb.logall();
             debugging = false;
+            Deb.disableLogging();
             base.BreakExecution(manual);
         }
 

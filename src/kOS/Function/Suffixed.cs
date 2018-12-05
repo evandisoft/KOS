@@ -183,11 +183,11 @@ namespace kOS.Function
     [Function("heading")]
     public class FunctionHeading : FunctionBase
     {
-        public override void Execute(SharedObjects shared)
+        public override void Execute(SharedObjects shared,IExec exec)
         {
-            double pitchAboveHorizon = GetDouble(PopValueAssert(shared));
-            double degreesFromNorth = GetDouble(PopValueAssert(shared));
-            AssertArgBottomAndConsume(shared);
+            double pitchAboveHorizon = GetDouble(PopValueAssert(exec));
+            double degreesFromNorth = GetDouble(PopValueAssert(exec));
+            AssertArgBottomAndConsume(exec);
 
             Vessel currentVessel = shared.Vessel;
             var q = UnityEngine.Quaternion.LookRotation(VesselUtils.GetNorthVector(currentVessel), currentVessel.upAxis);
