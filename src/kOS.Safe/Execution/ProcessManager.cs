@@ -59,7 +59,7 @@ namespace kOS.Safe
 
         public void Init() {
             processes.Clear();
-            var newProcess = new KOSProcess(this);
+            var newProcess = new InterpreterProcess(this);
             processes.Push(newProcess);
             InterpreterProcess = newProcess;
         }
@@ -91,9 +91,11 @@ namespace kOS.Safe
 
         void PopIfCurrentProcessNotInterpreter() {
             if (!InterpreterIsCurrent()) {
+                CurrentProcess.FlyByWire.DisableActiveFlyByWire();
                 Deb.EnqueueExec("Removing process", CurrentProcess.ID);
                 processes.Pop();
             }
+            CurrentProcess.FlyByWire.EnableActiveFlyByWire();
         }
 
         public void RunInInterpreter(Procedure Program, List<object> args) {
@@ -159,12 +161,13 @@ namespace kOS.Safe
         /// </summary>
         /// <param name="manual">If set to <c>true</c> manual.</param>
         public override void BreakExecution(bool manual) {
-            Init();
             if (debugging) {
                 Deb.LogQueues();
             }
             debugging = false;
+            CurrentProcess.FlyByWire.DisableActiveFlyByWire();
             InterpreterProcess.FlyByWire.DisableActiveFlyByWire();
+            Init();
         }
 
         public override void Boot() {

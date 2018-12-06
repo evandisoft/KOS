@@ -52,27 +52,27 @@ namespace kOS.Safe
         readonly Dictionary<string, SystemTrigger> SystemTriggerMap = 
             new Dictionary<string, SystemTrigger>();
 
-        internal ProcessManager ProcessManager { get; }
+        protected internal ProcessManager ProcessManager { get; }
         /// <summary>
         /// Stores a set of threads. Threads in this set will be added into
         /// the threadStack when it is done running.
         /// </summary>
-        readonly HashSet<KOSThread> threadSet = new HashSet<KOSThread>();
+        protected readonly HashSet<KOSThread> threadSet = new HashSet<KOSThread>();
         /// <summary>
         /// Works similar to threadSet.
         /// </summary>
-        readonly HashSet<KOSThread> triggerSet = new HashSet<KOSThread>();
+        protected readonly HashSet<KOSThread> triggerSet = new HashSet<KOSThread>();
 
         /// <summary>
         /// Stack to be executed until it's empty. The stack effectively keeps
         /// track of what was last executed even past an update. When it's empty it will
         /// eventually get filled up by the threadSet.
         /// </summary>
-        readonly coll.Stack<KOSThread> threadStack = new coll.Stack<KOSThread>();
+        protected readonly coll.Stack<KOSThread> threadStack = new coll.Stack<KOSThread>();
         /// <summary cref="ThreadStatus">
         /// Works similar to threadStack.
         /// </summary>
-        readonly coll.Stack<KOSThread> triggerStack = new coll.Stack<KOSThread>();
+        protected readonly coll.Stack<KOSThread> triggerStack = new coll.Stack<KOSThread>();
 
         public FlyByWireManager FlyByWire;
 
@@ -84,13 +84,11 @@ namespace kOS.Safe
 
         public ProcessStatus Status { get; set; } = ProcessStatus.OK;
 
+
         public void Execute()
 		{
             Deb.EnqueueExec("Process Execute.");
-
-            if (threadSet.Count == 0) {
-                Status = ProcessStatus.FINISHED;
-            }
+            SetFinishedStatusIfFinished();
 
             switch (Status) {
             case ProcessStatus.GLOBAL_INSTRUCTION_LIMIT:
@@ -124,6 +122,14 @@ namespace kOS.Safe
             ExecuteThreads(threadStack);
 
             Deb.EnqueueExec("Finished Thread with status", Status);
+
+
+        }
+
+        protected virtual void SetFinishedStatusIfFinished() {
+            if (threadSet.Count == 0) {
+                Status = ProcessStatus.FINISHED;
+            }
         }
 
         void ExecuteThreads(coll.Stack<KOSThread> stack){
@@ -196,6 +202,7 @@ namespace kOS.Safe
                 threadSet.Remove(thread);
                 break;
             }
+            SetFinishedStatusIfFinished();
         }
 
         /// <summary>
