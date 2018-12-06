@@ -135,7 +135,7 @@ namespace kOS.Safe.Function
             if (processManager.InterpreterIsCurrent()) {
                 processManager.RunInNewProcess(programProcedure, progArgs);
             } else {
-                exec.Stack.Push(0); // the "return" value
+                //exec.Stack.Push(0); // the "return" value
                 exec.Thread.CallWithArgs(programProcedure, progArgs);
             }
 

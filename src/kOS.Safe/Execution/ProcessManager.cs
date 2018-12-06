@@ -1,17 +1,9 @@
 ﻿using System;
 using kOS.Safe.Execution;
 using kOS.Safe.Compilation;
-using coll = System.Collections.Generic;
 using System.Collections.Generic;
 using kOS.Safe.Encapsulation;
 using kOS.Safe.Utilities;
-using kOS.Safe.Binding;
-using kOS.Safe.Callback;
-using kOS.Safe.Exceptions;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using Debug = kOS.Safe.Utilities.Debug;
 using kOS.Safe.Persistence;
 
 namespace kOS.Safe
@@ -38,7 +30,7 @@ namespace kOS.Safe
         /// Returns true if there are more instructions to execute this
         /// update and increments the counter.
         /// </summary>
-        public Boolean Continue(){
+        public bool Continue(){
             return instructionsPerUpdate>executionCounter++;
         }
     }
@@ -82,15 +74,18 @@ namespace kOS.Safe
             Deb.EnqueueExec("Executing Process", CurrentProcess.ID);
             CurrentProcess.Execute();
             Deb.EnqueueExec("Process has status", CurrentProcess.Status);
+
             switch (CurrentProcess.Status) {
             case ProcessStatus.FINISHED:
             case ProcessStatus.ERROR:
+                CurrentProcess.FlyByWire.DisableActiveFlyByWire();
                 PopIfCurrentProcessNotInterpreter();
                 break;
             case ProcessStatus.WAIT:
             case ProcessStatus.GLOBAL_INSTRUCTION_LIMIT:
                 break;
             }
+
             Deb.EnqueueExec("Process has status", CurrentProcess.Status);
         }
 
@@ -101,15 +96,16 @@ namespace kOS.Safe
             }
         }
 
-        public void RunInInterpreter(Procedure Program, List<object> args = null) {
+        public void RunInInterpreter(Procedure Program, List<object> args) {
             KOSThread thread = new KOSThread(InterpreterProcess);
             InterpreterProcess.AddThread(thread);
             thread.CallWithArgs(Program, args);
             InterpreterProcess.Status = ProcessStatus.OK;
         }
 
-        public void RunInNewProcess(Procedure Program, List<object> args = null) {
+        public void RunInNewProcess(Procedure Program, List<object> args) {
             KOSProcess process = new KOSProcess(this);
+            CurrentProcess.FlyByWire.DisableActiveFlyByWire();
             processes.Push(process);
             KOSThread thread = new KOSThread(process);
             process.AddThread(thread);
@@ -168,16 +164,18 @@ namespace kOS.Safe
                 Deb.LogQueues();
             }
             debugging = false;
+            InterpreterProcess.FlyByWire.DisableActiveFlyByWire();
         }
 
-        public void Boot() {
+        public override void Boot() {
+            Init();
             globalVariables.Clear();
-            //if (shared.GameEventDispatchManager != null) shared.GameEventDispatchManager.Clear();
+            if (shared.GameEventDispatchManager != null) shared.GameEventDispatchManager.Clear();
 
             PushInterpreterContext();
             currentTime = 0;
             // clear stack (which also orphans all local variables so they can get garbage collected)
-            stack.Clear();
+            //stack.Clear();
             if (shared.Interpreter != null) shared.Interpreter.Reset();
             // load functions
             if (shared.FunctionManager != null) shared.FunctionManager.Load();
@@ -205,24 +203,34 @@ namespace kOS.Safe
                     SafeHouse.Logger.Log(string.Format("Boot file \"{0}\" is missing, skipping boot script", path));
                 }
 
-                //shared.VolumeMgr.SwitchTo(shared.VolumeMgr.GetVolume(0));
-                //else {
-                //    var bootContext = "program";
-                //    shared.ScriptHandler.ClearContext(bootContext);
-                //    IProgramContext programContext = SwitchToProgramContext();
-                //    programContext.Silent = true;
+                shared.VolumeMgr.SwitchTo(shared.VolumeMgr.GetVolume(0));
+                if(file==null)
+                {
+                    SafeHouse.Logger.Log(string.Format("Boot file \"{0}\" is missing, skipping boot script", path));
+                }
+                else {
+                    var bootContext = "program";
+                    shared.ScriptHandler.ClearContext(bootContext);
+                    //IProgramContext programContext = SwitchToProgramContext();
+                    //programContext.Silent = true;
 
-                //    string bootCommand = string.Format("run \"{0}\".", file.Path);
+                    string bootCommand = string.Format("run \"{0}\".", file.Path);
 
-                //    var options = new CompilerOptions {
-                //        LoadProgramsInSameAddressSpace = true,
-                //        FuncManager = shared.FunctionManager,
-                //        IsCalledFromRun = false
-                //    };
+                    var options = new CompilerOptions {
+                        LoadProgramsInSameAddressSpace = false,
+                        FuncManager = shared.FunctionManager,
+                        IsCalledFromRun = false
+                    };
 
-                //    YieldProgram(YieldFinishedCompile.RunScript(new BootGlobalPath(bootCommand), 1, bootCommand, bootContext, options));
+                    List<CodePart> commandParts =
+                        shared.ScriptHandler.Compile(
+                        new BootGlobalPath(bootCommand), 1, bootCommand, "program", options);
+                    debugging = true;
+                    
+                    RunInInterpreter(ProgramBuilder2.BuildProgram(commandParts),new List<object>());
+                    //YieldProgram(YieldFinishedCompile.RunScript(new BootGlobalPath(bootCommand), 1, bootCommand, bootContext, options));
 
-                //}
+                }
             }
         }
 

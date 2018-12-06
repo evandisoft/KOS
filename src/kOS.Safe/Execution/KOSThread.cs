@@ -126,10 +126,10 @@ namespace kOS.Safe {
                 }
 
                 try {
-                    // This call may lead to the "CurrentProcedure"
+                    // This call may lead to the "CurrentProcedureCall"
                     // being popped off the stack. In this case
                     // any code we add between this call and continue;
-                    // that assumes "CurrentProcedure" remains the same as
+                    // that assumes "CurrentProcedureCall" remains the same as
                     // the one we just executed would be incorrect.
                     // Also if this call leads to the last ProcedureCall
                     // being popped off the stack, CurrentProcedureCall will
@@ -219,6 +219,9 @@ namespace kOS.Safe {
             Status = ThreadStatus.WAIT;
         }
 
+        /// <summary>
+        /// Called by OpcodeReturn.
+        /// </summary>
         public void Return() {
             Deb.EnqueueExec("Removing " + nameof(ProcedureCall));
             callStack.Pop();

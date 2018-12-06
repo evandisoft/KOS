@@ -2608,13 +2608,15 @@ namespace kOS.Safe.Compilation.KS
                     AddOpcode(new OpcodeAddTrigger(false));
                 }
                     
-                // enable this FlyByWire parameter
-                AddOpcode(new OpcodePush(new KOSArgMarkerType()));
-                AddOpcode(new OpcodePush(lockIdentifier));
-                AddOpcode(new OpcodePush(true));
-                AddOpcode(new OpcodeCall("toggleflybywire") { isBuiltin=true });
-                // add a pop to clear out the dummy return value from toggleflybywire()
-                AddOpcode(new OpcodePop());
+                // Evandisoft. We're toggling flybywire explicitly when
+                // we add or remove system triggers in KOSProcess
+                //// enable this FlyByWire parameter
+                //AddOpcode(new OpcodePush(new KOSArgMarkerType()));
+                //AddOpcode(new OpcodePush(lockIdentifier));
+                //AddOpcode(new OpcodePush(true));
+                //AddOpcode(new OpcodeCall("toggleflybywire") { isBuiltin=true });
+                //// add a pop to clear out the dummy return value from toggleflybywire()
+                //AddOpcode(new OpcodePop());
             }
             else{
                 // lock variable
@@ -2665,13 +2667,14 @@ namespace kOS.Safe.Compilation.KS
                 AddOpcode(new OpcodePush(lockObject.ScopelessIdentifier));
                 AddOpcode(new OpcodeRemoveTrigger());
                 //}
-                // disable this FlyByWire parameter
-                AddOpcode(new OpcodePush(new KOSArgMarkerType()));
-                AddOpcode(new OpcodePush(lockObject.ScopelessIdentifier));
-                AddOpcode(new OpcodePush(false));
-                AddOpcode(new OpcodeCall("toggleflybywire"){isBuiltin=true});
-                // add a pop to clear out the dummy return value from toggleflybywire()
-                AddOpcode(new OpcodePop());
+                // Evandisoft We're trying to call toggleflybywire explicity.
+                //// disable this FlyByWire parameter
+                //AddOpcode(new OpcodePush(new KOSArgMarkerType()));
+                //AddOpcode(new OpcodePush(lockObject.ScopelessIdentifier));
+                //AddOpcode(new OpcodePush(false));
+                //AddOpcode(new OpcodeCall("toggleflybywire"){isBuiltin=true});
+                //// add a pop to clear out the dummy return value from toggleflybywire()
+                //AddOpcode(new OpcodePop());
 
             } else{
                 AddOpcode(new OpcodePush("$"+lockObject.ScopelessIdentifier+"*"));

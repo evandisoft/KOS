@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using coll = System.Collections.Generic;
 using System;
 using kOS.Safe.Execution;
+using kOS.Safe.Binding;
 
 namespace kOS.Safe
 {
@@ -73,9 +74,12 @@ namespace kOS.Safe
         /// </summary>
         readonly coll.Stack<KOSThread> triggerStack = new coll.Stack<KOSThread>();
 
+        public FlyByWireManager FlyByWire;
+
         public KOSProcess(ProcessManager processManager)
         {
             ProcessManager=processManager;
+            FlyByWire = new FlyByWireManager(processManager.shared.BindingMgr);
         }
 
         public ProcessStatus Status { get; set; } = ProcessStatus.OK;
@@ -83,6 +87,10 @@ namespace kOS.Safe
         public void Execute()
 		{
             Deb.EnqueueExec("Process Execute.");
+
+            if (threadSet.Count == 0) {
+                Status = ProcessStatus.FINISHED;
+            }
 
             switch (Status) {
             case ProcessStatus.GLOBAL_INSTRUCTION_LIMIT:
@@ -111,17 +119,10 @@ namespace kOS.Safe
                 return;
             }
 
-            // execute all threads until GLOBAL_INSTRUCTION_LIMIT is
-            // exceeded
-            while (Status == ProcessStatus.OK){
-                FillThreadStackIfEmpty();
-                Deb.EnqueueExec("Executing. Threads",threadStack.Count);
-                ExecuteThreads(threadStack);
+            FillThreadStackIfEmpty();
+            Deb.EnqueueExec("Executing. Threads", threadStack.Count);
+            ExecuteThreads(threadStack);
 
-                if (threadSet.Count == 0) {
-                    Status = ProcessStatus.FINISHED;
-                }
-            }
             Deb.EnqueueExec("Finished Thread with status", Status);
         }
 
@@ -184,13 +185,17 @@ namespace kOS.Safe
         /// </summary>
         /// <param name="thread">Thread.</param>
         void RemoveThread(KOSThread thread) {
-            if(thread is SystemTrigger) {
-                RemoveSystemTrigger(((SystemTrigger)thread).Name);
+            switch (thread) {
+            case SystemTrigger sys:
+                RemoveSystemTrigger(sys.Name);
+                break;
+            case KOSTrigger trigger:
+                RemoveTrigger(trigger);
+                break;
+            default:
+                threadSet.Remove(thread);
+                break;
             }
-            if(thread is KOSTrigger) {
-                RemoveTrigger((KOSTrigger)thread);
-            }
-            threadSet.Remove(thread);
         }
 
         /// <summary>
@@ -247,6 +252,7 @@ namespace kOS.Safe
             }
             SystemTriggerMap.Add(systemTrigger.Name, systemTrigger);
             triggerSet.Add(systemTrigger);
+            FlyByWire.ToggleFlyByWire(systemTrigger.Name, true);
         }
 
         /// <summary>
@@ -257,6 +263,7 @@ namespace kOS.Safe
         public bool RemoveSystemTrigger(string name){
             if(SystemTriggerMap.TryGetValue(name, out SystemTrigger systemTrigger)){
                 SystemTriggerMap.Remove(name);
+                FlyByWire.ToggleFlyByWire(systemTrigger.Name, false);
                 return triggerSet.Remove(systemTrigger);
             }
             return false;
@@ -265,5 +272,7 @@ namespace kOS.Safe
         internal void RemoveTrigger(KOSTrigger kOSTrigger) {
             triggerSet.Remove(kOSTrigger);
         }
+
+
     }
 }
