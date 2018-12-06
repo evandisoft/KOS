@@ -94,8 +94,8 @@ namespace kOS.Safe
                 CurrentProcess.FlyByWire.DisableActiveFlyByWire();
                 Deb.EnqueueExec("Removing process", CurrentProcess.ID);
                 processes.Pop();
+                CurrentProcess.FlyByWire.EnableActiveFlyByWire();
             }
-            CurrentProcess.FlyByWire.EnableActiveFlyByWire();
         }
 
         public void RunInInterpreter(Procedure Program, List<object> args) {
