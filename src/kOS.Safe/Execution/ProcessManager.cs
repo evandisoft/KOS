@@ -81,17 +81,17 @@ namespace kOS.Safe
 
             Deb.EnqueueExec("Executing Process", CurrentProcess.ID);
             CurrentProcess.Execute();
-
+            Deb.EnqueueExec("Process has status", CurrentProcess.Status);
             switch (CurrentProcess.Status) {
             case ProcessStatus.FINISHED:
             case ProcessStatus.ERROR:
                 PopIfCurrentProcessNotInterpreter();
-                return;
+                break;
             case ProcessStatus.WAIT:
             case ProcessStatus.GLOBAL_INSTRUCTION_LIMIT:
-                return;
+                break;
             }
-
+            Deb.EnqueueExec("Process has status", CurrentProcess.Status);
         }
 
         void PopIfCurrentProcessNotInterpreter() {
@@ -105,6 +105,7 @@ namespace kOS.Safe
             KOSThread thread = new KOSThread(InterpreterProcess);
             InterpreterProcess.AddThread(thread);
             thread.CallWithArgs(Program, args);
+            InterpreterProcess.Status = ProcessStatus.OK;
         }
 
         public void RunInNewProcess(Procedure Program, List<object> args = null) {
@@ -144,13 +145,15 @@ namespace kOS.Safe
         /// Enables or disables debugging based on whether ExecutionIsActive
         /// </summary>
         public void EnableOrDisableDebugging() {
-            if (ExecutionIsActive()) {
+            if (!debugging && ExecutionIsActive()) {
                 Deb.RawLog("Starting debugging");
                 Deb.EnableLogging();
                 debugging = true;
-            } else {
+            } 
+            else if(debugging && !ExecutionIsActive()) {
                 Deb.RawLog("Stopping debugging");
                 Deb.DisableLogging();
+                Deb.LogQueues();
                 debugging = false;
             }
         }
@@ -164,6 +167,7 @@ namespace kOS.Safe
             if (debugging) {
                 Deb.LogQueues();
             }
+            debugging = false;
         }
 
         public void Boot() {

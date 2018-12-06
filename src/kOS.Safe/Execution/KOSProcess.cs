@@ -82,8 +82,7 @@ namespace kOS.Safe
 
         public void Execute()
 		{
-            Deb.EnqueueExec("Process Execute. Threads", threadSet.Count);
-            Deb.EnqueueExec("Process Execute. Triggers", triggerSet.Count);
+            Deb.EnqueueExec("Process Execute.");
 
             switch (Status) {
             case ProcessStatus.GLOBAL_INSTRUCTION_LIMIT:
@@ -97,8 +96,10 @@ namespace kOS.Safe
             }
 
             FillTriggerStackIfEmpty();
+            Deb.EnqueueExec("Executing. Triggers", triggerStack.Count);
             ExecuteThreads(triggerStack);
 
+            Deb.EnqueueExec("Finished. Triggers with status", Status);
             switch (Status) {
             case ProcessStatus.WAIT:
                 Status = ProcessStatus.OK;
@@ -114,13 +115,14 @@ namespace kOS.Safe
             // exceeded
             while (Status == ProcessStatus.OK){
                 FillThreadStackIfEmpty();
+                Deb.EnqueueExec("Executing. Threads",threadStack.Count);
                 ExecuteThreads(threadStack);
 
                 if (threadSet.Count == 0) {
                     Status = ProcessStatus.FINISHED;
                 }
             }
-
+            Deb.EnqueueExec("Finished Thread with status", Status);
         }
 
         void ExecuteThreads(coll.Stack<KOSThread> stack){
@@ -197,6 +199,7 @@ namespace kOS.Safe
         /// </summary>
         void FillTriggerStackIfEmpty(){
             if (triggerStack.Count==0) {
+                Deb.EnqueueExec("Filling Trigger Stack", triggerSet.Count);
                 foreach (var trigger in triggerSet) {
                     triggerStack.Push(trigger);
                 }
@@ -209,6 +212,7 @@ namespace kOS.Safe
         /// </summary>
         void FillThreadStackIfEmpty(){
             if (threadStack.Count==0) {
+                Deb.EnqueueExec("Filling Thread Stack", threadSet.Count);
                 foreach (var thread in threadSet) {
                     threadStack.Push(thread);
                 }
