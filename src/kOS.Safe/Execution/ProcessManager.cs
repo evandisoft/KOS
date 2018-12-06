@@ -39,12 +39,6 @@ namespace kOS.Safe
 
     /// <summary>
     /// Process manager. - Replacement for the CPU
-    /// TODO: This is not really implemented fully yet.
-    /// Currently, threads in a particular process will
-    /// eat up all the rest of the GLOBAL_INSTRUCTION_LIMIT and prevent
-    /// triggers in other processes from running on each update. But currently
-    /// we are only using one process at a time, so this is not currently a
-    /// problem.
     /// </summary>
     public class ProcessManager:CPU
     {
@@ -58,11 +52,14 @@ namespace kOS.Safe
         }
 
         public void Init() {
-            processes.Clear();
+            foreach(var process in processes) {
+                process.SetForDisposal();
+            }
             var newProcess = new InterpreterProcess(this);
             processes.Push(newProcess);
             InterpreterProcess = newProcess;
         }
+
 
         public bool debugging = false;
         override internal void ContinueExecution(bool doProfiling)
@@ -120,7 +117,7 @@ namespace kOS.Safe
         }
 
         /// <summary>
-        /// Enables or disables debugging based on whether ExecutionIsActive
+        /// Enables or disables debugging based on whether execution is active
         /// </summary>
         public void EnableOrDisableDebugging() {
             if (!debugging && CurrentProcess.Status==ProcessStatus.OK) {
@@ -141,13 +138,11 @@ namespace kOS.Safe
         /// </summary>
         /// <param name="manual">If set to <c>true</c> manual.</param>
         public override void BreakExecution(bool manual) {
+            Init();
             if (debugging) {
                 Deb.LogQueues();
             }
             debugging = false;
-            CurrentProcess.FlyByWire.DisableActiveFlyByWire();
-            InterpreterProcess.FlyByWire.DisableActiveFlyByWire();
-            Init();
         }
 
         public override void Boot() {

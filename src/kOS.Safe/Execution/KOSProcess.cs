@@ -251,6 +251,16 @@ namespace kOS.Safe
             triggerSet.Remove(kOSTrigger);
         }
 
-
+        public void SetForDisposal() {
+            foreach(var triggerName in SystemTriggerMap.Keys) {
+                RemoveSystemTrigger(triggerName);
+            }
+            threadSet.Clear();
+            triggerSet.Clear();
+            threadStack.Clear();
+            triggerStack.Clear();
+            Status = ProcessStatus.TERMINATED;
+            FlyByWire.DisableActiveFlyByWire();
+        }
     }
 }

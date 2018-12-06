@@ -440,6 +440,11 @@ namespace kOS.Safe.Compilation.KS
             }
         }
 
+        /// <summary>
+        /// This creates the code for the procedure that will run if the expr
+        /// in an on statement has changed
+        /// </summary>
+        /// <param name="node">Node.</param>
         private void PreProcessOnStatement(ParseNode node)
         {
             NodeStartHousekeeping(node);
@@ -449,38 +454,10 @@ namespace kOS.Safe.Compilation.KS
             string triggerIdentifier = "on-" + expressionHash.ToString();
             Trigger triggerObject = context.Triggers.GetTrigger(triggerIdentifier);
 
-            // - - - - - - - - - - - - 
-            // TODO: If we ever implement triggers that can be named and cancelled by name later,
-            // then right here we'd need to add some opcodes that implement the same logic as
-            // the cooked steering triggers use (check OpcodeTestCancelled and premature return
-            // if this trigger has been cancelled elsewhere before we begin running it.)
-            // - - - - - - - - - - - - 
-
-            // currentCodeSection = triggerObject.Code;
-            // // Put the old value on top of the stack for equals comparison later:
-            // AddOpcode(new OpcodePush(triggerObject.OldValueIdentifier));
-            // AddOpcode(new OpcodeEval());
-            // // eval the expression for the new value, and leave it on the stack twice.
-            // VisitNode(node.Nodes[1]);
-            // AddOpcode(new OpcodeEval());
-            // AddOpcode(new OpcodeDup());
-            // // Put one of those two copies of the new value into the old value identifier for next time.
-            // // This is local because triggers have scope and this will keep multiple instances of the
-            // // same ON trigger (i.e. executing the ON statement in a loop) to each have thier own copy
-            // // of thier own OldValue.
-            // AddOpcode(new OpcodeStoreLocal(triggerObject.OldValueIdentifier));
-            // // Use the other dup'ed copy of the new value to actually do the equals
-            // // comparison with the old value that's still under it on the stack:
-            // AddOpcode(new OpcodeCompareEqual());
-            // OpcodeBranchIfFalse branchToBody = new OpcodeBranchIfFalse();
-            // branchToBody.Distance = 3;
-            // AddOpcode(branchToBody);
-            // AddOpcode(new OpcodePush(true));       // wasn't triggered yet, so preserve.
-            // AddOpcode(new OpcodeReturn((short)0)); // premature return because it wasn't triggered
+            currentCodeSection = triggerObject.Code;
 
             // make flag that remembers whether to remove trigger:
             // defaults to true = removal should happen.
-            currentCodeSection = triggerObject.Code;
             string triggerKeepName = "$keep-" + triggerIdentifier;
             PushTriggerKeepName(triggerKeepName);
             AddOpcode(new OpcodePush(false));
@@ -497,12 +474,13 @@ namespace kOS.Safe.Compilation.KS
             nextBraceIsFunction = false;
         }
 
-        
+        /// <summary>
+        /// This creates the code for the procedure that will run if the conditional
+        /// expression in a when statement was true.
+        /// </summary>
+        /// <param name="node">Node.</param>
         private void PreProcessWhenStatement(ParseNode node)
         {
-            //evandisoft Don't think we need this
-            //return;
-
             NodeStartHousekeeping(node);
             nextBraceIsFunction = true; // triggers aren't really functions but act like it a lot.
             
@@ -510,21 +488,7 @@ namespace kOS.Safe.Compilation.KS
             string triggerIdentifier = "when-" + expressionHash.ToString();
             Trigger triggerObject = context.Triggers.GetTrigger(triggerIdentifier);
 
-            // - - - - - - - - - - - - 
-            // TODO: If we ever implement triggers that can be named and cancelled by name later,
-            // then right here we'd need to add some opcodes that implement the same logic as
-            // the cooked steering triggers use (check OpcodeTestCancelled and premature return
-            // if this trigger has been cancelled elsewhere before we begin running it.)
-            // - - - - - - - - - - - - 
-
             currentCodeSection = triggerObject.Code;
-            
-            // Evandisoft: This stuff has been added to 
-            // OpcodeBranchIfTrue branchToBody = new OpcodeBranchIfTrue();
-            // branchToBody.Distance = 3;
-            // AddOpcode(branchToBody);
-            // AddOpcode(new OpcodePush(true));       // wasn't triggered yet, so preserve.
-            // AddOpcode(new OpcodeReturn((short)0)); // premature return because it wasn't triggered
 
             // make flag that remembers whether to remove trigger:
             // defaults to true = removal should happen.
@@ -2691,22 +2655,16 @@ namespace kOS.Safe.Compilation.KS
                 //AddOpcode(new OpcodeStoreExist(lockObject.ScopelessPointerIdentifier));
         }
 
+        /// <summary>
+        /// There are two different procedures created by each on.
+        /// One is the one that will run to check whether the given expression has
+        /// remained the same. That is the one with the "anonymousIdentifier".
+        /// The other is the one that will run if the expression has changed.
+        /// That is the "triggerObject". It was already created in PreProcessOn.
+        /// </summary>
+        /// <param name="node">Node.</param>
         private void VisitOnStatement(ParseNode node)
         {
-            // NodeStartHousekeeping(node);
-            // int expressionHash = ConcatenateNodes(node).GetHashCode();
-            // string triggerIdentifier = "on-" + expressionHash.ToString();
-            // Trigger triggerObject = context.Triggers.GetTrigger(triggerIdentifier);
-
-            // if (triggerObject.IsInitialized())
-            // {
-            //     // Store the current value into the old value to prep for the first use of the ON trigger:
-            //     VisitNode(node.Nodes[1]); // the expression in the on statement.
-            //     AddOpcode(new OpcodeStore(triggerObject.OldValueIdentifier));
-            //     AddOpcode(new OpcodePushRelocateLater(null), triggerObject.GetFunctionLabel());
-            //     AddOpcode(new OpcodeAddTrigger());
-            // }
-
             NodeStartHousekeeping(node);
             int expressionHash = ConcatenateNodes(node).GetHashCode();
             string triggerIdentifier = "on-" + expressionHash.ToString();
@@ -2722,23 +2680,36 @@ namespace kOS.Safe.Compilation.KS
             currentCodeSection=userFuncObject.GetUserFunctionOpcodes(expressionHash);
             forcedNextLabel=anonymousIdentifier;
             BeginScope(node);
+            // store the function ("$"+triggerIdentifier+"*") that will run when the expr
+            // value has changed.
             AddOpcode(new OpcodePushDelegateRelocateLater(null,true),triggerObject.GetFunctionLabel());
             AddOpcode(new OpcodeStoreLocal("$"+triggerIdentifier+"*"));
+            // evaluate the expression the first time and store it in the oldvaluidentifier
             VisitNode(node.Nodes[1]);
             AddOpcode(new OpcodeStoreLocal(triggerObject.OldValueIdentifier));
             AddOpcode(new OpcodePush(0));
             AddOpcode(new OpcodeWait());
-            var exprLabel=GetNextLabel(false);
+            var loopBegin=GetNextLabel(false);
+            // Put the old value on top of the stack for equals comparison later:
             AddOpcode(new OpcodePush(triggerObject.OldValueIdentifier));
             AddOpcode(new OpcodeEval());
             VisitNode(node.Nodes[1]);
             AddOpcode(new OpcodeEval());
             AddOpcode(new OpcodeDup());
+            // Put one of those two copies of the new value into the old value identifier for next time.
+            // This is local because triggers have scope and this will keep multiple instances of the
+            // same ON trigger (i.e. executing the ON statement in a loop) to each have thier own copy
+            // of thier own OldValue.
             AddOpcode(new OpcodeStoreLocal(triggerObject.OldValueIdentifier));
+            // Use the other dup'ed copy of the new value to actually do the equals
+            // comparison with the old value that's still under it on the stack:
             AddOpcode(new OpcodeCompareEqual());
-            var exprBranch=AddOpcode(new OpcodeBranchIfTrue());
+            // If the expr hasn't changed (old and new are equal), jump to waitLabel.
+            // If they are not equal call the "$"+triggerIdentifier+"*" function
+            var exprBranch =AddOpcode(new OpcodeBranchIfTrue());
             AddOpcode(new OpcodePush(new KOSArgMarkerType()));
             AddOpcode(new OpcodeCall("$"+triggerIdentifier+"*"));
+            // If the function chose not to preserve itself, jump to end. Otherwise wait.
             var endBranch=AddOpcode(new OpcodeBranchIfFalse());
             var waitLabel=AddOpcode(new OpcodePush(0)).Label;
             AddOpcode(new OpcodeWait());
@@ -2751,7 +2722,7 @@ namespace kOS.Safe.Compilation.KS
             
             exprBranch.DestinationLabel=waitLabel;
             endBranch.DestinationLabel=endLabel;
-            loopBranch.DestinationLabel=exprLabel;
+            loopBranch.DestinationLabel=loopBegin;
 
             currentCodeSection=lastCodeSection;
 
@@ -2760,12 +2731,21 @@ namespace kOS.Safe.Compilation.KS
             AddOpcode(new OpcodeAddTrigger());
         }
 
+        /// <summary>
+        /// There are two different procedures created by each when.
+        /// One is the one that will run to check whether the given expression is true.
+        /// That is the one with the "anonymousIdentifier".
+        /// The other is the one that will run if the expression is true.
+        /// That is the "triggerObject". It was already created in PreProcessWhen.
+        /// </summary>
+        /// <param name="node">Node.</param>
         private void VisitWhenStatement(ParseNode node)
         {
             NodeStartHousekeeping(node);
             int expressionHash = ConcatenateNodes(node).GetHashCode();
             string triggerIdentifier = "when-" + expressionHash.ToString();
             Trigger triggerObject = context.Triggers.GetTrigger(triggerIdentifier);
+
 
             string anonymousIdentifier = "anonymousDelegate`"+(anonymousDelegateID++);
                 UserFunction userFuncObject = context.UserFunctions.GetUserFunction(
@@ -2777,14 +2757,19 @@ namespace kOS.Safe.Compilation.KS
             currentCodeSection=userFuncObject.GetUserFunctionOpcodes(expressionHash);
             forcedNextLabel=anonymousIdentifier;
             BeginScope(node);
+            // store the function ("$"+triggerIdentifier+"*") that will run when the expr
+            // is true.
             AddOpcode(new OpcodePushDelegateRelocateLater(null,true),triggerObject.GetFunctionLabel());
             AddOpcode(new OpcodeStoreLocal("$"+triggerIdentifier+"*"));
-            var exprLabel=GetNextLabel(false);
+            var loopBegin=GetNextLabel(false);
             VisitNode(node.Nodes[1]);
-            var exprBranch=AddOpcode(new OpcodeBranchIfFalse());
+            // If the expr is false, we will jump to the wait code. Otherwise we will call the function.
+            var exprFalseBranch =AddOpcode(new OpcodeBranchIfFalse());
             AddOpcode(new OpcodePush(new KOSArgMarkerType()));
             AddOpcode(new OpcodeCall("$"+triggerIdentifier+"*"));
+            // If the function chose not to preserve itself we will end this trigger.
             var endBranch=AddOpcode(new OpcodeBranchIfFalse());
+            // Execution waits here after each evaluation unless the evalua
             var waitLabel=AddOpcode(new OpcodePush(0)).Label;
             AddOpcode(new OpcodeWait());
             var loopBranch=AddOpcode(new OpcodeBranchJump());
@@ -2793,9 +2778,10 @@ namespace kOS.Safe.Compilation.KS
             AddOpcode(new OpcodeReturn((short)0));
             AddOpcode(new OpcodeEOP());
 
-            exprBranch.DestinationLabel=waitLabel;
+            // If the expr is false, we will jump to the wait code.
+            exprFalseBranch.DestinationLabel=waitLabel;
             endBranch.DestinationLabel=endLabel;
-            loopBranch.DestinationLabel=exprLabel;
+            loopBranch.DestinationLabel=loopBegin;
 
             currentCodeSection=lastCodeSection;
 
