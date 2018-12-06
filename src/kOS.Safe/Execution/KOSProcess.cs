@@ -13,7 +13,6 @@ namespace kOS.Safe
         OK,
         FINISHED,
         GLOBAL_INSTRUCTION_LIMIT,
-        WAIT,
         ERROR,
         TERMINATED,
     }
@@ -88,34 +87,15 @@ namespace kOS.Safe
         public void Execute()
 		{
             Deb.EnqueueExec("Process Execute.");
-            SetFinishedStatusIfFinished();
-
-            switch (Status) {
-            case ProcessStatus.GLOBAL_INSTRUCTION_LIMIT:
-            case ProcessStatus.WAIT:
-                Status = ProcessStatus.OK;
-                break;
-            case ProcessStatus.TERMINATED:
-            case ProcessStatus.ERROR:
-            case ProcessStatus.FINISHED:
-                return;
-            }
 
             FillTriggerStackIfEmpty();
             Deb.EnqueueExec("Executing. Triggers", triggerStack.Count);
             ExecuteThreads(triggerStack);
 
             Deb.EnqueueExec("Finished. Triggers with status", Status);
-            switch (Status) {
-            case ProcessStatus.WAIT:
-                Status = ProcessStatus.OK;
-                break;
-            case ProcessStatus.GLOBAL_INSTRUCTION_LIMIT:
-            case ProcessStatus.TERMINATED:
-            case ProcessStatus.ERROR:
-            case ProcessStatus.FINISHED:
+
+            if (Status != ProcessStatus.OK)
                 return;
-            }
 
             FillThreadStackIfEmpty();
             Deb.EnqueueExec("Executing. Threads", threadStack.Count);
@@ -135,15 +115,10 @@ namespace kOS.Safe
         void ExecuteThreads(coll.Stack<KOSThread> stack){
             if (stack.Count == 0) return;
 
-            bool allThreadsWaiting = true;
             while (stack.Count>0) {
                 var currentThread = stack.Peek();
                 currentThread.Execute();
                 var status = currentThread.Status;
-
-                if(status!=ThreadStatus.WAIT){
-                    allThreadsWaiting=false;
-                }
 
                 switch (status) {
 
@@ -179,10 +154,6 @@ namespace kOS.Safe
                     stack.Pop();
                     break;
                 }
-            }
-
-            if(allThreadsWaiting){
-                Status=ProcessStatus.WAIT;
             }
         }
 

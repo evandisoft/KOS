@@ -81,8 +81,8 @@ namespace kOS.Safe
                 CurrentProcess.FlyByWire.DisableActiveFlyByWire();
                 PopIfCurrentProcessNotInterpreter();
                 break;
-            case ProcessStatus.WAIT:
             case ProcessStatus.GLOBAL_INSTRUCTION_LIMIT:
+                CurrentProcess.Status = ProcessStatus.OK;
                 break;
             }
 
@@ -114,41 +114,21 @@ namespace kOS.Safe
             thread.CallWithArgs(Program, args);
         }
 
-        public bool IsActiveStatus(ProcessStatus status) {
-            switch (status) {
-            case ProcessStatus.FINISHED:
-            case ProcessStatus.ERROR:
-            case ProcessStatus.TERMINATED:
-                return false;
-            case ProcessStatus.OK:
-            case ProcessStatus.GLOBAL_INSTRUCTION_LIMIT:
-            case ProcessStatus.WAIT:
-                return true;
-            }
-            throw new Exception("ProcessStatus type of " + status + " not found");
-        }
 
         public bool InterpreterIsCurrent() {
             return InterpreterProcess == CurrentProcess;
-        }
-
-        public bool ExecutionIsActive() {
-            if (!InterpreterIsCurrent()) {
-                return true;
-            }
-            return IsActiveStatus(InterpreterProcess.Status);
         }
 
         /// <summary>
         /// Enables or disables debugging based on whether ExecutionIsActive
         /// </summary>
         public void EnableOrDisableDebugging() {
-            if (!debugging && ExecutionIsActive()) {
+            if (!debugging && CurrentProcess.Status==ProcessStatus.OK) {
                 Deb.RawLog("Starting debugging");
                 Deb.EnableLogging();
                 debugging = true;
             } 
-            else if(debugging && !ExecutionIsActive()) {
+            else if(debugging && CurrentProcess.Status != ProcessStatus.OK) {
                 Deb.RawLog("Stopping debugging");
                 Deb.DisableLogging();
                 Deb.LogQueues();
