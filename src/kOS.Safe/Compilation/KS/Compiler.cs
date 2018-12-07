@@ -3416,11 +3416,10 @@ namespace kOS.Safe.Compilation.KS
             AddOpcode(new OpcodeStore(flagName));
         }
 
-        private void VisitRebootStatement(ParseNode node)
-        {
+        private void VisitRebootStatement(ParseNode node) {
             NodeStartHousekeeping(node);
             AddOpcode(new OpcodePush(new KOSArgMarkerType()));
-            AddOpcode(new OpcodeCall("reboot()"));
+            AddOpcode(new OpcodeCall("reboot") { isBuiltin = true });
             AddOpcode(new OpcodePop()); // all functions now return a value even if we ignore it.  Not sure it matters in the case of reboot() though.
         }
 
@@ -3428,7 +3427,7 @@ namespace kOS.Safe.Compilation.KS
         {
             NodeStartHousekeeping(node);
             AddOpcode(new OpcodePush(new KOSArgMarkerType()));
-            AddOpcode(new OpcodeCall("shutdown()"));
+            AddOpcode(new OpcodeCall("shutdown") { isBuiltin = true });
             AddOpcode(new OpcodePop()); // all functions now return a value even if we ignore it.  Not sure it matters in the case of shutdown() though.
         }
 

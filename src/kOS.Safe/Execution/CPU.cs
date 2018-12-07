@@ -34,7 +34,7 @@ namespace kOS.Safe.Execution
         internal readonly SafeSharedObjects shared;
         internal readonly List<ProgramContext> contexts;
         private ProgramContext currentContext;
-        private VariableScope savedPointers;
+        protected VariableScope savedPointers;
         private int instructionsPerUpdate;
 
         public int InstructionsThisUpdate { get; private set; }

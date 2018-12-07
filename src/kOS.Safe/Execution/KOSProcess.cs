@@ -105,11 +105,9 @@ namespace kOS.Safe
                 return;
             }
 
-            while (Status == ProcessStatus.OK) {
-                FillThreadStackIfEmpty();
-                Deb.EnqueueExec("Executing. Threads", threadStack.Count);
-                ExecuteThreads(threadStack);
-            }
+            FillThreadStackIfEmpty();
+            Deb.EnqueueExec("Executing. Threads", threadStack.Count);
+            ExecuteThreads(threadStack);
 
             Deb.EnqueueExec("Finished Thread with status", Status);
         }

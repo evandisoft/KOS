@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using kOS.Safe.Encapsulation;
 using kOS.Safe.Utilities;
 using kOS.Safe.Persistence;
+using System.Linq;
 
 namespace kOS.Safe
 {
@@ -114,6 +115,8 @@ namespace kOS.Safe
         /// <param name="Program">Program.</param>
         /// <param name="args">Arguments.</param>
         public void RunInNewProcess(Procedure Program, List<object> args) {
+            // Making the behavior same as the old version.
+            SaveAndClearPointers();
             KOSProcess process = new KOSProcess(this);
             CurrentProcess.FlyByWire.DisableActiveFlyByWire();
             processes.Push(process);
@@ -122,6 +125,25 @@ namespace kOS.Safe
             thread.CallWithArgs(Program, args);
         }
 
+        private void SaveAndClearPointers() {
+            // Any global variable that ends in an asterisk (*) is a system pointer
+            // that shouldn't be inherited by other program contexts.  These sorts of
+            // variables should only exist for the current program context.
+            // This method stashes all such variables in a storage area for the program
+            // context, then clears them.  The stash can be used later by RestorePointers()
+            // to bring them back into existence when coming back to this program context again.
+            // Pointer variables include:
+            //   IP jump location for subprograms.
+            //   IP jump location for functions.
+            savedPointers = new VariableScope(0, null);
+            var pointers = new List<KeyValuePair<string, Variable>>(globalVariables.Locals.Where(entry => StringUtil.EndsWith(entry.Key, "*")));
+
+            foreach (var entry in pointers) {
+                savedPointers.Add(entry.Key, entry.Value);
+                globalVariables.Remove(entry.Key);
+            }
+            SafeHouse.Logger.Log(string.Format("Saving and removing {0} pointers", pointers.Count));
+        }
 
         public bool InterpreterIsCurrent() {
             return InterpreterProcess == CurrentProcess;

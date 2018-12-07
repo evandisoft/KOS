@@ -51,14 +51,6 @@ namespace kOS.Safe {
         readonly coll.Stack<ProcedureCall> callStack = new coll.Stack<ProcedureCall>();
 
         /// <summary>
-        /// The thread instruction counter.
-        /// This counter keeps track of the threads own execution limit
-        /// TODO: Currently this is just set to the normal instructions
-        /// per update limit. I must give this a separate implementation
-        /// so that there can be a different limit per thread
-        /// </summary>
-        internal InstructionCounter ThreadInstructionCounter = new InstructionCounter();
-        /// <summary>
         /// The global instruction counter.
         /// This counter keeps track of the total limit on
         /// instructions per update.
@@ -138,16 +130,12 @@ namespace kOS.Safe {
                     return;
                 }
 
-                if (!ThreadInstructionCounter.Continue()) {
-                    ThreadInstructionCounter.Reset();
-                    Status = ThreadStatus.THREAD_INSTRUCTION_LIMIT;
-                    return;
-                }
-
                 // This wait check and the one at the beginning of Execute
                 // can not be consolidated, because the one at the beginning
                 // of execute doesn't exit on "wait 0." This wait check needs
                 // to exit on "wait 0."
+                // And since we're already using a switch here, we might as well
+                // check all the values here instead of the beginning of the loop.
                 switch (Status) {
                 case ThreadStatus.WAIT:
                 case ThreadStatus.FINISHED:
