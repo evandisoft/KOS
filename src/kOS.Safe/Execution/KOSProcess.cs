@@ -88,18 +88,28 @@ namespace kOS.Safe
 		{
             Deb.EnqueueExec("Process Execute.");
 
+            if (Status != ProcessStatus.OK) {
+                Deb.EnqueueExec("Exiting process",ID,"with status",Status);
+                return;
+            }
+
+
             FillTriggerStackIfEmpty();
             Deb.EnqueueExec("Executing. Triggers", triggerStack.Count);
             ExecuteThreads(triggerStack);
 
             Deb.EnqueueExec("Finished. Triggers with status", Status);
 
-            if (Status != ProcessStatus.OK)
+            if (Status != ProcessStatus.OK) {
+                Deb.EnqueueExec("Exiting process", ID, "with status", Status);
                 return;
+            }
 
-            FillThreadStackIfEmpty();
-            Deb.EnqueueExec("Executing. Threads", threadStack.Count);
-            ExecuteThreads(threadStack);
+            while (Status == ProcessStatus.OK) {
+                FillThreadStackIfEmpty();
+                Deb.EnqueueExec("Executing. Threads", threadStack.Count);
+                ExecuteThreads(threadStack);
+            }
 
             Deb.EnqueueExec("Finished Thread with status", Status);
         }
@@ -206,6 +216,7 @@ namespace kOS.Safe
                 }
             }
         }
+
 
         public void AddThread(KOSThread thread)
         {

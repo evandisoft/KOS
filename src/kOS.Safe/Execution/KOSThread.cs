@@ -87,6 +87,7 @@ namespace kOS.Safe {
         public void Execute() {
             Deb.EnqueueExec("Executing thread", ID, nameof(ProcedureCall), callStack.Count);
 
+
             switch (Status) {
             case ThreadStatus.WAIT:
                 if (StillWaiting()) {
@@ -111,20 +112,10 @@ namespace kOS.Safe {
 
         void ExecuteLoop() {
             while (true) {
-                // TODO: Evandisoft This will be to ensure that no single thread 
-                // hogs all the processing time if it never waits. 
-                // But currently KOSProcess
-                // is not set up for this to be done properly.
-                //if (!ThreadInstructionCounter.Continue()) {
-                //    ThreadInstructionCounter.Reset();
-                //    Status = ThreadStatus.THREAD_INSTRUCTION_LIMIT;
-                //    return;
-                //}
-
                 try {
                     // This call may lead to the "CurrentProcedureCall"
                     // being popped off the stack. In this case
-                    // any code we add between this call and continue;
+                    // any code we execute after this call
                     // that assumes "CurrentProcedureCall" remains the same as
                     // the one we just executed would be incorrect.
                     // Also if this call leads to the last ProcedureCall
@@ -136,8 +127,10 @@ namespace kOS.Safe {
                     Deb.EnqueueException(e);
                     Process.ProcessManager.BreakExecution(false);
                     Status = ThreadStatus.ERROR;
-                    //throw;
+                    throw;
                 }
+
+
 
                 if (!GlobalInstructionCounter.Continue()) {
                     GlobalInstructionCounter.Reset();
@@ -145,6 +138,16 @@ namespace kOS.Safe {
                     return;
                 }
 
+                if (!ThreadInstructionCounter.Continue()) {
+                    ThreadInstructionCounter.Reset();
+                    Status = ThreadStatus.THREAD_INSTRUCTION_LIMIT;
+                    return;
+                }
+
+                // This wait check and the one at the beginning of Execute
+                // can not be consolidated, because the one at the beginning
+                // of execute doesn't exit on "wait 0." This wait check needs
+                // to exit on "wait 0."
                 switch (Status) {
                 case ThreadStatus.WAIT:
                 case ThreadStatus.FINISHED:
