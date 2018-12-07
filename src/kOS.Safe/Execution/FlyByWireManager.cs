@@ -11,7 +11,6 @@ namespace kOS.Safe.Execution {
             this.bindingManager = bindingManager;
         }
 
-
         public void EnableActiveFlyByWire() {
             foreach (KeyValuePair<string, bool> kvp in flyByWire) {
                 bindingManager.ToggleFlyByWire(kvp.Key, kvp.Value);
@@ -33,6 +32,7 @@ namespace kOS.Safe.Execution {
         }
 
         public void ToggleFlyByWire(string paramName, bool enabled) {
+            Deb.EnqueueExec("Binding manager toggleflybywire null?", bindingManager == null, "enabled?", enabled);
             if (bindingManager == null) return;
 
             bindingManager.ToggleFlyByWire(paramName, enabled);

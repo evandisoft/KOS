@@ -133,6 +133,7 @@ namespace kOS.Screen
 
         protected void CompileCommand(string commandText)
         {
+            Deb.RawLog("ScriptHandler "+Shared.ScriptHandler==null);
             if (Shared.ScriptHandler == null) return;
 
             try
@@ -149,6 +150,7 @@ namespace kOS.Screen
                 Deb.RawLog("Running program.");
                 List<CodePart> commandParts = Shared.ScriptHandler.Compile(new InterpreterPath(this),
                     commandHistoryIndex, commandText, InterpreterName, options);
+                //Deb.RawLog()
                 if (commandParts == null) return;
 				// If the cpu is really a "ProcessManager", we'll handle it
 				// the "new" way. If it's just a CPU, do it the old way.

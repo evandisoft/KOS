@@ -87,6 +87,23 @@ namespace kOS.Safe {
         public void Execute() {
             Deb.EnqueueExec("Executing thread", ID, nameof(ProcedureCall), callStack.Count);
 
+            switch (Status) {
+            case ThreadStatus.WAIT:
+                if (StillWaiting()) {
+                    return;
+                }
+                StopWaiting();
+                break;
+            case ThreadStatus.GLOBAL_INSTRUCTION_LIMIT:
+            case ThreadStatus.THREAD_INSTRUCTION_LIMIT:
+                Status = ThreadStatus.OK;
+                break;
+            case ThreadStatus.FINISHED:
+            case ThreadStatus.ERROR:
+            case ThreadStatus.TERMINATED:
+                return;
+            }
+
             ExecuteLoop();
 
             Deb.EnqueueExec("Exiting thread", ID, "with status", Status);
@@ -94,36 +111,15 @@ namespace kOS.Safe {
 
         void ExecuteLoop() {
             while (true) {
-                // These cases are not just to handle the first iteration
-                // of this loop, but to also handle any changes in status
-                // created by the execution of the CurrentProcedureCall below.
-                switch (Status) {
-                case ThreadStatus.WAIT:
-                    if (StillWaiting()) {
-                        return;
-                    }
-                    StopWaiting();
-                    break;
-                case ThreadStatus.GLOBAL_INSTRUCTION_LIMIT:
-                case ThreadStatus.THREAD_INSTRUCTION_LIMIT:
-                    Status = ThreadStatus.OK;
-                    break;
-                case ThreadStatus.FINISHED:
-                case ThreadStatus.ERROR:
-                case ThreadStatus.TERMINATED:
-                    return;
-                }
-
-                if (!GlobalInstructionCounter.Continue()) {
-                    GlobalInstructionCounter.Reset();
-                    Status = ThreadStatus.GLOBAL_INSTRUCTION_LIMIT;
-                    return;
-                }
-                if (!ThreadInstructionCounter.Continue()) {
-                    ThreadInstructionCounter.Reset();
-                    Status = ThreadStatus.THREAD_INSTRUCTION_LIMIT;
-                    return;
-                }
+                // TODO: Evandisoft This will be to ensure that no single thread 
+                // hogs all the processing time if it never waits. 
+                // But currently KOSProcess
+                // is not set up for this to be done properly.
+                //if (!ThreadInstructionCounter.Continue()) {
+                //    ThreadInstructionCounter.Reset();
+                //    Status = ThreadStatus.THREAD_INSTRUCTION_LIMIT;
+                //    return;
+                //}
 
                 try {
                     // This call may lead to the "CurrentProcedureCall"
@@ -135,19 +131,27 @@ namespace kOS.Safe {
                     // being popped off the stack, CurrentProcedureCall will
                     // cause an error if you attempt to access it again.
                     CurrentProcedureCall.ExecuteNextInstruction();
-                    continue;
-                    // Don't put anything between 
-                    // 'CurrentProcedureCall.ExecuteNextInstruction();'
-                    // and
-                    // 'continue;'
                 } catch (Exception e) {
                     Deb.EnqueueExec(e);
                     Deb.EnqueueException(e);
                     Process.ProcessManager.BreakExecution(false);
                     Status = ThreadStatus.ERROR;
-                    throw;
+                    //throw;
                 }
-                // Do not put code here. See Above
+
+                if (!GlobalInstructionCounter.Continue()) {
+                    GlobalInstructionCounter.Reset();
+                    Status = ThreadStatus.GLOBAL_INSTRUCTION_LIMIT;
+                    return;
+                }
+
+                switch (Status) {
+                case ThreadStatus.WAIT:
+                case ThreadStatus.FINISHED:
+                case ThreadStatus.ERROR:
+                case ThreadStatus.TERMINATED:
+                    return;
+                }
             }
         }
 

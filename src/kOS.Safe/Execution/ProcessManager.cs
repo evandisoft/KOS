@@ -53,7 +53,7 @@ namespace kOS.Safe
 
         public void Init() {
             foreach(var process in processes) {
-                process.SetForDisposal();
+                process.PrepareForDisposal();
             }
             var newProcess = new InterpreterProcess(this);
             processes.Push(newProcess);
@@ -75,7 +75,6 @@ namespace kOS.Safe
             switch (CurrentProcess.Status) {
             case ProcessStatus.FINISHED:
             case ProcessStatus.ERROR:
-                CurrentProcess.FlyByWire.DisableActiveFlyByWire();
                 PopIfCurrentProcessNotInterpreter();
                 break;
             case ProcessStatus.GLOBAL_INSTRUCTION_LIMIT:
@@ -88,13 +87,19 @@ namespace kOS.Safe
 
         void PopIfCurrentProcessNotInterpreter() {
             if (!InterpreterIsCurrent()) {
-                CurrentProcess.FlyByWire.DisableActiveFlyByWire();
+                CurrentProcess.PrepareForDisposal();
                 Deb.EnqueueExec("Removing process", CurrentProcess.ID);
                 processes.Pop();
                 CurrentProcess.FlyByWire.EnableActiveFlyByWire();
-            }
+            } 
         }
 
+        /// <summary>
+        /// Creates a new thread, puts the Program into the thread, and
+        /// puts the thread into the interpreter process.
+        /// </summary>
+        /// <param name="Program">Program.</param>
+        /// <param name="args">Arguments.</param>
         public void RunInInterpreter(Procedure Program, List<object> args) {
             KOSThread thread = new KOSThread(InterpreterProcess);
             InterpreterProcess.AddThread(thread);
@@ -102,6 +107,12 @@ namespace kOS.Safe
             InterpreterProcess.Status = ProcessStatus.OK;
         }
 
+        /// <summary>
+        /// Creates a new process, a new thread, and places the Program into
+        /// the thread, and the thread into the process.
+        /// </summary>
+        /// <param name="Program">Program.</param>
+        /// <param name="args">Arguments.</param>
         public void RunInNewProcess(Procedure Program, List<object> args) {
             KOSProcess process = new KOSProcess(this);
             CurrentProcess.FlyByWire.DisableActiveFlyByWire();
@@ -117,7 +128,8 @@ namespace kOS.Safe
         }
 
         /// <summary>
-        /// Enables or disables debugging based on whether execution is active
+        /// Enables or disables debugging based on whether execution is active.
+        /// If it is not active, we don't want to store meaningless debug info.
         /// </summary>
         public void EnableOrDisableDebugging() {
             if (!debugging && CurrentProcess.Status==ProcessStatus.OK) {
@@ -134,15 +146,41 @@ namespace kOS.Safe
         }
 
         /// <summary>
-        /// Doesn't yet handle removing toggleflybywire properly.
+        /// Breaks the Execution.
         /// </summary>
         /// <param name="manual">If set to <c>true</c> manual.</param>
         public override void BreakExecution(bool manual) {
-            Init();
+            // TODO: Evandisoft A full init might or might not be appropriate.
+            Init(); 
             if (debugging) {
                 Deb.LogQueues();
             }
             debugging = false;
+        }
+
+        public override void KOSFixedUpdate(double deltaTime) {
+            bool showStatistics = SafeHouse.Config.ShowStatistics;
+
+            currentTime = shared.UpdateHandler.CurrentFixedTime;
+
+            try {
+                PreUpdateBindings();
+
+                ContinueExecution(showStatistics);
+
+                PostUpdateBindings();
+            } catch (Exception e) {
+                if (shared.Logger != null) {
+                    shared.Logger.Log(e);
+                    SafeHouse.Logger.Log(stack.Dump());
+                }
+                if (shared.SoundMaker != null) {
+                    // Stop all voices any time there is an error, both at the interpreter and in a program
+                    shared.SoundMaker.StopAllVoices();
+                }
+
+                BreakExecution(false);
+            }
         }
 
         public override void Boot() {
@@ -150,10 +188,10 @@ namespace kOS.Safe
             globalVariables.Clear();
             if (shared.GameEventDispatchManager != null) shared.GameEventDispatchManager.Clear();
 
-            PushInterpreterContext();
+            //PushInterpreterContext();
             currentTime = 0;
             // clear stack (which also orphans all local variables so they can get garbage collected)
-            //stack.Clear();
+
             if (shared.Interpreter != null) shared.Interpreter.Reset();
             // load functions
             if (shared.FunctionManager != null) shared.FunctionManager.Load();
@@ -189,8 +227,6 @@ namespace kOS.Safe
                 else {
                     var bootContext = "program";
                     shared.ScriptHandler.ClearContext(bootContext);
-                    //IProgramContext programContext = SwitchToProgramContext();
-                    //programContext.Silent = true;
 
                     string bootCommand = string.Format("run \"{0}\".", file.Path);
 
@@ -206,8 +242,6 @@ namespace kOS.Safe
                     debugging = true;
                     
                     RunInInterpreter(ProgramBuilder2.BuildProgram(commandParts),new List<object>());
-                    //YieldProgram(YieldFinishedCompile.RunScript(new BootGlobalPath(bootCommand), 1, bootCommand, bootContext, options));
-
                 }
             }
         }

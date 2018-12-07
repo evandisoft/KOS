@@ -45,13 +45,13 @@ namespace kOS.Safe
         /// </summary>
         public void ExecuteNextInstruction()
         {
-            CurrentOpcode.Execute(Thread);
             Deb.EnqueueExec("Current Opcode", CurrentOpcode);
-            Deb.EnqueueExec("Stack for thread", "(" + Thread.ID, "is", Thread.Stack+ ")");
+            Deb.EnqueueExec("Stack for thread", "(" + Thread.ID, "is", Thread.Stack + ")");
             Deb.EnqueueExec("Store is", Store.scopeStack.Count);
             Deb.EnqueueOpcode(CurrentOpcode, "(ID:", Thread.ID + ")", "(Stack:", Thread.Stack.ToString() + ")");
+            CurrentOpcode.Execute(Thread);
             Deb.EnqueueExec("In Execute. delta was", CurrentOpcode.DeltaInstructionPointer);
-            instructionPointer+=CurrentOpcode.DeltaInstructionPointer;
+            instructionPointer +=CurrentOpcode.DeltaInstructionPointer;
         }
     }
 }

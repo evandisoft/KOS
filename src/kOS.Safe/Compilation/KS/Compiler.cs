@@ -2746,12 +2746,12 @@ namespace kOS.Safe.Compilation.KS
             string triggerIdentifier = "when-" + expressionHash.ToString();
             Trigger triggerObject = context.Triggers.GetTrigger(triggerIdentifier);
 
-
             string anonymousIdentifier = "anonymousDelegate`"+(anonymousDelegateID++);
                 UserFunction userFuncObject = context.UserFunctions.GetUserFunction(
                     anonymousIdentifier,
                     GetContainingScopeId(node),
                     node);
+
             expressionHash = anonymousIdentifier.GetHashCode();
             var lastCodeSection=currentCodeSection;
             currentCodeSection=userFuncObject.GetUserFunctionOpcodes(expressionHash);
@@ -2769,7 +2769,8 @@ namespace kOS.Safe.Compilation.KS
             AddOpcode(new OpcodeCall("$"+triggerIdentifier+"*"));
             // If the function chose not to preserve itself we will end this trigger.
             var endBranch=AddOpcode(new OpcodeBranchIfFalse());
-            // Execution waits here after each evaluation unless the evalua
+            // Execution waits here so the process can keep this thread alive, waiting for
+            // anther check.
             var waitLabel=AddOpcode(new OpcodePush(0)).Label;
             AddOpcode(new OpcodeWait());
             var loopBranch=AddOpcode(new OpcodeBranchJump());

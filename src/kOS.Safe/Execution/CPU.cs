@@ -1277,7 +1277,7 @@ namespace kOS.Safe.Execution
             }
         }
 
-        public void KOSFixedUpdate(double deltaTime)
+        public virtual void KOSFixedUpdate(double deltaTime)
         {
             bool showStatistics = SafeHouse.Config.ShowStatistics;
 
@@ -1351,7 +1351,7 @@ namespace kOS.Safe.Execution
                 statBlock.EndOneUpdate();
         }
 
-        private void PreUpdateBindings()
+        protected void PreUpdateBindings()
         {
             if (shared.BindingMgr != null)
             {
@@ -1359,7 +1359,7 @@ namespace kOS.Safe.Execution
             }
         }
 
-        private void PostUpdateBindings()
+        protected void PostUpdateBindings()
         {
             if (shared.BindingMgr != null)
             {

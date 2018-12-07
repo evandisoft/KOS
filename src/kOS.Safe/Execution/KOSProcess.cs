@@ -102,10 +102,15 @@ namespace kOS.Safe
             ExecuteThreads(threadStack);
 
             Deb.EnqueueExec("Finished Thread with status", Status);
-
-
         }
 
+        /// <summary>
+        /// This is overriden by InterpreterProcess to allow it to run
+        /// triggers even if all the threads were removed.
+        /// 
+        /// InterpreterProcess only considers itself finished if both the
+        /// triggers and threads were removed.
+        /// </summary>
         protected virtual void SetFinishedStatusIfFinished() {
             if (threadSet.Count == 0) {
                 Status = ProcessStatus.FINISHED;
@@ -222,6 +227,7 @@ namespace kOS.Safe
         /// </summary>
         /// <param name="systemTrigger">System trigger.</param>
         public void AddSystemTrigger(SystemTrigger systemTrigger){
+            Deb.EnqueueExec("Adding System Trigger", systemTrigger.Name);
             if (systemTrigger==null)
                 throw new Exception(
                     "SystemTriggers passed to AddSystemTrigger cannot be null");
@@ -230,6 +236,7 @@ namespace kOS.Safe
             }
             SystemTriggerMap.Add(systemTrigger.Name, systemTrigger);
             triggerSet.Add(systemTrigger);
+            Deb.EnqueueExec("Enabling flybywire", systemTrigger.Name);
             FlyByWire.ToggleFlyByWire(systemTrigger.Name, true);
         }
 
@@ -239,7 +246,9 @@ namespace kOS.Safe
         /// <returns><c>true</c>, if system trigger was removed, <c>false</c> otherwise.</returns>
         /// <param name="name">Name.</param>
         public bool RemoveSystemTrigger(string name){
+            Deb.EnqueueExec("Attempting to remove System Trigger", name);
             if(SystemTriggerMap.TryGetValue(name, out SystemTrigger systemTrigger)){
+                Deb.EnqueueExec("Trigger found", name);
                 SystemTriggerMap.Remove(name);
                 FlyByWire.ToggleFlyByWire(systemTrigger.Name, false);
                 return triggerSet.Remove(systemTrigger);
@@ -251,10 +260,8 @@ namespace kOS.Safe
             triggerSet.Remove(kOSTrigger);
         }
 
-        public void SetForDisposal() {
-            foreach(var triggerName in SystemTriggerMap.Keys) {
-                RemoveSystemTrigger(triggerName);
-            }
+        public void PrepareForDisposal() {
+            SystemTriggerMap.Clear();
             threadSet.Clear();
             triggerSet.Clear();
             threadStack.Clear();
