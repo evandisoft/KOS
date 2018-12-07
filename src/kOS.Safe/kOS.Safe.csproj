@@ -307,7 +307,6 @@
     <Compile Include="Execution\KOSTrigger.cs" />
     <Compile Include="Execution\FlyByWireManager.cs" />
     <Compile Include="Execution\InterpreterProcess.cs" />
-    <Compile Include="Execution\ThreadManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Compilation\CompiledObject-doc.md" />
