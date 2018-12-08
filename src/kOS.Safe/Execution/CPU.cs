@@ -398,6 +398,7 @@ namespace kOS.Safe.Execution
 
         public Opcode GetOpcodeAt(int instructionPtr)
         {
+            throw new NotImplementedException("GetOpcodeAt has not yet been implemented in the new Execution system");
             if (instructionPtr < 0 || instructionPtr >= currentContext.Program.Count)
             {
                 return new OpcodeBogus();
@@ -607,6 +608,7 @@ namespace kOS.Safe.Execution
         /// that got us to here.</returns>
         public List<int> GetCallTrace()
         {
+            throw new NotImplementedException("GetCallTrace has not yet been implemented in the new Execution system");
             List<int> trace = stack.GetCallTrace();
             trace.Insert(0, currentContext.InstructionPointer); // perpend current IP
             return trace;

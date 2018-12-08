@@ -9,7 +9,6 @@ namespace kOS.Safe.Function
         void Load();
         void CallFunction(string functionName,IExec exec);
 
-        [Obsolete("Calling functions without args is being phased out.")]
         void CallFunction(string functionName);
         bool Exists(string functionName);
     }
