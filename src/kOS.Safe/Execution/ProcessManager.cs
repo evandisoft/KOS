@@ -36,7 +36,6 @@ namespace kOS.Safe
         }
     }
 
-   
 
     /// <summary>
     /// Process manager. - Replacement for the CPU
@@ -53,9 +52,11 @@ namespace kOS.Safe
         }
 
         public void Init() {
-            foreach(var process in processes) {
+            Deb.RawLog("Initializing ProcessManager");
+            foreach (var process in processes) {
                 process.PrepareForDisposal();
             }
+            processes.Clear();
             var newProcess = new InterpreterProcess(this);
             processes.Push(newProcess);
             InterpreterProcess = newProcess;
@@ -74,6 +75,9 @@ namespace kOS.Safe
             Deb.EnqueueExec("Process has status", CurrentProcess.Status);
 
             switch (CurrentProcess.Status) {
+            case ProcessStatus.SHUTDOWN:
+                Init();
+                return;
             case ProcessStatus.FINISHED:
             case ProcessStatus.ERROR:
                 PopIfCurrentProcessNotInterpreter();
@@ -172,8 +176,12 @@ namespace kOS.Safe
         /// </summary>
         /// <param name="manual">If set to <c>true</c> manual.</param>
         public override void BreakExecution(bool manual) {
-            // TODO: Evandisoft A full init might or might not be appropriate.
-            Init(); 
+            Deb.RawLog("Execution Broken");
+            Init();
+            if (manual) {
+                Deb.RawLog("Manual Break.");
+
+            } 
             if (debugging) {
                 Deb.LogQueues();
             }
@@ -261,7 +269,7 @@ namespace kOS.Safe
                     List<CodePart> commandParts =
                         shared.ScriptHandler.Compile(
                         new BootGlobalPath(bootCommand), 1, bootCommand, "program", options);
-                    debugging = true;
+                    //debugging = true;
                     
                     RunInInterpreter(ProgramBuilder2.BuildProgram(commandParts),new List<object>());
                 }

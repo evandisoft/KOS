@@ -2903,7 +2903,7 @@ namespace kOS.Safe.Compilation
         }
         public override void Execute(IExec exec)
         {
-            var triggerName= Convert.ToString(exec.PopValue()); // in case it got wrapped in a ScalarIntValue
+            var triggerName= Convert.ToString(exec.PopValue());
             exec.Process.RemoveSystemTrigger(triggerName);
         }
     }

@@ -15,6 +15,7 @@ namespace kOS.Safe
         GLOBAL_INSTRUCTION_LIMIT,
         ERROR,
         TERMINATED,
+        SHUTDOWN,
     }
 
     /// <summary>
@@ -125,6 +126,10 @@ namespace kOS.Safe
             }
         }
 
+        public void Terminate() {
+            Status = ProcessStatus.TERMINATED;
+        }
+
         void ExecuteThreads(coll.Stack<KOSThread> stack){
             if (stack.Count == 0) return;
 
@@ -135,6 +140,9 @@ namespace kOS.Safe
 
                 switch (status) {
 
+                case ThreadStatus.SHUTDOWN:
+                    Status = ProcessStatus.SHUTDOWN;
+                    return;
                 case ThreadStatus.THREAD_INSTRUCTION_LIMIT:
                 case ThreadStatus.WAIT:
                     stack.Pop();

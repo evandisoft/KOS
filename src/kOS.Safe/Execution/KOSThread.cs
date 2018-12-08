@@ -15,6 +15,7 @@ namespace kOS.Safe {
         THREAD_INSTRUCTION_LIMIT,
         TERMINATED,
         WAIT,
+        SHUTDOWN,
     }
 
     /// <summary>
@@ -141,6 +142,7 @@ namespace kOS.Safe {
                 case ThreadStatus.FINISHED:
                 case ThreadStatus.ERROR:
                 case ThreadStatus.TERMINATED:
+                case ThreadStatus.SHUTDOWN:
                     return;
                 }
             }

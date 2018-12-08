@@ -287,8 +287,7 @@ namespace kOS.Safe.Function
         public override void Execute(SafeSharedObjects shared,IExec exec) {
             if (shared.Processor != null) {
                 AssertArgBottomAndConsume(exec); // not sure if this matters when rebooting anwyway.
-                // There is no global "current opcode" anymore. So I hope this way of doing things works.
-                shared.Cpu.BreakExecution(false); //GetCurrentOpcode().AbortProgram = true;
+                exec.Thread.Status = ThreadStatus.SHUTDOWN;
                 shared.Processor.SetMode(ProcessorModes.OFF);
                 shared.Processor.SetMode(ProcessorModes.READY);
             }
@@ -307,7 +306,7 @@ namespace kOS.Safe.Function
         public override void Execute(SafeSharedObjects shared,IExec exec) {
             AssertArgBottomAndConsume(exec); // not sure if this matters when shutting down anwyway.
             // There is no global "current opcode" anymore. So I hope this way of doing things works.
-            shared.Cpu.BreakExecution(false); //GetCurrentOpcode().AbortProgram = true;
+            exec.Thread.Status = ThreadStatus.SHUTDOWN;
             if (shared.Processor != null) shared.Processor.SetMode(ProcessorModes.OFF);
         }
     }
