@@ -19,13 +19,13 @@ namespace kOS.Function
     [Function("node")]
     public class FunctionNode : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            double prograde = GetDouble(PopValueAssert(exec));
-            double normal = GetDouble(PopValueAssert(exec));
-            double radial = GetDouble(PopValueAssert(exec));
-            double time = GetDouble(PopValueAssert(exec));
-            AssertArgBottomAndConsume(exec);
+            double prograde = GetDouble(PopValueAssert(shared));
+            double normal = GetDouble(PopValueAssert(shared));
+            double radial = GetDouble(PopValueAssert(shared));
+            double time = GetDouble(PopValueAssert(shared));
+            AssertArgBottomAndConsume(shared);
 
             var result = new Node(time, radial, normal, prograde, shared);
             ReturnValue = result;
@@ -35,7 +35,17 @@ namespace kOS.Function
     [Function("v")]
     public class FunctionVector : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
+        {
+            double z = GetDouble(PopValueAssert(shared));
+            double y = GetDouble(PopValueAssert(shared));
+            double x = GetDouble(PopValueAssert(shared));
+            AssertArgBottomAndConsume(shared);
+
+            var result = new Vector(x, y, z);
+            ReturnValue = result;
+        }
+        public override void Execute(SharedObjects shared,IExec exec)
         {
             double z = GetDouble(PopValueAssert(exec));
             double y = GetDouble(PopValueAssert(exec));
@@ -50,12 +60,12 @@ namespace kOS.Function
     [Function("r")]
     public class FunctionRotation : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            double roll = GetDouble(PopValueAssert(exec));
-            double yaw = GetDouble(PopValueAssert(exec));
-            double pitch = GetDouble(PopValueAssert(exec));
-            AssertArgBottomAndConsume(exec);
+            double roll = GetDouble(PopValueAssert(shared));
+            double yaw = GetDouble(PopValueAssert(shared));
+            double pitch = GetDouble(PopValueAssert(shared));
+            AssertArgBottomAndConsume(shared);
 
             var result = new Direction(new Vector3d(pitch, yaw, roll), true);
             ReturnValue = result;
@@ -65,13 +75,13 @@ namespace kOS.Function
     [Function("q")]
     public class FunctionQuaternion : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            double angle = GetDouble(PopValueAssert(exec));
-            double roll = GetDouble(PopValueAssert(exec));
-            double yaw = GetDouble(PopValueAssert(exec));
-            double pitch = GetDouble(PopValueAssert(exec));
-            AssertArgBottomAndConsume(exec);
+            double angle = GetDouble(PopValueAssert(shared));
+            double roll = GetDouble(PopValueAssert(shared));
+            double yaw = GetDouble(PopValueAssert(shared));
+            double pitch = GetDouble(PopValueAssert(shared));
+            AssertArgBottomAndConsume(shared);
 
             var result = new Direction(new UnityEngine.Quaternion((float)pitch, (float)yaw, (float)roll, (float)angle));
             ReturnValue = result;
@@ -81,11 +91,11 @@ namespace kOS.Function
     [Function("rotatefromto")]
     public class FunctionRotateFromTo : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            Vector toVector = GetVector(PopValueAssert(exec));
-            Vector fromVector = GetVector(PopValueAssert(exec));
-            AssertArgBottomAndConsume(exec);
+            Vector toVector = GetVector(PopValueAssert(shared));
+            Vector fromVector = GetVector(PopValueAssert(shared));
+            AssertArgBottomAndConsume(shared);
 
             var result = Direction.FromVectorToVector(fromVector, toVector);
             ReturnValue = result;
@@ -95,11 +105,11 @@ namespace kOS.Function
     [Function("lookdirup")]
     public class FunctionLookDirUp : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            Vector topVector = GetVector(PopValueAssert(exec));
-            Vector lookVector = GetVector(PopValueAssert(exec));
-            AssertArgBottomAndConsume(exec);
+            Vector topVector = GetVector(PopValueAssert(shared));
+            Vector lookVector = GetVector(PopValueAssert(shared));
+            AssertArgBottomAndConsume(shared);
 
             var result = Direction.LookRotation(lookVector, topVector);
             ReturnValue = result;
@@ -109,11 +119,11 @@ namespace kOS.Function
     [Function("angleaxis")]
     public class FunctionAngleAxis : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            Vector axisVector = GetVector(PopValueAssert(exec));
-            double degrees = GetDouble(PopValueAssert(exec));
-            AssertArgBottomAndConsume(exec);
+            Vector axisVector = GetVector(PopValueAssert(shared));
+            double degrees = GetDouble(PopValueAssert(shared));
+            AssertArgBottomAndConsume(shared);
 
             var result = Direction.AngleAxis(degrees, axisVector);
             ReturnValue = result;
@@ -123,11 +133,11 @@ namespace kOS.Function
     [Function("latlng")]
     public class FunctionLatLng : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            double longitude = GetDouble(PopValueAssert(exec));
-            double latitude = GetDouble(PopValueAssert(exec));
-            AssertArgBottomAndConsume(exec);
+            double longitude = GetDouble(PopValueAssert(shared));
+            double latitude = GetDouble(PopValueAssert(shared));
+            AssertArgBottomAndConsume(shared);
 
             var result = new GeoCoordinates(shared, latitude, longitude);
             ReturnValue = result;
@@ -137,10 +147,10 @@ namespace kOS.Function
     [Function("vessel")]
     public class FunctionVessel : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            string vesselName = PopValueAssert(exec).ToString();
-            AssertArgBottomAndConsume(exec);
+            string vesselName = PopValueAssert(shared).ToString();
+            AssertArgBottomAndConsume(shared);
             var result = VesselTarget.CreateOrGetExisting(VesselUtils.GetVesselByName(vesselName, shared.Vessel), shared);
             ReturnValue = result;
         }
@@ -149,10 +159,10 @@ namespace kOS.Function
     [Function("body")]
     public class FunctionBody : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            string bodyName = PopValueAssert(exec).ToString();
-            AssertArgBottomAndConsume(exec);
+            string bodyName = PopValueAssert(shared).ToString();
+            AssertArgBottomAndConsume(shared);
             var result = BodyTarget.CreateOrGetExisting(bodyName, shared);
             ReturnValue = result;
         }
@@ -161,10 +171,10 @@ namespace kOS.Function
     [Function("bodyatmosphere")]
     public class FunctionBodyAtmosphere : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            string bodyName = PopValueAssert(exec).ToString();
-            AssertArgBottomAndConsume(exec);
+            string bodyName = PopValueAssert(shared).ToString();
+            AssertArgBottomAndConsume(shared);
             var result = new BodyAtmosphere(VesselUtils.GetBodyByName(bodyName));
             ReturnValue = result;
         }
@@ -191,19 +201,19 @@ namespace kOS.Function
     [Function("slidenote")]
     public class FunctionSlideNote : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            int argCount = CountRemainingArgs(exec);
+            int argCount = CountRemainingArgs(shared);
             float vol = 1.0f;
             float keyDownDuration = -1f;
             if (argCount >= 5)
-                vol = (float) GetDouble(PopValueAssert(exec));
+                vol = (float) GetDouble(PopValueAssert(shared));
             if (argCount >= 4)
-                keyDownDuration = (float)GetDouble(PopValueAssert(exec));
-            float duration = (float)GetDouble(PopValueAssert(exec));
-            object endNote = PopValueAssert(exec);
-            object startNote = PopValueAssert(exec);
-            AssertArgBottomAndConsume(exec);
+                keyDownDuration = (float)GetDouble(PopValueAssert(shared));
+            float duration = (float)GetDouble(PopValueAssert(shared));
+            object endNote = PopValueAssert(shared);
+            object startNote = PopValueAssert(shared);
+            AssertArgBottomAndConsume(shared);
             if (keyDownDuration < 0)
                 keyDownDuration = duration * 0.9f; // default to 90% of the total duration, allowing a short window for the release
             if (keyDownDuration > duration)
@@ -221,18 +231,18 @@ namespace kOS.Function
     [Function("note")]
     public class FunctionNote : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            int argCount = CountRemainingArgs(exec);
+            int argCount = CountRemainingArgs(shared);
             float vol = 1.0f;
             float keyDownDuration = -1f;
             if (argCount >= 4)
-                vol = (float) GetDouble(PopValueAssert(exec));
+                vol = (float) GetDouble(PopValueAssert(shared));
             if (argCount >= 3)
-                keyDownDuration = (float)GetDouble(PopValueAssert(exec));
-            float duration = (float)GetDouble(PopValueAssert(exec)); 
-            object note = PopValueAssert(exec);
-            AssertArgBottomAndConsume(exec);
+                keyDownDuration = (float)GetDouble(PopValueAssert(shared));
+            float duration = (float)GetDouble(PopValueAssert(shared)); 
+            object note = PopValueAssert(shared);
+            AssertArgBottomAndConsume(shared);
             if (keyDownDuration < 0)
                 keyDownDuration = duration * 0.9f; // default to 90% of the total duration, allowing a short window for the release
             if (keyDownDuration > duration)
@@ -250,10 +260,10 @@ namespace kOS.Function
     [Function("GetVoice")]
     public class FunctionGetVoice : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            int voiceNum = GetInt(PopValueAssert(exec));
-            AssertArgBottomAndConsume(exec);
+            int voiceNum = GetInt(PopValueAssert(shared));
+            AssertArgBottomAndConsume(shared);
 
             VoiceValue val;
 
@@ -271,7 +281,7 @@ namespace kOS.Function
     [Function("StopAllVoices")]
     public class FunctionStopAllVoices : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
             shared.SoundMaker.StopAllVoices();
         }
@@ -280,12 +290,12 @@ namespace kOS.Function
     [Function("hsv")]
     public class FunctionHsv : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            var v = (float) GetDouble(PopValueAssert(exec));
-            var s = (float) GetDouble(PopValueAssert(exec));
-            var h = (float) GetDouble(PopValueAssert(exec));
-            AssertArgBottomAndConsume(exec);
+            var v = (float) GetDouble(PopValueAssert(shared));
+            var s = (float) GetDouble(PopValueAssert(shared));
+            var h = (float) GetDouble(PopValueAssert(shared));
+            AssertArgBottomAndConsume(shared);
             ReturnValue = new HsvaColor(h,s,v);
         }
     }
@@ -293,13 +303,13 @@ namespace kOS.Function
     [Function("hsva")]
     public class FunctionHsva : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            var a = (float) GetDouble(PopValueAssert(exec));
-            var v = (float) GetDouble(PopValueAssert(exec));
-            var s = (float) GetDouble(PopValueAssert(exec));
-            var h = (float) GetDouble(PopValueAssert(exec));
-            AssertArgBottomAndConsume(exec);
+            var a = (float) GetDouble(PopValueAssert(shared));
+            var v = (float) GetDouble(PopValueAssert(shared));
+            var s = (float) GetDouble(PopValueAssert(shared));
+            var h = (float) GetDouble(PopValueAssert(shared));
+            AssertArgBottomAndConsume(shared);
             ReturnValue = new HsvaColor(h,s,v,a);
         }
     }
@@ -307,12 +317,12 @@ namespace kOS.Function
     [Function("rgb")]
     public class FunctionRgb : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            var b = (float) GetDouble(PopValueAssert(exec));
-            var g = (float) GetDouble(PopValueAssert(exec));
-            var r = (float) GetDouble(PopValueAssert(exec));
-            AssertArgBottomAndConsume(exec);
+            var b = (float) GetDouble(PopValueAssert(shared));
+            var g = (float) GetDouble(PopValueAssert(shared));
+            var r = (float) GetDouble(PopValueAssert(shared));
+            AssertArgBottomAndConsume(shared);
             ReturnValue = new RgbaColor(r,g,b);
         }
     }
@@ -320,13 +330,13 @@ namespace kOS.Function
     [Function("rgba")]
     public class FunctionRgba : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            var a = (float) GetDouble(PopValueAssert(exec));
-            var b = (float) GetDouble(PopValueAssert(exec));
-            var g = (float) GetDouble(PopValueAssert(exec));
-            var r = (float) GetDouble(PopValueAssert(exec));
-            AssertArgBottomAndConsume(exec);
+            var a = (float) GetDouble(PopValueAssert(shared));
+            var b = (float) GetDouble(PopValueAssert(shared));
+            var g = (float) GetDouble(PopValueAssert(shared));
+            var r = (float) GetDouble(PopValueAssert(shared));
+            AssertArgBottomAndConsume(shared);
             ReturnValue = new RgbaColor(r,g,b,a);
         }
     }
@@ -342,19 +352,19 @@ namespace kOS.Function
     [Function("vecdraw", "vecdrawargs")]
     public class FunctionVecDrawNull : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            int argc = CountRemainingArgs(exec);
+            int argc = CountRemainingArgs(shared);
 
             // Handle the var args that might be passed in, or give defaults if fewer args:
-            double width   = (argc >= 7) ? GetDouble(PopValueAssert(exec))         : 0.2;
-            bool   show    = (argc >= 6) ? Convert.ToBoolean(PopValueAssert(exec)) : false;
-            double scale   = (argc >= 5) ? GetDouble(PopValueAssert(exec))         : 1.0;
-            string str     = (argc >= 4) ? PopValueAssert(exec).ToString()         : "";
-            RgbaColor rgba = (argc >= 3) ? GetRgba(PopValueAssert(exec))           : new RgbaColor(1.0f, 1.0f, 1.0f);
-            Vector vec     = (argc >= 2) ? GetVector(PopValueAssert(exec))         : new Vector(1.0, 0.0, 0.0);
-            Vector start   = (argc >= 1) ? GetVector(PopValueAssert(exec))         : new Vector(0.0, 0.0, 0.0);
-            AssertArgBottomAndConsume(exec);
+            double width   = (argc >= 7) ? GetDouble(PopValueAssert(shared))         : 0.2;
+            bool   show    = (argc >= 6) ? Convert.ToBoolean(PopValueAssert(shared)) : false;
+            double scale   = (argc >= 5) ? GetDouble(PopValueAssert(shared))         : 1.0;
+            string str     = (argc >= 4) ? PopValueAssert(shared).ToString()         : "";
+            RgbaColor rgba = (argc >= 3) ? GetRgba(PopValueAssert(shared))           : new RgbaColor(1.0f, 1.0f, 1.0f);
+            Vector vec     = (argc >= 2) ? GetVector(PopValueAssert(shared))         : new Vector(1.0, 0.0, 0.0);
+            Vector start   = (argc >= 1) ? GetVector(PopValueAssert(shared))         : new Vector(0.0, 0.0, 0.0);
+            AssertArgBottomAndConsume(shared);
             DoExecuteWork(shared, start, vec, rgba, str, scale, show, width);
         }
         
@@ -378,9 +388,9 @@ namespace kOS.Function
     [Function("clearvecdraws")]
     public class FunctionHideAllVecdraws : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            AssertArgBottomAndConsume(exec);
+            AssertArgBottomAndConsume(shared);
             VectorRenderer.ClearAll(shared.UpdateHandler);
         }
     }
@@ -388,9 +398,9 @@ namespace kOS.Function
     [Function("clearguis")]
     public class FunctionClearAllGuis : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            AssertArgBottomAndConsume(exec);
+            AssertArgBottomAndConsume(shared);
             GUIWidgets.ClearAll(shared);
         }
     }
@@ -398,12 +408,12 @@ namespace kOS.Function
     [Function("gui")]
     public class FunctionWidgets : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            int argc = CountRemainingArgs(exec);
-            int height = argc > 1 ? GetInt(PopValueAssert(exec)) : 0;
-            int width = GetInt(PopValueAssert(exec));
-            AssertArgBottomAndConsume(exec);
+            int argc = CountRemainingArgs(shared);
+            int height = argc > 1 ? GetInt(PopValueAssert(shared)) : 0;
+            int width = GetInt(PopValueAssert(shared));
+            AssertArgBottomAndConsume(shared);
             ReturnValue = new GUIWidgets(width,height,shared);
         }
     }
@@ -411,11 +421,11 @@ namespace kOS.Function
     [Function("positionat")]
     public class FunctionPositionAt : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            var when = GetTimeSpan(PopValueAssert(exec));
-            var what = GetOrbitable(PopValueAssert(exec));
-            AssertArgBottomAndConsume(exec);
+            var when = GetTimeSpan(PopValueAssert(shared));
+            var what = GetOrbitable(PopValueAssert(shared));
+            AssertArgBottomAndConsume(shared);
 
             ReturnValue = what.GetPositionAtUT(when);
         }
@@ -424,11 +434,11 @@ namespace kOS.Function
     [Function("velocityat")]
     public class FunctionVelocityAt : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            var when = GetTimeSpan(PopValueAssert(exec));
-            var what = GetOrbitable(PopValueAssert(exec));
-            AssertArgBottomAndConsume(exec);
+            var when = GetTimeSpan(PopValueAssert(shared));
+            var what = GetOrbitable(PopValueAssert(shared));
+            AssertArgBottomAndConsume(shared);
 
             ReturnValue = what.GetVelocitiesAtUT(when);
         }
@@ -437,11 +447,11 @@ namespace kOS.Function
     [Function("highlight")]
     public class FunctionHightlight : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            var color = GetRgba(PopValueAssert(exec));
-            var obj = PopValueAssert(exec);
-            AssertArgBottomAndConsume(exec);
+            var color = GetRgba(PopValueAssert(shared));
+            var obj = PopValueAssert(shared);
+            AssertArgBottomAndConsume(shared);
 
             ReturnValue = new HighlightStructure(shared.UpdateHandler, obj, color);
         }
@@ -450,11 +460,11 @@ namespace kOS.Function
     [Function("orbitat")]
     public class FunctionOrbitAt : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            var when = GetTimeSpan(PopValueAssert(exec));
-            var what = GetOrbitable(PopValueAssert(exec));
-            AssertArgBottomAndConsume(exec);
+            var when = GetTimeSpan(PopValueAssert(shared));
+            var what = GetOrbitable(PopValueAssert(shared));
+            AssertArgBottomAndConsume(shared);
 
             ReturnValue = new OrbitInfo( what.GetOrbitAtUT(when.ToUnixStyleTime()), shared );
         }
@@ -463,9 +473,9 @@ namespace kOS.Function
     [Function("career")]
     public class FunctionCareer : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            AssertArgBottomAndConsume(exec); // no args
+            AssertArgBottomAndConsume(shared); // no args
             ReturnValue = new Career();
         }
     }
@@ -473,9 +483,9 @@ namespace kOS.Function
     [Function("allwaypoints")]
     public class FunctionAllWaypoints : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            AssertArgBottomAndConsume(exec); // no args
+            AssertArgBottomAndConsume(shared); // no args
             
             // ReSharper disable SuggestUseVarKeywordEvident
             ListValue<WaypointValue> returnList = new ListValue<WaypointValue>();
@@ -503,10 +513,10 @@ namespace kOS.Function
     [Function("waypoint")]
     public class FunctionWaypoint : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            string pointName = PopValueAssert(exec).ToString();
-            AssertArgBottomAndConsume(exec);
+            string pointName = PopValueAssert(shared).ToString();
+            AssertArgBottomAndConsume(shared);
 
             WaypointManager wpm = WaypointManager.Instance();
 
@@ -550,12 +560,12 @@ namespace kOS.Function
     [Function("transferall")]
     public class FunctionTransferAll : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            var transferTo = PopValueAssert(exec);
-            var transferFrom = PopValueAssert(exec);
-            var resourceName = PopValueAssert(exec).ToString();
-            AssertArgBottomAndConsume(exec);
+            var transferTo = PopValueAssert(shared);
+            var transferFrom = PopValueAssert(shared);
+            var resourceName = PopValueAssert(shared).ToString();
+            AssertArgBottomAndConsume(shared);
 
             var resourceInfo = TransferManager.ParseResource(resourceName);
             if (resourceInfo == null)
@@ -573,13 +583,13 @@ namespace kOS.Function
     [Function("transfer")]
     public class FunctionTransfer : FunctionBase
     {
-        public override void Execute(SharedObjects shared, IExec exec)
+        public override void Execute(SharedObjects shared)
         {
-            var amount = PopValueAssert(exec);
-            var transferTo = PopValueAssert(exec);
-            var transferFrom = PopValueAssert(exec);
-            var resourceName = PopValueAssert(exec).ToString();
-            AssertArgBottomAndConsume(exec);
+            var amount = PopValueAssert(shared);
+            var transferTo = PopValueAssert(shared);
+            var transferFrom = PopValueAssert(shared);
+            var resourceName = PopValueAssert(shared).ToString();
+            AssertArgBottomAndConsume(shared);
 
             var resourceInfo = TransferManager.ParseResource(resourceName);
             if (resourceInfo == null)

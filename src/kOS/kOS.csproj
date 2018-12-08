@@ -283,6 +283,7 @@
   -->
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="Function\Suffixed.cs.old" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>
