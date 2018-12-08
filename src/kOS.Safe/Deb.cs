@@ -24,8 +24,8 @@ namespace kOS.Safe
             QueueLogType.EXCEPTION, QueueLogType.BUILD };
 
         const string logBasename = "Logs/kOS/";
-        static Dictionary<QueueLogType,Queue<object[]>>
-            logQueueDictionary=new Dictionary<QueueLogType,Queue<object[]>>();
+        static Dictionary<QueueLogType,Queue<string>>
+            logQueueDictionary=new Dictionary<QueueLogType,Queue<string>>();
 
         static bool loggingEnabled = false;
         static public void EnableLogging() {
@@ -37,12 +37,12 @@ namespace kOS.Safe
             loggingEnabled = false;
         }
         static public int LogLength=10000;
-        static void Log(QueueLogType logType, Queue<object[]> objectArrays) {
+        static void Log(QueueLogType logType, Queue<string> strings) {
             string logFilename = Logname(logType);
-            RawLog("Logging " + logType + " to "+logFilename+", of size "+objectArrays.Count);
+            RawLog("Logging " + logType + " to "+logFilename+", of size "+strings.Count);
             File.WriteAllText(logFilename, "");
-            foreach(var objArray in objectArrays) {
-                string toWrite = ToString(objArray) + "\n";
+            foreach(var str in strings) {
+                string toWrite = str + "\n";
                 File.AppendAllText(logFilename, toWrite);
             }
         }
@@ -52,17 +52,20 @@ namespace kOS.Safe
         static public void ClearLogs() {
             RawLog("Clearing All Logs");
             foreach(var logType in queueLogTypes) {
-                if(logQueueDictionary.TryGetValue(logType,out Queue<object[]> objs)){
-                    objs.Clear();
+                if(logQueueDictionary.TryGetValue(logType,out Queue<string> strings)){
+                    strings.Clear();
                 }
                 RawLog("Clearing Log " + logType);
                 File.WriteAllText(Logname(logType), "");
             }
         }
-        static void Store(QueueLogType logType,object[] obj){
+
+
+        static void Store(QueueLogType logType,object[] objs){
+            var logstring = ToString(objs);
             if (loggingEnabled) {
-                Queue<object[]> queue=new Queue<object[]>();
-                if (logQueueDictionary.TryGetValue(logType, out Queue<object[]> q)) {
+                Queue<string> queue=new Queue<string>();
+                if (logQueueDictionary.TryGetValue(logType, out Queue<string> q)) {
                     queue = q;
                 } else {
                     logQueueDictionary[logType] = queue;
@@ -70,7 +73,7 @@ namespace kOS.Safe
                 if (queue.Count >= LogLength) {
                     queue.Dequeue();
                 }
-                queue.Enqueue(obj);
+                queue.Enqueue(logstring);
             }
         }
         static public void LogQueues(){

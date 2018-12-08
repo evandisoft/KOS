@@ -89,7 +89,7 @@ namespace kOS.Safe
             Deb.EnqueueExec("Process Execute.");
 
             if (Status != ProcessStatus.OK) {
-                Deb.EnqueueExec("Exiting process",ID,"with status",Status);
+                Deb.EnqueueExec("Exiting process",ID, "with status",Status);
                 return;
             }
 

@@ -57,7 +57,7 @@ namespace kOS.Safe.Execution {
 
         public object GetValue(object testValue, bool barewordOkay = false)
         {
-            Deb.EnqueueExec("GettingValue", testValue,"barewordOkay",barewordOkay);
+            Deb.EnqueueExec("GettingValue", testValue, "barewordOkay",barewordOkay);
             // $cos     cos named variable
             // cos()    cos trigonometric function
             // cos      string literal "cos"
@@ -82,7 +82,7 @@ namespace kOS.Safe.Execution {
 
 
             Variable variable = GetVariable(identifier, barewordOkay);
-            Deb.EnqueueExec("Got variable", variable,"value",variable!=null?variable.Value:null);
+            Deb.EnqueueExec("Got variable", variable,"value",variable!=null?variable.Value : "null");
             return variable.Value;
         }
 
@@ -90,7 +90,7 @@ namespace kOS.Safe.Execution {
         {
             Deb.EnqueueExec("GetVariable called for", identifier, "barewordOkay", barewordOkay);
             identifier = identifier.ToLower();
-            
+
             foreach (var level in scopeStack) {
                 Deb.EnqueueExec("Checking level", level,"total levels",scopeStack.Count);
                 if (level.TryGetValue(identifier, out Variable variable)) {

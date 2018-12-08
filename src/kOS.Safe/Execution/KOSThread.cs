@@ -149,8 +149,8 @@ namespace kOS.Safe {
         bool StillWaiting() {
             if (timeToWaitInMilliseconds > waitWatch.ElapsedMilliseconds) {
                 Deb.EnqueueExec(
-                    "Thread", ID, "is waiting for",
-                    timeToWaitInMilliseconds - waitWatch.ElapsedMilliseconds,
+                    "Thread", ID.ToString(), "is waiting for",
+                    (timeToWaitInMilliseconds - waitWatch.ElapsedMilliseconds),
                     "more milliseconds"
                     );
                 return true;

@@ -368,7 +368,7 @@ namespace kOS.Safe.Execution
             Deb.EnqueueExec ("Entering FindScope");
             for (int index = scopeCount - 1; index >= 0; --index)
             {
-                Deb.EnqueueExec("index", index, "scopeCount", scopeCount,"ScopeId",ScopeId);
+                Deb.EnqueueExec("index", index.ToString(), "scopeCount", scopeCount, "ScopeId",ScopeId);
                 var scope = scopeStack[index] as VariableScope;
                 if (scope != null && scope.ScopeId == ScopeId)
                 {

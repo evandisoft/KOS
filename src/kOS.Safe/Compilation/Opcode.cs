@@ -2158,6 +2158,7 @@ namespace kOS.Safe.Compilation
         public override void Execute(IExec exec)
         {
             object returnVal = exec.PopValue();
+            exec.Stack.ClearArgs(); // clear out any extra args that were not used.
             exec.Stack.Push(Structure.FromPrimitive(returnVal));
             exec.Thread.Return();
         }
@@ -2365,7 +2366,6 @@ namespace kOS.Safe.Compilation
             if(worked){
                 object shouldBeArgMarker = exec.Stack.Peek();
                 if((shouldBeArgMarker != null) && (shouldBeArgMarker.GetType() == OpcodeCall.ArgMarkerType) ){
-                    exec.Stack.Pop();
                     return;
                 }
             }
