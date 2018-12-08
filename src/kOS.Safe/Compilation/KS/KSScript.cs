@@ -1,7 +1,7 @@
 using kOS.Safe.Exceptions;
 using System.Collections.Generic;
 using kOS.Safe.Persistence;
-
+using kOS.Safe.Encapsulation;
 
 namespace kOS.Safe.Compilation.KS
 {
@@ -11,12 +11,14 @@ namespace kOS.Safe.Compilation.KS
         private readonly Parser parser;
         private readonly Dictionary<string, Context> contexts;
         private Context currentContext;
+        private Dictionary<GlobalPath, Procedure> compiledPrograms;
 
         public KSScript()
         {
             scanner = new Scanner();
             parser = new Parser(scanner);
             contexts = new Dictionary<string, Context>();
+            compiledPrograms = new Dictionary<GlobalPath, Procedure>();
         }
 
         public override List<CodePart> Compile(GlobalPath filePath, int startLineNum, string scriptText, string contextId, CompilerOptions options)

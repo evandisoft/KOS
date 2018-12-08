@@ -208,12 +208,13 @@ namespace kOS.Safe.Encapsulation
 
         public override Structure CallWithArgsPushedAlready()
         {
+            throw new NotImplementedException("CallWithArgsPushedALready is not implemented");
             if (Cpu == null)
                 throw new KOSCannotCallException();
             CheckForDead(true);
-            int absoluteJumpTo = OpcodeCall.StaticExecute(Cpu, false, "", true);
-            if (absoluteJumpTo >= 0)
-                Cpu.InstructionPointer = absoluteJumpTo - 1; // -1 because it increments by 1 automatically between instructions.
+           ////int absoluteJumpTo = OpcodeCall.StaticExecute(Cpu, false, "", true);
+            //if (absoluteJumpTo >= 0)
+                //Cpu.InstructionPointer = absoluteJumpTo - 1; // -1 because it increments by 1 automatically between instructions.
             
             // Remember this is just a special flag telling OpcodeCall to never place
             // this suffix's C# delegate return value on the stack.  It's like saying

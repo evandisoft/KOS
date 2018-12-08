@@ -37,11 +37,14 @@ namespace kOS.Safe
     }
 
 
+
     /// <summary>
     /// Process manager. - Replacement for the CPU
     /// </summary>
     public class ProcessManager:CPU
     {
+        readonly Dictionary<string, Procedure> compiledPrograms = new Dictionary<string, Procedure>();
+        readonly Dictionary<string, bool> ranPrograms = new Dictionary<string, bool>();
         readonly Stack<KOSProcess> processes = new Stack<KOSProcess> ();
         internal InstructionCounter GlobalInstructionCounter = new InstructionCounter();
         internal KOSProcess CurrentProcess => processes.Peek();
@@ -245,11 +248,8 @@ namespace kOS.Safe
                 // handled the range check for the archive.
                 Volume sourceVolume = shared.VolumeMgr.CurrentVolume;
                 var file = shared.VolumeMgr.CurrentVolume.Open(path);
-                if (file == null) {
-                    SafeHouse.Logger.Log(string.Format("Boot file \"{0}\" is missing, skipping boot script", path));
-                }
 
-                shared.VolumeMgr.SwitchTo(shared.VolumeMgr.GetVolume(0));
+                //shared.VolumeMgr.SwitchTo(shared.VolumeMgr.GetVolume(0));
                 if(file==null)
                 {
                     SafeHouse.Logger.Log(string.Format("Boot file \"{0}\" is missing, skipping boot script", path));
@@ -275,6 +275,5 @@ namespace kOS.Safe
                 }
             }
         }
-
     }
 }

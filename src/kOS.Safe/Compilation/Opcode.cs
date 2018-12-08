@@ -807,51 +807,7 @@ namespace kOS.Safe.Compilation
         protected OpcodeGetMember() : base("")
         {
         }
-
-        public override void Execute(ICpu cpu)
-        {
-            object popValue = cpu.PopValueEncapsulatedArgument();
-
-            var specialValue = popValue as ISuffixed;
-            
-            if (specialValue == null)
-            {
-                throw new Exception(string.Format("Values of type {0} cannot have suffixes", popValue.GetType()));
-            }
-
-            ISuffixResult result = specialValue.GetSuffix(Identifier);
-
-            // If the result is a suffix that is still in need of being invoked and hasn't resolved to a value yet:
-            if (result != null && !IsMethodCallAttempt && !result.HasValue)
-            {
-                // This is what happens when someone tries to call a suffix method as if
-                // it wasn't a method (i.e. leaving the parentheses off the call).  The
-                // member returned is a delegate that needs to be called to get its actual
-                // value.  Borrowing the same routine that OpcodeCall uses for its method calls:
-                
-                cpu.PushArgumentStack(result);
-                cpu.PushArgumentStack(new KOSArgMarkerType());
-                OpcodeCall.StaticExecute(cpu, false, "", false); // this will push the return value on the stack for us.
-            }
-            else
-            {
-                if (result.HasValue)
-                {
-                    // Push the already calculated value.
-
-                    cpu.PushArgumentStack(result.Value);
-                }
-                else
-                {
-                    // Push the indirect suffix delegate, but don't execute it yet
-                    // because we need to put the upcoming arg list above it on the stack.
-                    // Eventually an <indirect> OpcodeCall will occur further down the program which
-                    // will actually execute this.
-                    
-                    cpu.PushArgumentStack(result);
-                }
-            }
-        }
+        
         public override void Execute(IExec exec)
         {
             object popValue = PopValueAssertEncapsulated(exec);
@@ -879,17 +835,10 @@ namespace kOS.Safe.Compilation
                 //throw new NotImplementedException("Have not implemented suffix method calls");
                 //OpcodeCall.StaticExecute(exec, false, "", false); // this will push the return value on the stack for us.
             } else {
-                if (result.HasValue) {
-                    // Push the already calculated value.
-
-                    exec.Stack.Push(result.Value);
-                } else {
-                    // Push the indirect suffix delegate, but don't execute it yet
-                    // because we need to put the upcoming arg list above it on the stack.
-                    // Eventually an <indirect> OpcodeCall will occur further down the program which
-                    // will actually execute this.
-
+                if (IsMethodCallAttempt) {
                     exec.Stack.Push(result);
+                } else {
+                    exec.Stack.Push(result.Value);
                 }
             }
         }
@@ -1775,12 +1724,6 @@ namespace kOS.Safe.Compilation
             Destination = fields[1];
         }
 
-        public override void Execute(ICpu cpu)
-        {
-            int absoluteJumpTo = StaticExecute(cpu, Direct, Destination, false);
-            if (absoluteJumpTo >= 0)
-                DeltaInstructionPointer = absoluteJumpTo - cpu.InstructionPointer;
-        }
         public override void Execute(IExec exec)
         {
             Deb.EnqueueExec("calling ", Destination);
@@ -1809,22 +1752,32 @@ namespace kOS.Safe.Compilation
                 foreach(var stackItem in exec.Stack){
                     Deb.EnqueueExec("looking through arguments in stack for object to call");
                     Deb.EnqueueExec("Stack is ",exec.Stack);
+                    Deb.EnqueueExec("Current stackItem is", stackItem,"type is",stackItem.GetType());
                     if (foundArgMarker) {
-                        if (stackItem is Procedure) {
-                            var procedure = stackItem as Procedure;
+                        if (stackItem is Procedure procedure) {
                             CpuUtility.ReverseStackArgs(exec, false);
                             Deb.EnqueueExec("Calling procedure", procedure);
                             exec.Thread.Call(procedure);
                             return;
                         }
-                        if (stackItem is ISuffixResult) {
-                            var suffix = stackItem as ISuffixResult;
+                        if (stackItem is ISuffixResult suffix) {
                             Deb.EnqueueExec("Invoking suffixresult", suffix);
-                            suffix.Invoke(exec);
-                            exec.Stack.Push(suffix.Value);
+                            // If there is a value already, there should be no args.
+                            // Pop off arg marker, then pop off this suffix.
+                            // then push it's value.
+                            if (suffix.HasValue) {
+                                exec.Stack.ClearArgs();
+                                exec.Stack.Pop();
+                                exec.Stack.Push(suffix.Value);
+                            } else {
+                                // If there is no value, execute the suffix
+                                // to get the value.
+                                suffix.Invoke(exec);
+                                exec.Stack.Push(suffix.Value);
+                            }
                             return;
                         }
-                        throw new Exception("Did not find callable object.");
+                        throw new Exception("Did not find callable object during Indirect call.");
                     }
                     if(stackItem is KOSArgMarkerType) {
                         foundArgMarker=true;
@@ -1834,182 +1787,6 @@ namespace kOS.Safe.Compilation
             }
         }
 
-        /// <summary>
-        /// Performs the actual execution of a subroutine call, either from this opcode or externally from elsewhere.
-        /// All "call a routine" logic should shunt through this code here, which handles all the complex cases,
-        /// or at least it should.
-        /// Note that in the case of a user function, this does not *ACTUALLY* execute the function yet.  It just
-        /// arranges the stack correctly for the call and returns the new location that the IP should be jumped to
-        /// on the next instruction to begin the subroutine.  For all built-in cases, it actually executes the 
-        /// call right now and doesn't return until it's done.  But for User functions it can't do that - it can only
-        /// advise on where to jump on the next instruction to begin the function.
-        /// </summary>
-        /// <param name="cpu">the cpu its running on</param>
-        /// <param name="direct">same meaning as OpcodeCall.Direct</param>
-        /// <param name="destination">if direct, then this is the function name</param>
-        /// <param name="calledFromKOSDelegateCall">true if KOSDelegate.Call() brought us here.  If true that
-        /// means any pre-bound args are already on the stack.  If false it means they aren't and this will have to
-        /// put them there.</param>
-        /// <returns>new IP to jump to, if this should be followed up by a jump.  If -1 then it means don't jump.</returns>
-        public static int StaticExecute(ICpu cpu, bool direct, object destination, bool calledFromKOSDelegateCall)
-        {
-            object functionPointer;
-            object delegateReturn = null;
-            int newIP = -1; // new instruction pointer to jump to, next, if any.
-
-            if (direct)
-            {
-                functionPointer = cpu.GetValue(destination);
-                if (functionPointer == null)
-                    throw new KOSException("Attempt to call function failed - Value of function pointer for " + destination + " is null.");
-            }
-            else // for indirect calls, dig down to find what's underneath the argument list in the stack and use that:
-            {
-                bool foundBottom = false;
-                int digDepth;
-                int argsCount = 0;
-                for (digDepth = 0; (! foundBottom) && digDepth < cpu.GetArgumentStackSize() ; ++digDepth)
-                {
-                    object arg = cpu.PeekValueArgument(digDepth);
-                    if (arg != null && arg.GetType() == ArgMarkerType)
-                        foundBottom = true;
-                    else
-                        ++argsCount;
-                }
-                functionPointer = cpu.PeekValueArgument(digDepth);
-                if (! ( functionPointer is Delegate || functionPointer is KOSDelegate || functionPointer is ISuffixResult))
-                {
-                    // Indirect calls are meant to be delegates.  If they are not, then that means the
-                    // function parentheses were put on by the user when they weren't required.  Just dig
-                    // through the stack to the result of the getMember and skip the rest of the execute logic
-
-                    // If args were passed to a non-method, then clean them off the stack, and complain:
-                    if (argsCount>0)
-                    {
-                        for (int i=1 ; i<=argsCount; ++i)
-                            cpu.PopValueArgument();
-                        throw new KOSArgumentMismatchException(
-                            0, argsCount, "\n(In fact in this case the parentheses are entirely optional)");
-                    }
-                    cpu.PopValueArgument(); // pop the ArgMarkerString too.
-                    return -1;
-                }
-            }
-
-            // If it's a string it might not really be a built-in, it might still be a user func.
-            // Detect whether it's built-in, and if it's not, then convert it into the equivalent
-            // user func call by making it be an integer instruction pointer instead:
-            if (functionPointer is string || functionPointer is StringValue)
-            {
-                string functionName = functionPointer.ToString();
-                if (StringUtil.EndsWith(functionName, "()"))
-                    functionName = functionName.Substring(0, functionName.Length - 2);
-                if (!(cpu.BuiltInExists(functionName)))
-                {
-                    // It is not a built-in, so instead get its value as a user function pointer variable, despite
-                    // the fact that it's being called AS IF it was direct.
-                    if (!StringUtil.EndsWith(functionName, "*")) functionName = functionName + "*";
-                    if (!StringUtil.StartsWith(functionName, "$")) functionName = "$" + functionName;
-                    functionPointer = cpu.GetValue(functionName);
-                }
-            }
-
-            KOSDelegate kosDelegate = functionPointer as KOSDelegate;
-            if (kosDelegate != null)
-            {
-                if (! calledFromKOSDelegateCall)
-                    kosDelegate.InsertPreBoundArgs();
-            }
-
-            IUserDelegate userDelegate = functionPointer as IUserDelegate;
-            if (userDelegate != null)
-            {
-                if (userDelegate is NoDelegate)
-                    functionPointer = userDelegate; // still leave it as a delegate as a flag to not call the entry point.
-                else
-                    functionPointer = userDelegate.EntryPoint;
-            }
-
-            BuiltinDelegate builtinDel = functionPointer as BuiltinDelegate;
-            if (builtinDel != null && (! calledFromKOSDelegateCall) )
-                functionPointer = builtinDel.Name;
-
-            // If the IP for a jump location got encapsulated as a user int when it got stored
-            // into the internal variable, then get the primitive int back out of it again:
-            ScalarIntValue userInt = functionPointer as ScalarIntValue;
-            if (userInt != null)
-                functionPointer = userInt.GetIntValue();
-            
-            // Convert to int instead of cast in case the identifier is stored
-            // as an encapsulated ScalarValue, preventing an unboxing collision.
-            if (functionPointer is int || functionPointer is ScalarValue)
-            {
-                CpuUtility.ReverseStackArgs(cpu, direct);
-                var contextRecord = new SubroutineContext(cpu.InstructionPointer+1);
-                newIP = Convert.ToInt32(functionPointer);
-                
-                cpu.PushScopeStack(contextRecord);
-                if (userDelegate != null)
-                {
-                    cpu.AssertValidDelegateCall(userDelegate);
-                    // Reverse-push the closure's scope record, just after the function return context got put on the stack.
-                    for (int i = userDelegate.Closure.Count - 1 ; i >= 0 ; --i)
-                        cpu.PushScopeStack(userDelegate.Closure[i]);
-                }
-            }
-            else if (functionPointer is string)
-            {
-                // Built-ins don't need to dereference the stack values because they
-                // don't leave the scope - they're not implemented that way.  But later we
-                // might want to change that.
-                var name = functionPointer as string;
-                string functionName = name;
-                if (StringUtil.EndsWith(functionName, "()"))
-                    functionName = functionName.Substring(0, functionName.Length - 2);
-                cpu.CallBuiltinFunction(functionName);
-
-                // If this was indirect, we need to consume the thing under the return value.
-                // as that was the indirect BuiltInDelegate:
-                if ((! direct) && builtinDel != null)
-                {
-                    object topThing = cpu.PopArgumentStack();
-                    cpu.PopArgumentStack(); // remove BuiltInDelegate object.
-                    cpu.PushArgumentStack(topThing); // put return value back.
-                }
-            }
-            else if (functionPointer is ISuffixResult)
-            {
-                var result = (ISuffixResult) functionPointer;
-
-                if (!result.HasValue)
-                {
-                    result.Invoke(cpu);
-                }
-
-                delegateReturn = result.Value;
-            }
-            else if (functionPointer is NoDelegate)
-            {
-                delegateReturn = ((NoDelegate)functionPointer).CallWithArgsPushedAlready();
-            }
-            // TODO:erendrake This else if is likely never used anymore
-            else if (functionPointer is Delegate)
-            {
-                throw new KOSYouShouldNeverSeeThisException("OpcodeCall unexpected function pointer delegate");
-            }
-            else
-            {
-                throw new KOSNotInvokableException(functionPointer);
-            }
-
-            if (functionPointer is ISuffixResult || functionPointer is NoDelegate)
-            {
-                if (! (delegateReturn is KOSPassThruReturn))
-                    cpu.PushArgumentStack(delegateReturn); // And now leave the return value on the stack to be read.
-            }
-
-            return newIP;
-        }
 
         public override string ToString()
         {
@@ -2078,83 +1855,7 @@ namespace kOS.Safe.Compilation
             Depth = depth;
         }
         
-        public override void Execute(ICpu cpu)
-        {
-            // Return value should be atop the stack.
-            // Pop it, eval it, and push it back,
-            // i.e. if the statement was RETURN X, and X is 2, then you want
-            // it to return the number 2, not the variable name $x, which could
-            // be a variable local to this function which is about to go out of scope
-            // so the caller can't access it:
-            object returnVal = cpu.PopValueArgument();
 
-            // Now dig down through the stack until the argbottom is found.
-            // anything still leftover above that should be unread parameters we
-            // should throw away:
-            object shouldBeArgMarker = 0; // just a temp to force the loop to execute at least once.
-            while (shouldBeArgMarker == null || (shouldBeArgMarker.GetType() != OpcodeCall.ArgMarkerType))
-            {
-                if (cpu.GetArgumentStackSize() <= 0)
-                {
-                    throw new KOSArgumentMismatchException(
-                        string.Format("Something is wrong with the stack - no arg bottom mark when doing a return.  This is an internal problem with kOS")
-                       );
-                }
-                shouldBeArgMarker = cpu.PopArgumentStack();
-            }
-
-            cpu.PushArgumentStack(Structure.FromPrimitive(returnVal));
-
-            // Now, after the eval was done, NOW finally pop the scope, after we don't need local vars anymore:
-            if( Depth > 0 )
-                OpcodePopScope.DoPopScope(cpu, Depth);
-
-            // The only thing on the "above stack" now that is allowed to get in the way of
-            // finding the context record that tells us where to jump back to, are the potential
-            // closure scope frames that might have been pushed if this subroutine was
-            // called via a delegate reference.  Consume any of those that are in
-            // the way, then expect the context record.  Any other pattern encountered
-            // is proof the stack alignment got screwed up:
-            bool okay;
-            VariableScope peeked = cpu.PeekRawScope(0, out okay) as VariableScope;
-            while (okay && peeked != null && peeked.IsClosure)
-            {
-                cpu.PopScopeStack(1);
-                peeked = cpu.PeekRawScope(0, out okay) as VariableScope;
-            }
-            object shouldBeContextRecord = cpu.PopScopeStack(1);
-            if ( !(shouldBeContextRecord is SubroutineContext) )
-            {
-                // This should never happen with any user code:
-                throw new Exception( "kOS internal error: Stack misalignment detected when returning from routine.");
-            }
-            
-            var contextRecord = shouldBeContextRecord as SubroutineContext;
-            
-            // Special case for when the subroutine was really being called as an interrupt
-            // trigger from the kOS CPU itself.  In that case we don't want to leave the
-            // return value atop the stack, and instead want to pop it and use it:
-            if (contextRecord.IsTrigger)
-            {
-                cpu.PopArgumentStack(); // already got the return value up above, just ignore it.
-                TriggerInfo trigger = contextRecord.Trigger;
-                // For callbacks, the return value should be preserved in the trigger object
-                // so the C# code can find it there.  For non-callbacks, the return value 
-                // determines whether or not to re-add the trigger so it happens again.
-                // (For C# callbacks, it's always a one-shot call.  The C# code should re-add the
-                // trigger itself if it wants to make the call happen again.)
-                if (trigger.IsCSharpCallback)
-                    trigger.FinishCallback(returnVal);
-                else
-                    if (returnVal is bool || returnVal is BooleanValue )
-                        if (Convert.ToBoolean(returnVal))
-                            cpu.AddTrigger(trigger.EntryPoint, trigger.Priority, trigger.InstanceCount, false /*next update, not right now*/, trigger.Closure);
-            }
-            
-            int destinationPointer = contextRecord.CameFromInstPtr;
-            int currentPointer = cpu.InstructionPointer;
-            DeltaInstructionPointer = destinationPointer - currentPointer;
-        }
         public override void Execute(IExec exec)
         {
             object returnVal = exec.PopValue();

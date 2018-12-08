@@ -5,6 +5,7 @@ using kOS.Safe.Encapsulation.Suffixes;
 using kOS.Safe.Encapsulation;
 using System.Linq;
 using kOS.Safe.Function;
+using kOS.Safe.Execution;
 
 namespace kOS.Safe
 {
@@ -21,9 +22,9 @@ namespace kOS.Safe
         [Function("path")]
         public class FunctionPath : SafeFunctionBase
         {
-            public override void Execute(SafeSharedObjects shared)
+            public override void Execute(SafeSharedObjects shared, IExec exec)
             {
-                int remaining = CountRemainingArgs(shared);
+                int remaining = CountRemainingArgs(exec);
 
                 GlobalPath path;
 
@@ -34,11 +35,11 @@ namespace kOS.Safe
                 }
                 else
                 {
-                    object pathObject = PopValueAssert(shared, true);
+                    object pathObject = PopValueAssert(exec, true);
                     path = shared.VolumeMgr.GlobalPathFromObject(pathObject);
                 }
 
-                AssertArgBottomAndConsume(shared);
+                AssertArgBottomAndConsume(exec);
 
                 ReturnValue = new PathValue(path, shared);
             }

@@ -1,5 +1,6 @@
 ﻿using kOS.Safe.Compilation;
 using kOS.Safe.Execution;
+using System;
 
 namespace kOS.Safe.Encapsulation
 {
@@ -46,7 +47,9 @@ namespace kOS.Safe.Encapsulation
         
         public override Structure CallWithArgsPushedAlready()
         {
-            int throwAway = OpcodeCall.StaticExecute(Cpu, true, Name, true);
+            throw new NotImplementedException("CallWithArgsPushedAlready not implemented.");
+            // TODO: Evandisoft This next line needed this call I deleted. Not sure what calls this.
+            //int throwAway = OpcodeCall.StaticExecute(Cpu, true, Name, true);
             // throwAway will be -1 for cases where it's a builtin function.
             // and the return value will be left atop the stack by StaticExecute.
             return new KOSPassThruReturn();

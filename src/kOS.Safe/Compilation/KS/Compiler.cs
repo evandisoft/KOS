@@ -3143,8 +3143,10 @@ namespace kOS.Safe.Compilation.KS
                 ++argListIndex;
                 ++progNameIndex;
             }
-            if (hasOnce && ! options.LoadProgramsInSameAddressSpace)
-                throw new KOSOnceInvalidHereException(new LineCol(lastLine, lastColumn));
+            // TODO: Evandisoft just commenting this out here. We will have to manage run once differently
+            // than the previous version.
+            //if (hasOnce && ! options.LoadProgramsInSameAddressSpace)
+                //throw new KOSOnceInvalidHereException(new LineCol(lastLine, lastColumn));
 
             // process program arguments
             AddOpcode(new OpcodePush(new KOSArgMarkerType())); // regardless of whether it's called directly or indirectly, we still need at least one.
