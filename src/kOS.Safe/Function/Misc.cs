@@ -70,6 +70,7 @@ namespace kOS.Safe.Function
             // pass on to the program it's invoking.  First, these are the args to run itself:
             object volumeId = PopValueAssert(exec, true);
             object pathObject = PopValueAssert(exec, true);
+            object runOnceObject = PopValueAssert(exec, true);
             AssertArgBottomAndConsume(exec);
 
             // Now the args it is going to be passing on to the program:
@@ -103,19 +104,39 @@ namespace kOS.Safe.Function
                 IsCalledFromRun = true
             };
 
+            ProcessManager processManager = shared.Cpu as ProcessManager;
+            if (processManager == null) {
+                throw new Exception(nameof(shared.Cpu) + " must be of type " + nameof(ProcessManager));
+            }
+
+
             Procedure program =
                 shared.ScriptHandler.Compile(
                     path, 1, content.String, "program", options);
-            ProcessManager processManager = shared.Cpu as ProcessManager;
 
+            UsesAutoReturn = false;
             exec.Stack.Push(0);
+
+            // If this program was already ran, just return.
+            if (runOnceObject is bool){
+                if ((bool)runOnceObject) {
+                    if (processManager.ranPrograms.ContainsKey(program)) {
+                        return;
+                    }
+                }
+                processManager.ranPrograms[program] = true;
+            } else {
+                throw new Exception("runOnce bool was not set properly");
+            }
+
+
             if (processManager.InterpreterIsCurrent()) {
                 processManager.RunInNewProcess(program, progArgs);
             } else {
                 exec.Thread.CallWithArgs(program, progArgs);
             }
 
-            UsesAutoReturn = false;
+
         }
     }
 
