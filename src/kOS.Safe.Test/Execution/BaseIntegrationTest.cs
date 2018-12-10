@@ -78,6 +78,7 @@ namespace kOS.Safe.Test.Execution
 
         protected void RunScript(string fileName)
         {
+            throw new NotImplementedException("Old cpu version of compile no longer supported");
             string contents = File.ReadAllText(Path.Combine(baseDir, fileName));
             GlobalPath path = shared.VolumeMgr.GlobalPathFromObject("0:/" + fileName);
             var compiled = shared.ScriptHandler.Compile(path, 1, contents, "test", new CompilerOptions()
@@ -89,7 +90,8 @@ namespace kOS.Safe.Test.Execution
             cpu.Boot();
 
             screen.ClearOutput();
-            cpu.GetCurrentContext().AddParts(compiled);
+
+            //cpu.GetCurrentContext().AddParts(compiled);
         }
 
         protected void RunSingleStep()

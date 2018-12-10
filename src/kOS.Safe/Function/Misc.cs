@@ -108,35 +108,31 @@ namespace kOS.Safe.Function
             if (processManager == null) {
                 throw new Exception(nameof(shared.Cpu) + " must be of type " + nameof(ProcessManager));
             }
-
-
-            Procedure program =
-                shared.ScriptHandler.Compile(
-                    path, 1, content.String, "program", options);
-
             UsesAutoReturn = false;
             exec.Stack.Push(0);
 
+
             // If this program was already ran, just return.
-            if (runOnceObject is bool){
+            if (runOnceObject is bool) {
                 if ((bool)runOnceObject) {
-                    if (processManager.ranPrograms.ContainsKey(program)) {
+                    if (processManager.ranPrograms.ContainsKey(path)) {
                         return;
                     }
                 }
-                processManager.ranPrograms[program] = true;
+                processManager.ranPrograms[path] = true;
             } else {
                 throw new Exception("runOnce bool was not set properly");
             }
 
+            Procedure program =
+                shared.ScriptHandler.Compile(
+                    path, 1, content.String, "program", options);
 
             if (processManager.InterpreterIsCurrent()) {
                 processManager.RunInNewProcess(program, progArgs);
             } else {
                 exec.Thread.CallWithArgs(program, progArgs);
             }
-
-
         }
     }
 

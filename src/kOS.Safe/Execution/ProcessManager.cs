@@ -44,7 +44,7 @@ namespace kOS.Safe
     public class ProcessManager:CPU
     {
         readonly Dictionary<string, Procedure> compiledPrograms = new Dictionary<string, Procedure>();
-        public readonly Dictionary<Procedure, bool> ranPrograms = new Dictionary<Procedure, bool>();
+        public readonly Dictionary<GlobalPath, bool> ranPrograms = new Dictionary<GlobalPath, bool>();
         readonly Stack<KOSProcess> processes = new Stack<KOSProcess>();
         internal InstructionCounter GlobalInstructionCounter = new InstructionCounter();
         internal KOSProcess CurrentProcess => processes.Peek();

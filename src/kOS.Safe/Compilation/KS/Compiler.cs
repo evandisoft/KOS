@@ -3143,34 +3143,9 @@ namespace kOS.Safe.Compilation.KS
                 ++argListIndex;
                 ++progNameIndex;
             }
-            // TODO: Evandisoft just commenting this out here. We will have to manage run once differently
-            // than the previous version.
-            //if (hasOnce && ! options.LoadProgramsInSameAddressSpace)
-                //throw new KOSOnceInvalidHereException(new LineCol(lastLine, lastColumn));
 
             // process program arguments
             AddOpcode(new OpcodePush(new KOSArgMarkerType())); // regardless of whether it's called directly or indirectly, we still need at least one.
-            bool hasOn = node.Nodes.Any(cn => cn.Token.Type == TokenType.ON);
-            if (!hasOn && options.LoadProgramsInSameAddressSpace)
-            {
-                // When running in the same address space, we need an extra arg marker under the args, because
-                // of the double-indirect call where we call the subroutine that was built in PreProcessRunStatement,
-                // and IT in turn calls the actual subprogram (after deciding whether or not it needs to compile it
-                // into existence).
-                AddOpcode(new OpcodePush(new KOSArgMarkerType()));
-            }
-
-            // Needs to push a true/false onto the stack to record whether or not there was a "once"
-            // associated with this run (i.e. "run" versus "run once").  This has to go
-            // underneath the actual args.  This arg, and them, will get reversed by OpcodeCall, thus this
-            // boolean will end up atop the stack by the time the 'once' checker built in
-            // PreprocessRunStatement() gets to it:
-            if (!hasOn && options.LoadProgramsInSameAddressSpace)
-            {
-                AddOpcode(new OpcodePush(hasOnce));
-                VisitNode(node.Nodes[progNameIndex]); // put program name on stack.
-                AddOpcode(new OpcodeEval(true));
-            }
 
             if (node.Nodes.Count > argListIndex && node.Nodes[argListIndex].Token.Type == TokenType.arglist)
             {
@@ -3181,35 +3156,30 @@ namespace kOS.Safe.Compilation.KS
                 volumeIndex += 3;
             }
 
-            if (!hasOn && options.LoadProgramsInSameAddressSpace)
-            {
-                AddOpcode(new OpcodeCall(null)).DestinationLabel = boilerplateLoadAndRunEntryLabel;
-                AddOpcode(new OpcodePop()); // ditch the dummy return value for now - maybe we can use it in a later version.
-            }
+            // When running in a new address space, we also need a second arg marker, but in this
+            // case it has to go over the top of the other args, not under them, to tell the RUN
+            // builtin function where its arguments end and the progs arguments start:
+            AddOpcode(new OpcodePush(new KOSArgMarkerType()));
+
+
+            AddOpcode(new OpcodePush(hasOnce));
+            // program name
+            VisitNode(node.Nodes[progNameIndex]);
+
+            // volume where program should be executed (null means local)
+            if (volumeIndex >= 0 && volumeIndex < node.Nodes.Count)
+                VisitNode(node.Nodes[volumeIndex]);
             else
-            {
-                // When running in a new address space, we also need a second arg marker, but in this
-                // case it has to go over the top of the other args, not under them, to tell the RUN
-                // builtin function where its arguments end and the progs arguments start:
-                AddOpcode(new OpcodePush(new KOSArgMarkerType()));
+                AddOpcode(new OpcodePush(null));
+            var opcode = new OpcodeCall("run"){isBuiltin=true};
+            AddOpcode(opcode);
+            
+            // Note: it is not an error that there are two Pop's here:  There are two levels of return value - one from the program run
+            // and one from the function call run():
+            // evandisoft TODO: Breaking Change! z
+            //AddOpcode(new OpcodePop()); // ditch the program exit's dummy return value for now - maybe we can use it in a later version.
+            AddOpcode(new OpcodePop()); // ditch the run()'s dummy return value for now - maybe we can use it in a later version.
 
-                // program name
-                VisitNode(node.Nodes[progNameIndex]);
-
-                // volume where program should be executed (null means local)
-                if (volumeIndex >= 0 && volumeIndex < node.Nodes.Count)
-                    VisitNode(node.Nodes[volumeIndex]);
-                else
-                    AddOpcode(new OpcodePush(null));
-                var opcode = new OpcodeCall("run"){isBuiltin=true};
-                AddOpcode(opcode);
-                
-                // Note: it is not an error that there are two Pop's here:  There are two levels of return value - one from the program run
-                // and one from the function call run():
-                // evandisoft TODO: Breaking Change! z
-                //AddOpcode(new OpcodePop()); // ditch the program exit's dummy return value for now - maybe we can use it in a later version.
-                AddOpcode(new OpcodePop()); // ditch the run()'s dummy return value for now - maybe we can use it in a later version.
-            }
         }
 
         private void VisitCompileStatement(ParseNode node)
