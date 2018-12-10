@@ -2,6 +2,7 @@ using kOS.Safe.Exceptions;
 using System.Collections.Generic;
 using kOS.Safe.Persistence;
 using kOS.Safe.Encapsulation;
+using System;
 
 namespace kOS.Safe.Compilation.KS
 {
@@ -21,8 +22,15 @@ namespace kOS.Safe.Compilation.KS
             compiledPrograms = new Dictionary<GlobalPath, Procedure>();
         }
 
-        public override List<CodePart> Compile(GlobalPath filePath, int startLineNum, string scriptText, string contextId, CompilerOptions options)
+        public override Procedure Compile(GlobalPath filePath, int startLineNum, string scriptText, string contextId, CompilerOptions options)
         {
+            Procedure procedure;
+
+            if (compiledPrograms.TryGetValue(filePath,out procedure)) {
+                return procedure;
+            }
+            Deb.RawLog("Compiling new program "+filePath);
+
             var parts = new List<CodePart>();
             ParseTree parseTree = parser.Parse(scriptText);
             if (parseTree.Errors.Count == 0)
@@ -34,6 +42,7 @@ namespace kOS.Safe.Compilation.KS
                 try
                 {
                     mainPart = compiler.Compile(startLineNum, parseTree, currentContext, options);
+
                 }
                 catch (KOSCompileException e)
                 {
@@ -51,6 +60,15 @@ namespace kOS.Safe.Compilation.KS
                 parts.Add(mainPart);
 
                 AssignSourceId(parts, filePath);
+                try {
+                    procedure = ProgramBuilder2.BuildProgram(parts);
+                    compiledPrograms[filePath] = procedure;
+                }
+                catch(Exception e) {
+                    Deb.EnqueueCompile(e);
+                    Deb.LogQueues();
+                    throw;
+                }
 
                 //if (contextId != "interpreter") _cache.AddToCache(scriptText, parts);
             }
@@ -67,7 +85,7 @@ namespace kOS.Safe.Compilation.KS
                 throw new KOSParseException(error, scriptText);
             }
 
-            return parts;
+            return procedure;
         }
 
         private void LoadContext(string contextId)

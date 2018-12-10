@@ -148,23 +148,15 @@ namespace kOS.Screen
                 Deb.EnableLogging();
                 Deb.ClearLogs();
                 Deb.RawLog("Running program.");
-                List<CodePart> commandParts = Shared.ScriptHandler.Compile(new InterpreterPath(this),
+                Procedure program = Shared.ScriptHandler.Compile(new InterpreterPath(this),
                     commandHistoryIndex, commandText, InterpreterName, options);
-                //Deb.RawLog()
-                if (commandParts == null) return;
-				// If the cpu is really a "ProcessManager", we'll handle it
-				// the "new" way. If it's just a CPU, do it the old way.
+
 				ProcessManager processManager = Shared.Cpu as ProcessManager;
 				if (processManager!=null){
-					
-
-					var programProcedure = ProgramBuilder2.BuildProgram(commandParts);
-					processManager.RunInInterpreter(programProcedure,new List<object>());
-				} else{
-					var interpreterContext = ((CPU)Shared.Cpu).GetInterpreterContext();
-					interpreterContext.AddParts(commandParts);
-				}
-			}
+					processManager.RunInInterpreter(program,new List<object>());
+                }
+                throw new Exception(nameof(Shared.Cpu)+" must be of type "+nameof(ProcessManager));
+            }
             catch (Exception e)
             {
                 if (Shared.Logger != null)

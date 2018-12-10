@@ -89,7 +89,6 @@ namespace kOS.Safe.Test.Execution
             cpu.Boot();
 
             screen.ClearOutput();
-
             cpu.GetCurrentContext().AddParts(compiled);
         }
 

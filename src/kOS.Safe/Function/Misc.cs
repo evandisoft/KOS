@@ -103,18 +103,16 @@ namespace kOS.Safe.Function
                 IsCalledFromRun = true
             };
 
-            List<CodePart> commandParts =
+            Procedure program =
                 shared.ScriptHandler.Compile(
                     path, 1, content.String, "program", options);
             ProcessManager processManager = shared.Cpu as ProcessManager;
 
-            var programProcedure = ProgramBuilder2.BuildProgram(commandParts);
-
             exec.Stack.Push(0);
             if (processManager.InterpreterIsCurrent()) {
-                processManager.RunInNewProcess(programProcedure, progArgs);
+                processManager.RunInNewProcess(program, progArgs);
             } else {
-                exec.Thread.CallWithArgs(programProcedure, progArgs);
+                exec.Thread.CallWithArgs(program, progArgs);
             }
 
             UsesAutoReturn = false;
