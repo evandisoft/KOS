@@ -266,12 +266,12 @@ namespace kOS.Safe
                         IsCalledFromRun = false
                     };
 
-                    List<CodePart> commandParts =
+                    Procedure program =
                         shared.ScriptHandler.Compile(
                         new BootGlobalPath(bootCommand), 1, bootCommand, "program", options);
                     //debugging = true;
-                    
-                    RunInInterpreter(ProgramBuilder2.BuildProgram(commandParts),new List<object>());
+
+                    RunInInterpreter(program,new List<object>());
                 }
             }
         }

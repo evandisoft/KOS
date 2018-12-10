@@ -3,6 +3,7 @@ using kOS.Safe.Encapsulation;
 using kOS.Safe.Persistence;
 using System.Collections.Generic;
 using System.Threading;
+using System;
 
 namespace kOS.Safe.Execution
 {
@@ -47,7 +48,8 @@ namespace kOS.Safe.Execution
 
         public override void ThreadExecute()
         {
-            codeParts = shared.ScriptHandler.Compile(path, startLineNum, content, contextId, options);
+            throw new NotImplementedException("ThreadExecute and YieldFinishedCompile are no longer meant to be used.");
+            //codeParts = shared.ScriptHandler.Compile(path, startLineNum, content, contextId, options);
         }
 
         public override void ThreadFinish()
