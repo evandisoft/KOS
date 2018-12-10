@@ -104,13 +104,14 @@ namespace kOS.Safe.Function
                 IsCalledFromRun = true
             };
 
+
+
             ProcessManager processManager = shared.Cpu as ProcessManager;
             if (processManager == null) {
                 throw new Exception(nameof(shared.Cpu) + " must be of type " + nameof(ProcessManager));
             }
             UsesAutoReturn = false;
             exec.Stack.Push(0);
-
 
             // If this program was already ran, just return.
             if (runOnceObject is bool) {
@@ -127,6 +128,7 @@ namespace kOS.Safe.Function
             Procedure program =
                 shared.ScriptHandler.Compile(
                     path, 1, content.String, "program", options);
+
 
             if (processManager.InterpreterIsCurrent()) {
                 processManager.RunInNewProcess(program, progArgs);
