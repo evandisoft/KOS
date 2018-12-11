@@ -15,7 +15,7 @@ namespace kOS.Suffixed.Widget
 
         public int Count { get { return Widgets.Count; } }
 
-        public UserDelegate UserOnRadioChange { get ; set; }
+        public Procedure UserOnRadioChange { get ; set; }
 
         public Box(Box parent, LayoutMode mode) : this(parent, mode, parent.FindStyle("box"))
         {
@@ -51,7 +51,7 @@ namespace kOS.Suffixed.Widget
             AddSuffix("ADDSPACING", new OptionalArgsSuffix<Spacing>(AddSpace, new Structure [] { new ScalarIntValue(-1) }));
             AddSuffix("WIDGETS", new Suffix<ListValue>(() => ListValue.CreateList(Widgets)));
             AddSuffix("RADIOVALUE", new Suffix<StringValue>(() => new StringValue(GetRadioValue())));
-            AddSuffix("ONRADIOCHANGE", new SetSuffix<UserDelegate>(() => CallbackGetter(UserOnRadioChange), value => UserOnRadioChange = CallbackSetter(value)));
+            AddSuffix("ONRADIOCHANGE", new SetSuffix<Procedure>(() => CallbackGetter(UserOnRadioChange), value => UserOnRadioChange = CallbackSetter(value)));
             AddSuffix("SHOWONLY", new OneArgsSuffix<Widget>(value => ShowOnly(value)));
             AddSuffix("CLEAR", new NoArgsVoidSuffix(Clear));
         }
@@ -78,9 +78,9 @@ namespace kOS.Suffixed.Widget
             if (UserOnRadioChange != null)
             {
                 if (guiCaused)
-                    UserOnRadioChange.TriggerOnFutureUpdate(InterruptPriority.CallbackOnce, b);
+                    GetProcessManager().AddToCurrentTriggers(UserOnRadioChange);
                 else
-                    UserOnRadioChange.TriggerOnNextOpcode(InterruptPriority.NoChange, b);
+                    GetProcessManager().InterruptCurrentThread(UserOnRadioChange);
             }
         }
 

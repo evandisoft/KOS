@@ -27,7 +27,7 @@ namespace kOS.Suffixed.Widget
         private float min { get; set; }
         private float max { get; set; }
         private WidgetStyle thumbStyle;
-        private UserDelegate UserOnChange { get; set; }
+        private Procedure UserOnChange { get; set; }
 
         public Slider(Box parent, bool h_not_v, float v, float from, float to) : base(parent, parent.FindStyle(h_not_v ? "horizontalSlider" : "verticalSlider"))
         {
@@ -45,7 +45,7 @@ namespace kOS.Suffixed.Widget
             AddSuffix("VALUE", new SetSuffix<ScalarValue>(() => Value, v => { if (Value != v) { Value = v; Communicate(() => valueVisible = v); } }));
             AddSuffix("MIN", new SetSuffix<ScalarValue>(() => min, v => min = v));
             AddSuffix("MAX", new SetSuffix<ScalarValue>(() => max, v => max = v));
-            AddSuffix("ONCHANGE", new SetSuffix<UserDelegate>(() => CallbackGetter(UserOnChange), v => UserOnChange = CallbackSetter(v)));
+            AddSuffix("ONCHANGE", new SetSuffix<Procedure>(() => CallbackGetter(UserOnChange), v => UserOnChange = CallbackSetter(v)));
         }
 
         public override void DoGUI()
@@ -69,10 +69,9 @@ namespace kOS.Suffixed.Widget
             if (UserOnChange != null)
             {
                 if (guiCaused)
-                    //GetProcessManager().ScheduleTriggerOnFutureUpdate()
-                    UserOnChange.TriggerOnFutureUpdate(InterruptPriority.CallbackOnce, new ScalarDoubleValue((double)val));
+                    GetProcessManager().AddToCurrentTriggers(UserOnChange);
                 else
-                    UserOnChange.TriggerOnNextOpcode(InterruptPriority.NoChange, new ScalarDoubleValue((double)val));
+                    GetProcessManager().InterruptCurrentThread(UserOnChange);
             }
         }
 

@@ -16,6 +16,7 @@ namespace kOS.Safe {
         TERMINATED,
         WAIT,
         SHUTDOWN,
+        INTERRUPTED,
     }
 
     /// <summary>
@@ -42,6 +43,10 @@ namespace kOS.Safe {
         public ArgumentStack Stack { get; }
         VariableStore IExec.Store => CurrentProcedureCall.Store;
 
+        // If non-null, this is used to place the return value of the
+        // last procedure, if any.
+        ReturnCell returnCell;
+
         /// <summary>
         /// Gets the current procedure.
         /// </summary>
@@ -64,7 +69,8 @@ namespace kOS.Safe {
         /// Initializes a new instance of the <see cref="T:kOS.Safe.KOSThread"/> class.
         /// </summary>
         /// <param name="process">Process.</param>
-        public KOSThread(KOSProcess process) {
+        public KOSThread(KOSProcess process,ReturnCell returnCell=null) {
+            this.returnCell = returnCell;
             Process = process;
             ProcessManager = Process.ProcessManager;
             Stack = new ArgumentStack();
@@ -88,10 +94,6 @@ namespace kOS.Safe {
                 }
                 StopWaiting();
                 break;
-            case ThreadStatus.GLOBAL_INSTRUCTION_LIMIT:
-            case ThreadStatus.THREAD_INSTRUCTION_LIMIT:
-                Status = ThreadStatus.OK;
-                break;
             case ThreadStatus.FINISHED:
             case ThreadStatus.ERROR:
             case ThreadStatus.TERMINATED:
@@ -105,6 +107,12 @@ namespace kOS.Safe {
 
         void ExecuteLoop() {
             while (true) {
+                if (!GlobalInstructionCounter.Continue()) {
+                    GlobalInstructionCounter.Reset();
+                    Status = ThreadStatus.GLOBAL_INSTRUCTION_LIMIT;
+                    return;
+                }
+
                 try {
                     // This call may lead to the "CurrentProcedureCall"
                     // being popped off the stack. In this case
@@ -123,25 +131,12 @@ namespace kOS.Safe {
                     throw;
                 }
 
-
-
-                if (!GlobalInstructionCounter.Continue()) {
-                    GlobalInstructionCounter.Reset();
-                    Status = ThreadStatus.GLOBAL_INSTRUCTION_LIMIT;
-                    return;
-                }
-
-                // This wait check and the one at the beginning of Execute
-                // can not be consolidated, because the one at the beginning
-                // of execute doesn't exit on "wait 0." This wait check needs
-                // to exit on "wait 0."
-                // And since we're already using a switch here, we might as well
-                // check all the values here instead of the beginning of the loop.
                 switch (Status) {
                 case ThreadStatus.WAIT:
                 case ThreadStatus.FINISHED:
                 case ThreadStatus.ERROR:
                 case ThreadStatus.TERMINATED:
+                case ThreadStatus.INTERRUPTED:
                 case ThreadStatus.SHUTDOWN:
                     return;
                 }
@@ -223,11 +218,18 @@ namespace kOS.Safe {
             Deb.EnqueueExec("Removing " + nameof(ProcedureCall));
             callStack.Pop();
             if (callStack.Count == 0) {
+                // if the returnCell is nonnull, set it to the last return value
+                if (returnCell!=null && Stack.CountArgs() > 0) {
+                    returnCell.ReturnValue = PopStructureEncapsulated();
+                }
                 Status = ThreadStatus.FINISHED;
                 return;
             }
         }
 
+        public Structure PopStructureEncapsulated(bool barewordOkay = false) {
+            return Structure.FromPrimitiveWithAssert(PopValue(barewordOkay));
+        }
 
         /// <summary>
         /// Pops the value from the Stack, looking it up in the Store if it's
@@ -241,6 +243,5 @@ namespace kOS.Safe {
             Deb.EnqueueExec("Got value of", retval2);
             return retval2;
         }
-
     }
 }

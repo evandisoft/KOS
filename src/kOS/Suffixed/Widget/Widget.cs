@@ -80,10 +80,10 @@ namespace kOS.Suffixed.Widget
         /// all the callbacks the GUI system will use.
         /// </summary>
         /// <returns>The callback or NoDelegate.</returns>
-        /// <param name="d">delegate to try</param>
-        public static UserDelegate CallbackGetter(UserDelegate d)
+        /// <param name="p">delegate to try</param>
+        public static Procedure CallbackGetter(Procedure p)
         {
-            return d ?? NoDelegate.Instance;
+            return p ?? Procedure.Empty;
         }
 
         /// <summary>
@@ -92,10 +92,10 @@ namespace kOS.Suffixed.Widget
         /// for gui user callbacks so the kerboscript can pass in NoDelegate
         /// and the kOS C# code will interpret that to mean a null.
         /// </summary>
-        /// <param name="d">delegate to return</param>
-        public static UserDelegate CallbackSetter(UserDelegate d)
+        /// <param name="p">delegate to return</param>
+        public static Procedure CallbackSetter(Procedure p)
         {
-            return (d is NoDelegate ? null : d);
+            return (p is NoDelegate ? null : p);
         }
 
         protected GUIWidgets FindGUI()

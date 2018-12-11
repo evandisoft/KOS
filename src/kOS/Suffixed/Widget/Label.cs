@@ -14,8 +14,8 @@ namespace kOS.Suffixed.Widget
 
         public string Text { get { return content.text; } }
 
-        private UserDelegate UserTextUpdater { get; set; }
-        private TriggerInfo UserTextUpdateResult;
+        private Procedure UserTextUpdater { get; set; }
+        private ReturnCell UserTextUpdateResult;
 
         public Label(Box parent, string text, WidgetStyle style) : base(parent, style)
         {
@@ -32,7 +32,7 @@ namespace kOS.Suffixed.Widget
         {
             AddSuffix("TEXT", new SetSuffix<StringValue>(() => content.text, value => SetText(value)));
             AddSuffix("IMAGE", new SetSuffix<StringValue>(() => "", value => SetContentImage(value)));
-            AddSuffix("TEXTUPDATER", new SetSuffix<UserDelegate>(() => CallbackGetter(UserTextUpdater), value => UserTextUpdater = CallbackSetter(value)));
+            AddSuffix("TEXTUPDATER", new SetSuffix<Procedure>(() => CallbackGetter(UserTextUpdater), value => UserTextUpdater = CallbackSetter(value)));
             AddSuffix("TOOLTIP", new SetSuffix<StringValue>(() => content.tooltip, value => { if (content.tooltip != value) { content.tooltip = value; Communicate(() => content_visible.tooltip = value); } }));
         }
 
@@ -98,22 +98,23 @@ namespace kOS.Suffixed.Widget
 
             if (UserTextUpdateResult != null)
             {
-                if (UserTextUpdateResult.CallbackFinished)
+                if (UserTextUpdateResult.ReturnValue!=null)
                 {
                     SetText(UserTextUpdateResult.ReturnValue.ToString());
-                    UserTextUpdateResult = (guiCaused ?
-                        UserTextUpdater.TriggerOnFutureUpdate(InterruptPriority.CallbackOnce) :
-                        UserTextUpdater.TriggerOnNextOpcode(InterruptPriority.NoChange ));
+                    if (guiCaused) {
+                        UserTextUpdateResult = GetProcessManager().AddToCurrentTriggers(UserTextUpdater);
+                    } else {
+                        UserTextUpdateResult = GetProcessManager().InterruptCurrentThread(UserTextUpdater);
+                    }
                 }
-                // Else just do nothing because a previous call is still pending its return result.
-                // don't start up a second call while still waiting for the first one to finish.  (we
-                // don't want to end up stacking up calls faster than they execute.)
             }
             else
             {
-                UserTextUpdateResult = (guiCaused ?
-                    UserTextUpdater.TriggerOnFutureUpdate(InterruptPriority.CallbackOnce) :
-                    UserTextUpdater.TriggerOnNextOpcode(InterruptPriority.NoChange));
+                if (guiCaused) {
+                    UserTextUpdateResult = GetProcessManager().AddToCurrentTriggers(UserTextUpdater);
+                } else {
+                    UserTextUpdateResult = GetProcessManager().InterruptCurrentThread(UserTextUpdater);
+                }
             }
         }
 

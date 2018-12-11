@@ -102,6 +102,22 @@ namespace kOS.Safe.Execution
             } 
         }
 
+        public ReturnCell AddToCurrentTriggers(Procedure userTextUpdater) {
+            ReturnCell cell = new ReturnCell();
+            var interruptThread = new KOSThread(CurrentProcess, cell);
+            interruptThread.Call(userTextUpdater);
+            CurrentProcess.AddTrigger(interruptThread);
+            return cell;
+        }
+
+        public ReturnCell InterruptCurrentThread(Procedure userTextUpdater) {
+            ReturnCell cell = new ReturnCell();
+            var interruptThread = new KOSThread(CurrentProcess,cell);
+            interruptThread.Call(userTextUpdater);
+            CurrentProcess.Interrupt(interruptThread);
+            return cell;
+        }
+
         /// <summary>
         /// Creates a new thread, puts the Program into the thread, and
         /// puts the thread into the interpreter process.

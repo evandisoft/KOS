@@ -48,5 +48,7 @@ namespace kOS.Safe.Encapsulation
         public ProcedureCall Call(KOSThread thread){
             return new ProcedureCall(thread,this);
         }
+
+        static public Procedure Empty => new Procedure(new OpcodeList());
     }
 }

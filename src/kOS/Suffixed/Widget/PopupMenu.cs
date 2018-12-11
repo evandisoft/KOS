@@ -29,7 +29,7 @@ namespace kOS.Suffixed.Widget
         private WidgetStyle popupStyle;
         private WidgetStyle itemStyle;
         private string optSuffix = "ToString";
-        public UserDelegate UserOnChange { get ; set; }
+        public Procedure UserOnChange { get ; set; }
 
         public PopupMenu(Box parent) : base(parent,"", parent.FindStyle("popupMenu"))
         {
@@ -52,7 +52,7 @@ namespace kOS.Suffixed.Widget
             AddSuffix("CLEAR", new NoArgsVoidSuffix(Clear));
             AddSuffix("CHANGED", new SetSuffix<BooleanValue>(() => TakeChange(), value => changed = value));
             AddSuffix("MAXVISIBLE", new SetSuffix<ScalarIntValue>(() => maxVisible, value => maxVisible = value));
-            AddSuffix("ONCHANGE", new SetSuffix<UserDelegate>(() => CallbackGetter(UserOnChange), value => UserOnChange = CallbackSetter(value)));
+            AddSuffix("ONCHANGE", new SetSuffix<Procedure>(() => CallbackGetter(UserOnChange), value => UserOnChange = CallbackSetter(value)));
             AddSuffix("OPTIONSUFFIX", new SetSuffix<StringValue>(() => optSuffix, value => optSuffix = value));
         }
 
@@ -74,9 +74,9 @@ namespace kOS.Suffixed.Widget
             if (UserOnChange != null)
             {
                 if (guiCaused)
-                    UserOnChange.TriggerOnFutureUpdate(InterruptPriority.CallbackOnce, GetValue());
+                    GetProcessManager().AddToCurrentTriggers(UserOnChange);
                 else
-                    UserOnChange.TriggerOnNextOpcode(InterruptPriority.NoChange, GetValue());
+                    GetProcessManager().InterruptCurrentThread(UserOnChange);
                 changed = false;
             }
         }

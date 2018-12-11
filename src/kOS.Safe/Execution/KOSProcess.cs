@@ -16,6 +16,7 @@ namespace kOS.Safe
         ERROR,
         TERMINATED,
         SHUTDOWN,
+        INTERRUPTED,
     }
 
     /// <summary>
@@ -74,6 +75,7 @@ namespace kOS.Safe
         /// </summary>
         protected readonly coll.Stack<KOSThread> triggerStack = new coll.Stack<KOSThread>();
 
+
         public FlyByWireManager FlyByWire;
 
         public KOSProcess(ProcessManager processManager)
@@ -84,6 +86,32 @@ namespace kOS.Safe
 
         public ProcessStatus Status { get; set; } = ProcessStatus.OK;
 
+        KOSThread newInterrupt;
+
+        public void Interrupt(KOSThread interrupt) {
+            Deb.EnqueueExec("Calling "+nameof(KOSProcess)+"."+nameof(Interrupt));
+            if (newInterrupt != null) {
+                throw new Exception(nameof(newInterrupt) + " should have been null");
+            }
+            newInterrupt = interrupt;
+            KOSThread currentThread = CurrentThread();
+            if (currentThread != null) {
+                currentThread.Status = ThreadStatus.INTERRUPTED;
+                return;
+            }
+            throw new Exception("No current thread to interrupt.");
+        }
+
+        KOSThread CurrentThread() {
+            if (triggerStack.Count == 0) {
+                if (threadStack.Count == 0) {
+                    return null;
+                } else {
+                    return threadStack.Peek();
+                }
+            }
+            return triggerStack.Peek();
+        }
 
         public void Execute()
 		{
@@ -93,7 +121,6 @@ namespace kOS.Safe
                 Deb.EnqueueExec("Exiting process",ID, "with status",Status);
                 return;
             }
-
 
             FillTriggerStackIfEmpty();
             Deb.EnqueueExec("Executing. Triggers", triggerStack.Count);
@@ -144,6 +171,9 @@ namespace kOS.Safe
                     Status = ProcessStatus.SHUTDOWN;
                     return;
                 case ThreadStatus.THREAD_INSTRUCTION_LIMIT:
+                    currentThread.Status = ThreadStatus.OK;
+                    stack.Pop();
+                    break;
                 case ThreadStatus.WAIT:
                     stack.Pop();
                     break;
@@ -151,6 +181,7 @@ namespace kOS.Safe
                 // thread after the update is over. (Don't pop the current
                 // thread/trigger from its stack)
                 case ThreadStatus.GLOBAL_INSTRUCTION_LIMIT:
+                    currentThread.Status = ThreadStatus.OK;
                     Status=ProcessStatus.GLOBAL_INSTRUCTION_LIMIT;
                     return;
                 case ThreadStatus.TERMINATED:
@@ -161,6 +192,14 @@ namespace kOS.Safe
                     RemoveThread(currentThread);
                     stack.Pop();
                     break;
+                case ThreadStatus.INTERRUPTED:
+                    if (newInterrupt == null) {
+                        throw new Exception("Though thread had interrupt status, " + nameof(newInterrupt) + " was null");
+                    }
+                    currentThread.Status = ThreadStatus.OK;
+                    stack.Push(newInterrupt);
+                    newInterrupt = null;
+                    return;
                 case ThreadStatus.FINISHED:
                     RemoveThread(currentThread);
                     if (currentThread is SystemTrigger){

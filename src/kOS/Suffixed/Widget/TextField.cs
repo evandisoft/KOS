@@ -35,8 +35,8 @@ namespace kOS.Suffixed.Widget
             }
         }
 
-        private UserDelegate UserOnChange { get; set; }
-        private UserDelegate UserOnConfirm { get; set; }
+        private Procedure UserOnChange { get; set; }
+        private Procedure UserOnConfirm { get; set; }
 
         private WidgetStyle toolTipStyle;
 
@@ -60,8 +60,8 @@ namespace kOS.Suffixed.Widget
         {
             AddSuffix("CHANGED", new SetSuffix<BooleanValue>(() => TakeChange(), value => Changed = value));
             AddSuffix("CONFIRMED", new SetSuffix<BooleanValue>(() => TakeConfirm(), value => Confirmed = value));
-            AddSuffix("ONCHANGE", new SetSuffix<UserDelegate>(() => CallbackGetter(UserOnChange), value => UserOnChange = CallbackSetter(value)));
-            AddSuffix("ONCONFIRM", new SetSuffix<UserDelegate>(() => CallbackGetter(UserOnConfirm), value => UserOnConfirm = CallbackSetter(value)));
+            AddSuffix("ONCHANGE", new SetSuffix<Procedure>(() => CallbackGetter(UserOnChange), value => UserOnChange = CallbackSetter(value)));
+            AddSuffix("ONCONFIRM", new SetSuffix<Procedure>(() => CallbackGetter(UserOnConfirm), value => UserOnConfirm = CallbackSetter(value)));
         }
 
         public bool TakeChange()
@@ -83,9 +83,9 @@ namespace kOS.Suffixed.Widget
             if (UserOnConfirm != null)
             {
                 if (guiCaused)
-                    UserOnConfirm.TriggerOnFutureUpdate(InterruptPriority.CallbackOnce, new StringValue(Text));
+                    GetProcessManager().AddToCurrentTriggers(UserOnConfirm);
                 else
-                    UserOnConfirm.TriggerOnNextOpcode(InterruptPriority.NoChange, new StringValue(Text));
+                    GetProcessManager().InterruptCurrentThread(UserOnConfirm);
                 Confirmed = false;
             }
         }
@@ -95,9 +95,9 @@ namespace kOS.Suffixed.Widget
             if (UserOnChange != null)
             {
                 if (guiCaused)
-                    UserOnChange.TriggerOnFutureUpdate(InterruptPriority.CallbackOnce, new StringValue(Text));
+                    GetProcessManager().AddToCurrentTriggers(UserOnChange);
                 else
-                    UserOnChange.TriggerOnNextOpcode(InterruptPriority.NoChange, new StringValue(Text));
+                    GetProcessManager().InterruptCurrentThread(UserOnChange);
                 Changed = false;
             }
         }

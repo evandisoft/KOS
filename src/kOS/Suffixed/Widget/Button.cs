@@ -18,8 +18,8 @@ namespace kOS.Suffixed.Widget
         public bool PressedVisible { get; private set; }
         public bool IsToggle { get; set; }
         public bool IsExclusive { get; set; }
-        public UserDelegate UserOnToggle { get ; set; }
-        public UserDelegate UserOnClick { get ; set; }
+        public Procedure UserOnToggle { get ; set; }
+        public Procedure UserOnClick { get ; set; }
 
         public Button(Box parent, string text) : this(parent, text, parent.FindStyle("button"))
         {
@@ -56,8 +56,8 @@ namespace kOS.Suffixed.Widget
             AddSuffix("TAKEPRESS", new Suffix<BooleanValue>(() => new BooleanValue(TakePress())));
             AddSuffix("TOGGLE", new SetSuffix<BooleanValue>(() => IsToggle, value => SetToggleMode(value)));
             AddSuffix("EXCLUSIVE", new SetSuffix<BooleanValue>(() => IsExclusive, value => IsExclusive = value));
-            AddSuffix("ONTOGGLE", new SetSuffix<UserDelegate>(() => CallbackGetter(UserOnToggle), value => UserOnToggle = CallbackSetter(value)));
-            AddSuffix("ONCLICK", new SetSuffix<UserDelegate>(() => CallbackGetter(UserOnClick), value => UserOnClick = CallbackSetter(value)));
+            AddSuffix("ONTOGGLE", new SetSuffix<Procedure>(() => CallbackGetter(UserOnToggle), value => UserOnToggle = CallbackSetter(value)));
+            AddSuffix("ONCLICK", new SetSuffix<Procedure>(() => CallbackGetter(UserOnClick), value => UserOnClick = CallbackSetter(value)));
         }
 
         /// <summary>
@@ -82,9 +82,9 @@ namespace kOS.Suffixed.Widget
             if (UserOnToggle != null)
             {
                 if (guiCaused)
-                    UserOnToggle.TriggerOnFutureUpdate(InterruptPriority.CallbackOnce, new BooleanValue(pressed));
+                    GetProcessManager().AddToCurrentTriggers(UserOnToggle);
                 else
-                    UserOnToggle.TriggerOnNextOpcode(InterruptPriority.NoChange, new BooleanValue(pressed));
+                    GetProcessManager().InterruptCurrentThread(UserOnToggle);
             }
 
             if (parent != null && parent.UserOnRadioChange != null)
@@ -103,9 +103,9 @@ namespace kOS.Suffixed.Widget
             if (UserOnClick != null && (IsToggle || pressed))
             {
                 if (guiCaused)
-                    UserOnClick.TriggerOnNextOpcode(InterruptPriority.CallbackOnce);
+                    GetProcessManager().AddToCurrentTriggers(UserOnClick);
                 else
-                    UserOnClick.TriggerOnNextOpcode(InterruptPriority.NoChange);
+                    GetProcessManager().InterruptCurrentThread(UserOnClick);
 
                 if (!IsToggle)
                     causeRelease = true;
