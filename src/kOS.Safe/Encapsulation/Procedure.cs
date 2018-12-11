@@ -1,6 +1,7 @@
 ﻿using System;
 using kOS.Safe.Compilation;
 using System.Collections.Generic;
+using kOS.Safe.Encapsulation.Suffixes;
 using kOS.Safe.Execution;
 using kOS.Safe.Utilities;
 using System.Collections.ObjectModel;
@@ -45,8 +46,28 @@ namespace kOS.Safe.Encapsulation
             Deb.EnqueueExec("closure in Procedure constructor is", closure);
         }
 
+        private void InitializeSuffixes() {
+            AddSuffix("CALL", new VarArgsSuffix<Structure, Structure>(CallPassingArgs));
+            AddSuffix("BIND", new VarArgsSuffix<Procedure, Structure>(Bind));
+            AddSuffix("ISDEAD", new NoArgsSuffix<BooleanValue>(() => (BooleanValue)IsDead()));
+        }
+
         public ProcedureCall Call(KOSThread thread){
             return new ProcedureCall(thread,this);
+        }
+
+        public Structure CallPassingArgs(params Structure[] args) {
+            if (Cpu == null)
+                throw new KOSCannotCallException();
+            PushUnderArgs();
+            Cpu.PushArgumentStack(new KOSArgMarkerType());
+            foreach (Structure arg in PreBoundArgs) {
+                Cpu.PushArgumentStack(arg);
+            }
+            foreach (Structure arg in args) {
+                Cpu.PushArgumentStack(arg);
+            }
+            return CallWithArgsPushedAlready();
         }
 
         static public Procedure Empty => new Procedure(new OpcodeList());
