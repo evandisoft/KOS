@@ -99,21 +99,26 @@ namespace kOS.Safe.Execution
                 Deb.EnqueueExec("Removing process", CurrentProcess.ID);
                 processes.Pop();
                 CurrentProcess.FlyByWire.EnableActiveFlyByWire();
+                if (InterpreterIsCurrent()) {
+                    shared.ScriptHandler.ResetProgramDict();
+                }
             } 
         }
 
-        public ReturnCell AddToCurrentTriggers(Procedure userTextUpdater) {
+        public ReturnCell AddToCurrentTriggers(Procedure procedure) {
             ReturnCell cell = new ReturnCell();
             var interruptThread = new KOSThread(CurrentProcess, cell);
-            interruptThread.Call(userTextUpdater);
+            interruptThread.Stack.Push(new KOSArgMarkerType());
+            interruptThread.Call(procedure);
             CurrentProcess.AddTrigger(interruptThread);
             return cell;
         }
 
-        public ReturnCell InterruptCurrentThread(Procedure userTextUpdater) {
+        public ReturnCell InterruptCurrentThread(Procedure procedure) {
             ReturnCell cell = new ReturnCell();
             var interruptThread = new KOSThread(CurrentProcess,cell);
-            interruptThread.Call(userTextUpdater);
+            interruptThread.Stack.Push(new KOSArgMarkerType());
+            interruptThread.Call(procedure);
             CurrentProcess.Interrupt(interruptThread);
             return cell;
         }

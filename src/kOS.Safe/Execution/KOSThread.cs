@@ -216,15 +216,14 @@ namespace kOS.Safe {
         /// </summary>
         public void Return() {
             Deb.EnqueueExec("Removing " + nameof(ProcedureCall));
-            callStack.Pop();
-            if (callStack.Count == 0) {
+            if (callStack.Count == 1) {
                 // if the returnCell is nonnull, set it to the last return value
-                if (returnCell!=null && Stack.CountArgs() > 0) {
+                if (returnCell != null && Stack.Count > 0) {
                     returnCell.ReturnValue = PopStructureEncapsulated();
                 }
                 Status = ThreadStatus.FINISHED;
-                return;
             }
+            callStack.Pop();
         }
 
         public Structure PopStructureEncapsulated(bool barewordOkay = false) {

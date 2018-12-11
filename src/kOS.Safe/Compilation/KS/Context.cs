@@ -1,5 +1,7 @@
 using System;
 using kOS.Safe.Persistence;
+using System.Collections.Generic;
+using kOS.Safe.Encapsulation;
 
 namespace kOS.Safe.Compilation.KS
 {
@@ -11,7 +13,8 @@ namespace kOS.Safe.Compilation.KS
         public int NumCompilesSoFar {get; set;}
         public int LabelIndex { get; set; }
         public GlobalPath LastSourcePath { get; set; }
-        
+        public Dictionary<GlobalPath, Procedure> compiledPrograms;
+
         // This has to live inside context because of the fact that more than one program
         // can be compiled into the same memory space.  If it was reset to zero by the
         // Compile action, then when one program ran another program, it would give 
