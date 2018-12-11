@@ -1023,6 +1023,7 @@ namespace kOS.Safe.Compilation
         }
         public override void Execute(IExec exec)
         {
+            exec.Stack.ClearArgs();
             exec.Thread.Return();
         }
     }

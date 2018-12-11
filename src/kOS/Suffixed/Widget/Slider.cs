@@ -69,6 +69,7 @@ namespace kOS.Suffixed.Widget
             if (UserOnChange != null)
             {
                 if (guiCaused)
+                    //GetProcessManager().ScheduleTriggerOnFutureUpdate()
                     UserOnChange.TriggerOnFutureUpdate(InterruptPriority.CallbackOnce, new ScalarDoubleValue((double)val));
                 else
                     UserOnChange.TriggerOnNextOpcode(InterruptPriority.NoChange, new ScalarDoubleValue((double)val));
