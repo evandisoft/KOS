@@ -1138,11 +1138,7 @@ namespace kOS.Safe.Compilation
         protected override string Name { get { return "br.true"; } }
         public override ByteCode Code { get { return ByteCode.BRANCHTRUE; } }
 
-        public override void Execute(ICpu cpu)
-        {
-            bool condition = Convert.ToBoolean(cpu.PopValueArgument());
-            DeltaInstructionPointer = condition ? Distance : 1;
-        }
+
         public override void Execute(IExec exec)
         {
             bool condition = Convert.ToBoolean(exec.PopValue());

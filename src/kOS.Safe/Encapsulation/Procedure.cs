@@ -52,12 +52,20 @@ namespace kOS.Safe.Encapsulation
 
 
         private void InitializeSuffixes() {
-            AddSuffix("CALL", new VarArgsSuffix<Procedure, Structure>(BindAllAndCall));
+            AddSuffix("CALL", new VarArgsSuffix<Procedure, Structure>(BindAllAndMarkForCall));
             AddSuffix("BIND", new VarArgsSuffix<Procedure, Structure>(Bind));
             AddSuffix("ISDEAD", new NoArgsSuffix<BooleanValue>(() => false));
         }
 
-        public Procedure BindAllAndCall(params Structure[] args) {
+        /// <summary>
+        /// Returns a version of this Procedure with all args bound, and sets
+        /// "mustCall" in order to flag that this Procedure is not supposed
+        /// to be treated as a mere return value, but is to be called immediately.
+        /// This is for the "CALL" suffix of Procedure, which must not merely bind
+        /// arguments but must also cause a "CALL" of this procedure.
+        /// </summary>
+        /// <param name="args">Arguments.</param>
+        public Procedure BindAllAndMarkForCall(params Structure[] args) {
             var newProcedure = Bind(args);
             newProcedure.mustCall = true;
             return newProcedure;
@@ -72,6 +80,11 @@ namespace kOS.Safe.Encapsulation
             return newProcedure;
         }
 
+        /// <summary>
+        /// Bind the specified args. Returns a new Procedure with some args bound.
+        /// </summary>
+        /// <returns>New Procedure with args bound.</returns>
+        /// <param name="args">Arguments.</param>
         public Procedure Bind(params Structure[] args) {
             var newProcedure = Clone();
             foreach(var arg in args) {
@@ -79,6 +92,7 @@ namespace kOS.Safe.Encapsulation
             }
             return newProcedure;
         }
+
 
         public ProcedureCall Call(KOSThread thread){
             for(int i = preBoundArgs.Count - 1;i >= 0;i--) {

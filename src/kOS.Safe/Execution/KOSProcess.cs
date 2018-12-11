@@ -56,7 +56,7 @@ namespace kOS.Safe
         protected internal ProcessManager ProcessManager { get; }
         /// <summary>
         /// Stores a set of threads. Threads in this set will be added into
-        /// the threadStack when it is done running.
+        /// the threadStack when it is empty.
         /// </summary>
         protected readonly HashSet<KOSThread> threadSet = new HashSet<KOSThread>();
         /// <summary>
@@ -88,6 +88,22 @@ namespace kOS.Safe
 
         KOSThread newInterrupt;
 
+        /// <summary>
+        /// Stores a thread to be ran as an interrupt in "newInterrupt".
+        /// Then it finds the currently running thread and marks it's Status as
+        /// "INTERRUPTED".
+        /// This will lead to the thread returning with an INTERRUPTED status
+        /// which allows ExecuteThreads to place the newInterrupt on the current
+        /// stack it is processing, to be processed next.
+        /// Examples of these types of interrupts are the GUI callbacks, such
+        /// as onlick. When onclick is triggered in the code, via takepress,
+        /// the onlick function is to be executed on the next opcode.
+        /// This interrupt functionality implements this feature.
+        /// This function is not used for normal button presses, as those lead
+        /// to the registered onclick Procedure being added into a thread and
+        /// placed into the trigger set.
+        /// </summary>
+        /// <param name="interrupt">Interrupt.</param>
         public void Interrupt(KOSThread interrupt) {
             Deb.EnqueueExec("Calling "+nameof(KOSProcess)+"."+nameof(Interrupt));
             if (newInterrupt != null) {
@@ -199,7 +215,7 @@ namespace kOS.Safe
                     currentThread.Status = ThreadStatus.OK;
                     stack.Push(newInterrupt);
                     newInterrupt = null;
-                    return;
+                    break;
                 case ThreadStatus.FINISHED:
                     RemoveThread(currentThread);
                     if (currentThread is SystemTrigger){

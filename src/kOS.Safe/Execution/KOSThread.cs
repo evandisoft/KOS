@@ -61,7 +61,7 @@ namespace kOS.Safe {
         /// This counter keeps track of the total limit on
         /// instructions per update.
         /// </summary>
-        internal InstructionCounter GlobalInstructionCounter;
+        internal GlobalInstructionCounter GlobalInstructionCounter;
         Stopwatch waitWatch = new Stopwatch();
         long timeToWaitInMilliseconds;
 
@@ -108,7 +108,6 @@ namespace kOS.Safe {
         void ExecuteLoop() {
             while (true) {
                 if (!GlobalInstructionCounter.Continue()) {
-                    GlobalInstructionCounter.Reset();
                     Status = ThreadStatus.GLOBAL_INSTRUCTION_LIMIT;
                     return;
                 }

@@ -9,10 +9,10 @@ using System.Linq;
 
 namespace kOS.Safe.Execution
 {
-    public class InstructionCounter {
+    public class GlobalInstructionCounter {
         public int executionCounter;
         public int instructionsPerUpdate;
-        public InstructionCounter(){
+        public GlobalInstructionCounter(){
             Reset();
         }
 
@@ -46,7 +46,7 @@ namespace kOS.Safe.Execution
         readonly Dictionary<string, Procedure> compiledPrograms = new Dictionary<string, Procedure>();
         public readonly Dictionary<GlobalPath, bool> ranPrograms = new Dictionary<GlobalPath, bool>();
         readonly Stack<KOSProcess> processes = new Stack<KOSProcess>();
-        internal InstructionCounter GlobalInstructionCounter = new InstructionCounter();
+        internal GlobalInstructionCounter GlobalInstructionCounter = new GlobalInstructionCounter();
         internal KOSProcess CurrentProcess => processes.Peek();
         internal KOSProcess InterpreterProcess;
 
@@ -69,6 +69,8 @@ namespace kOS.Safe.Execution
         public bool debugging = false;
         override internal void ContinueExecution(bool doProfiling)
         {
+            GlobalInstructionCounter.Reset();
+
             Deb.EnqueueExec("ContinueExecution", "Processes", processes.Count);
 
             EnableOrDisableDebugging();
@@ -90,6 +92,7 @@ namespace kOS.Safe.Execution
                 break;
             }
 
+
             Deb.EnqueueExec("Process has status", CurrentProcess.Status);
         }
 
@@ -98,13 +101,17 @@ namespace kOS.Safe.Execution
                 CurrentProcess.PrepareForDisposal();
                 Deb.EnqueueExec("Removing process", CurrentProcess.ID);
                 processes.Pop();
+                RestorePointers();
+                shared.ScriptHandler.ResetProgramDict();
                 CurrentProcess.FlyByWire.EnableActiveFlyByWire();
-                if (InterpreterIsCurrent()) {
-                    shared.ScriptHandler.ResetProgramDict();
-                }
             } 
         }
 
+        /// <summary>
+        /// Adds the given procedure into the current process' triggerSet.
+        /// </summary>
+        /// <returns>The to current triggers.</returns>
+        /// <param name="procedure">Procedure.</param>
         public ReturnCell AddToCurrentTriggers(Procedure procedure) {
             ReturnCell cell = new ReturnCell();
             var interruptThread = new KOSThread(CurrentProcess, cell);
@@ -114,6 +121,12 @@ namespace kOS.Safe.Execution
             return cell;
         }
 
+        /// <summary>
+        /// Sets the given procedure up to be ran on the next opcode, interrupting
+        /// the currently executing thread in the current process.
+        /// </summary>
+        /// <returns>The current thread.</returns>
+        /// <param name="procedure">Procedure.</param>
         public ReturnCell InterruptCurrentThread(Procedure procedure) {
             ReturnCell cell = new ReturnCell();
             var interruptThread = new KOSThread(CurrentProcess,cell);
@@ -153,16 +166,13 @@ namespace kOS.Safe.Execution
             thread.CallWithArgs(Program, args);
         }
 
+        /// <summary>
+        /// Evandisoft. This is not necessary anymore with the new version, but 
+        /// users might depend on it.
+        /// This saves all global function variables ($function_name*) in a dictionary
+        /// to be restored next time the interpreter process is running.
+        /// </summary>
         private void SaveAndClearPointers() {
-            // Any global variable that ends in an asterisk (*) is a system pointer
-            // that shouldn't be inherited by other program contexts.  These sorts of
-            // variables should only exist for the current program context.
-            // This method stashes all such variables in a storage area for the program
-            // context, then clears them.  The stash can be used later by RestorePointers()
-            // to bring them back into existence when coming back to this program context again.
-            // Pointer variables include:
-            //   IP jump location for subprograms.
-            //   IP jump location for functions.
             savedPointers = new VariableScope(0, null);
             var pointers = new List<KeyValuePair<string, Variable>>(globalVariables.Locals.Where(entry => StringUtil.EndsWith(entry.Key, "*")));
 
@@ -171,6 +181,31 @@ namespace kOS.Safe.Execution
                 globalVariables.Remove(entry.Key);
             }
             SafeHouse.Logger.Log(string.Format("Saving and removing {0} pointers", pointers.Count));
+        }
+
+        /// <summary>
+        /// Evandisoft: This is not necessary anymore in the new version, 
+        /// but users might depend on it.
+        /// This restores previously saved global function variables ($function_name*)
+        /// on return to the interpreter process.
+        /// </summary>
+        private void RestorePointers() {
+
+
+            var restoredPointers = 0;
+            var deletedPointers = 0;
+
+            foreach (KeyValuePair<string, Variable> item in savedPointers.Locals) {
+
+                if (globalVariables.Contains(item.Key)) {
+                    globalVariables.Remove(item.Key);
+                    deletedPointers++;
+                }
+                globalVariables.Add(item.Key, item.Value);
+                restoredPointers++;
+            }
+
+            SafeHouse.Logger.Log(string.Format("Deleting {0} pointers and restoring {1} pointers", deletedPointers, restoredPointers));
         }
 
         public bool InterpreterIsCurrent() {
