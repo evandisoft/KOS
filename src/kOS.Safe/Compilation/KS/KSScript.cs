@@ -23,6 +23,10 @@ namespace kOS.Safe.Compilation.KS
             compiledPrograms = new Dictionary<GlobalPath, Procedure>();
         }
 
+        public override void ResetProgramDict() {
+            compiledPrograms.Clear();
+        }
+
         public override Procedure Compile(GlobalPath filePath, int startLineNum, string scriptText, string contextId, CompilerOptions options)
         {
             Procedure procedure;

@@ -252,6 +252,8 @@ namespace kOS.Safe.Execution
                                                    SafeHouse.Version, SafeHouse.DocumentationURL);
                 shared.Screen.Print(bootMessage);
             }
+            shared.ScriptHandler.ResetProgramDict();
+            
             if (!shared.Processor.CheckCanBoot()) return;
             VolumePath path = shared.Processor.BootFilePath;
             // Check to make sure the boot file name is valid, and then that the boot file exists.

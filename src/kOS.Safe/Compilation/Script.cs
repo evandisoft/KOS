@@ -13,6 +13,7 @@ namespace kOS.Safe.Compilation
             Cache = CompileCache.GetInstance();
         }
 
+        public abstract void ResetProgramDict();
         ///// <summary>
         ///// Compile source text into compiled codeparts.
         ///// </summary>

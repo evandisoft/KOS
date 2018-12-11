@@ -1,8 +1,9 @@
 ﻿using System;
+using kOS.Safe.Execution;
 using kOS.Safe.Compilation;
 using System.Collections.Generic;
 using kOS.Safe.Encapsulation.Suffixes;
-using kOS.Safe.Execution;
+
 using kOS.Safe.Utilities;
 using System.Collections.ObjectModel;
 using kOS.Safe.DataStructures;
@@ -33,11 +34,12 @@ namespace kOS.Safe.Encapsulation
         /// that you should not modify the underlying list at this point.
         /// </summary>
         internal IReadOnlyOpcodeList Opcodes { get;}
-        internal List<Mapping> Closure { get; } = new List<Mapping>();
+        internal List<Mapping> Closure { get; private set; } = new List<Mapping>();
         internal List<Structure> preBoundArgs = new List<Structure>();
 
         public Procedure(IReadOnlyOpcodeList opcodes,VariableStore closure=null)
         {
+            InitializeSuffixes();
             Opcodes = opcodes;
             if(closure!=null){
                 foreach(var level in closure.scopeStack){
@@ -47,38 +49,35 @@ namespace kOS.Safe.Encapsulation
             Deb.EnqueueExec("closure in Procedure constructor is", closure);
         }
 
-        private Procedure(IReadOnlyOpcodeList opcodes, List<Mapping> closure) {
-            Opcodes = opcodes;
-            if (closure != null) {
-                foreach (var level in closure) {
-                    Closure.Add(level);
-                }
-            }
-            Deb.EnqueueExec("closure in Procedure constructor is", closure);
-        }
 
         private void InitializeSuffixes() {
             //AddSuffix("CALL", new VarArgsSuffix<Structure, Structure>(CallPassingArgs));
-            AddSuffix("BIND", new VarArgsSuffix<Procedure, Procedure>(Bind));
+            AddSuffix("BIND", new VarArgsSuffix<Procedure, Structure>(Bind));
             AddSuffix("ISDEAD", new NoArgsSuffix<BooleanValue>(() => false));
         }
 
         public Procedure Clone() {
-            return new Procedure(Opcodes, Closure);
+            var newProcedure=new Procedure(Opcodes);
+            newProcedure.Closure = Closure;
+            foreach(var arg in preBoundArgs) {
+                newProcedure.preBoundArgs.Add(arg);
+            }
+            return newProcedure;
         }
 
-        public Procedure Bind(params object[] args) {
+        public Procedure Bind(params Structure[] args) {
             var newProcedure = Clone();
             foreach(var arg in args) {
-                preBoundArgs.Add(FromPrimitiveWithAssert(arg));
+                newProcedure.preBoundArgs.Add(FromPrimitiveWithAssert(arg));
             }
             return newProcedure;
         }
 
         public ProcedureCall Call(KOSThread thread){
-            foreach(var arg in preBoundArgs) {
-                thread.Stack.Push(arg);
+            for(int i = preBoundArgs.Count - 1;i >= 0;i--) {
+                thread.Stack.Push(preBoundArgs[i]);
             }
+
             return new ProcedureCall(thread,this);
         }
 
