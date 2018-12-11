@@ -36,6 +36,7 @@ namespace kOS.Safe.Encapsulation
         internal IReadOnlyOpcodeList Opcodes { get;}
         internal List<Mapping> Closure { get; private set; } = new List<Mapping>();
         internal List<Structure> preBoundArgs = new List<Structure>();
+        public bool mustCall;
 
         public Procedure(IReadOnlyOpcodeList opcodes,VariableStore closure=null)
         {
@@ -51,9 +52,15 @@ namespace kOS.Safe.Encapsulation
 
 
         private void InitializeSuffixes() {
-            //AddSuffix("CALL", new VarArgsSuffix<Structure, Structure>(CallPassingArgs));
+            AddSuffix("CALL", new VarArgsSuffix<Procedure, Structure>(BindAllAndCall));
             AddSuffix("BIND", new VarArgsSuffix<Procedure, Structure>(Bind));
             AddSuffix("ISDEAD", new NoArgsSuffix<BooleanValue>(() => false));
+        }
+
+        public Procedure BindAllAndCall(params Structure[] args) {
+            var newProcedure = Bind(args);
+            newProcedure.mustCall = true;
+            return newProcedure;
         }
 
         public Procedure Clone() {

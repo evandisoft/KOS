@@ -51,5 +51,12 @@ namespace kOS.Safe.Execution {
             }
         }
 
+        public void AssertArgBottomAndConsume() {
+            object shouldBeBottom = Pop();
+            if (shouldBeBottom != null && shouldBeBottom.GetType() == OpcodeCall.ArgMarkerType)
+                return; // Assert passed.
+
+            throw new Exception("No Arg Marker found.");
+        }
     }
 }

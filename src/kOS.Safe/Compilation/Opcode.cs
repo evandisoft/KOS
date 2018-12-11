@@ -1744,6 +1744,38 @@ namespace kOS.Safe.Compilation
             Destination = fields[1];
         }
 
+        static void CallProcedure(IExec exec, Procedure procedure) {
+            CpuUtility.ReverseStackArgs(exec, true);
+            Deb.EnqueueExec("Calling procedure", procedure);
+            exec.Thread.Call(procedure);
+        }
+
+        static void CallISuffix(IExec exec, ISuffixResult suffix) {
+            Deb.EnqueueExec("Invoking suffixresult", suffix);
+            // If there is a value already, there should be no args.
+            // Pop off arg marker, then pop off this suffix.
+            // then push it's value.
+            if (suffix.HasValue) {
+                exec.Stack.ClearArgs();
+                exec.Stack.Pop();
+                exec.Stack.Push(suffix.Value);
+            } else {
+                // If there is no value, execute the suffix
+                // to get the value.
+                suffix.Invoke(exec);
+                // proc.mustCall is a flag set only for if this return value
+                // is the result of a :call suffix on a procedure. In this case
+                // the procedure should have had all its arguments bound
+                // So we call it with no arguments.
+                if (suffix.Value is Procedure proc && proc.mustCall) {
+                    exec.Stack.Push(new KOSArgMarkerType());
+                    CallProcedure(exec, proc);
+                    return;
+                }
+                exec.Stack.Push(suffix.Value);
+            }
+        }
+
         public override void Execute(IExec exec)
         {
             Deb.EnqueueExec("calling ", Destination);
@@ -1762,12 +1794,13 @@ namespace kOS.Safe.Compilation
                     Procedure procedure = exec.Store.GetValue(dest) as Procedure;
                     if (procedure==null)
                         throw new Exception("The stored value was not a procedure! It was a "+dest.GetType());
-                    CpuUtility.ReverseStackArgs(exec, true);
-                    Deb.EnqueueExec("Calling procedure", procedure);
-                    exec.Thread.Call(procedure);
+                    CallProcedure(exec, procedure);
                 }
             }
             else{
+                // We look through the stack for something to call. If we find a procedure or an ISuffixResult
+                // after the first argmarker then we deal with it properly. If we do not find either of those
+                // we just clear argmarker off the stack. (This last bit makes implicit array access work)
                 bool foundArgMarker = false;
                 foreach(var stackItem in exec.Stack){
                     Deb.EnqueueExec("looking through arguments in stack for object to call");
@@ -1775,30 +1808,16 @@ namespace kOS.Safe.Compilation
                     Deb.EnqueueExec("Current stackItem is", stackItem,"type is",stackItem.GetType());
                     if (foundArgMarker) {
                         if (stackItem is Procedure procedure) {
-                            CpuUtility.ReverseStackArgs(exec, false);
-                            Deb.EnqueueExec("Calling procedure", procedure);
-                            exec.Thread.Call(procedure);
+                            CallProcedure(exec, procedure);
                             return;
                         }
                         if (stackItem is ISuffixResult suffix) {
-                            Deb.EnqueueExec("Invoking suffixresult", suffix);
-                            // If there is a value already, there should be no args.
-                            // Pop off arg marker, then pop off this suffix.
-                            // then push it's value.
-                            if (suffix.HasValue) {
-                                exec.Stack.ClearArgs();
-                                exec.Stack.Pop();
-                                exec.Stack.Push(suffix.Value);
-                            } else {
-                                // If there is no value, execute the suffix
-                                // to get the value.
-                                suffix.Invoke(exec);
-                                exec.Stack.Push(suffix.Value);
-                            }
+                            CallISuffix(exec, suffix);
                             return;
                         }
-                        Deb.EnqueueExec("Assuming this value on the stack is an array");
-                        exec.Stack.ClearArgs();
+                        // This part is for implicit array access
+                        Deb.EnqueueExec("Assuming this value on the stack is an indexible type");
+                        exec.Stack.AssertArgBottomAndConsume();
                         return;
                     }
                     if(stackItem is KOSArgMarkerType) {
