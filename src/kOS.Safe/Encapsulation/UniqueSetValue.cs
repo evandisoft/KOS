@@ -5,6 +5,7 @@ using kOS.Safe.Encapsulation.Suffixes;
 using kOS.Safe.Exceptions;
 using kOS.Safe.Serialization;
 using kOS.Safe.Function;
+using kOS.Safe.Execution;
 
 namespace kOS.Safe.Encapsulation
 {
@@ -68,12 +69,12 @@ namespace kOS.Safe.Encapsulation
         [Function("uniqueset")]
         public class FunctionSet : SafeFunctionBase
         {
-            public override void Execute(SafeSharedObjects shared)
+            public override void Execute(SafeSharedObjects shared,IExec exec)
             {
-                Structure[] argArray = new Structure[CountRemainingArgs(shared)];
+                Structure[] argArray = new Structure[CountRemainingArgs(exec)];
                 for (int i = argArray.Length - 1; i >= 0; --i)
-                    argArray[i] = PopStructureAssertEncapsulated(shared); // fill array in reverse order because .. stack args.
-                AssertArgBottomAndConsume(shared);
+                    argArray[i] = PopStructureAssertEncapsulated(exec); // fill array in reverse order because .. stack args.
+                AssertArgBottomAndConsume(exec);
                 var setValue = new UniqueSetValue(argArray.ToList());
                 ReturnValue = setValue;
             }

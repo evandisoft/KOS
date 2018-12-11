@@ -3174,12 +3174,7 @@ namespace kOS.Safe.Compilation.KS
             var opcode = new OpcodeCall("run"){isBuiltin=true};
             AddOpcode(opcode);
             
-            // Note: it is not an error that there are two Pop's here:  There are two levels of return value - one from the program run
-            // and one from the function call run():
-            // evandisoft TODO: Breaking Change! z
-            //AddOpcode(new OpcodePop()); // ditch the program exit's dummy return value for now - maybe we can use it in a later version.
             AddOpcode(new OpcodePop()); // ditch the run()'s dummy return value for now - maybe we can use it in a later version.
-
         }
 
         private void VisitCompileStatement(ParseNode node)
@@ -3209,7 +3204,7 @@ namespace kOS.Safe.Compilation.KS
             NodeStartHousekeeping(node);
             AddOpcode(new OpcodePush(new KOSArgMarkerType()));
             VisitNode(node.Nodes[2]);
-            AddOpcode(new OpcodeCall("switch()"));
+            AddOpcode(new OpcodeCall("switch") { isBuiltin = true });
             AddOpcode(new OpcodePop()); // all functions now return a value even if it's a dummy we ignore.
         }
 

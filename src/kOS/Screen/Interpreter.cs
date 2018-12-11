@@ -152,10 +152,10 @@ namespace kOS.Screen
                     commandHistoryIndex, commandText, InterpreterName, options);
 
 				ProcessManager processManager = Shared.Cpu as ProcessManager;
-				if (processManager!=null){
-					processManager.RunInInterpreter(program,new List<object>());
+				if (processManager==null){
+                    throw new Exception(nameof(Shared.Cpu)+" must be of type "+nameof(ProcessManager));
                 }
-                throw new Exception(nameof(Shared.Cpu)+" must be of type "+nameof(ProcessManager));
+                processManager.RunInInterpreter(program, new List<object>());
             }
             catch (Exception e)
             {

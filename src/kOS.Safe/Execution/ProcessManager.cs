@@ -7,7 +7,7 @@ using kOS.Safe.Utilities;
 using kOS.Safe.Persistence;
 using System.Linq;
 
-namespace kOS.Safe
+namespace kOS.Safe.Execution
 {
     public class InstructionCounter {
         public int executionCounter;

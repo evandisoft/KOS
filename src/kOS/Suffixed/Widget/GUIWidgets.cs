@@ -25,6 +25,12 @@ namespace kOS.Suffixed.Widget
         private GUIWindow window;
         public WidgetSkin Skin { get; private set; }
 
+        // A reference to processManager is needed in order for callbacks
+        // like onclick to be ran.
+        // Widget's GetProcessManager function finds the root
+        // GUIWidgets and returns this reference.
+        internal ProcessManager processManager;
+
         /// <summary>
         /// All instances of this widget which have ever been constructed.
         /// Weak references used so this won't prevent them from being GC'ed.
@@ -114,6 +120,11 @@ namespace kOS.Suffixed.Widget
             window = go.AddComponent<GUIWindow>();
             window.AttachTo(width,height,"",shared,this);
             InitializeSuffixes();
+
+            processManager = shared.Cpu as ProcessManager;
+            if (processManager==null) {
+                throw new Exception(nameof(shared.Cpu)+" must be of type "+nameof(ProcessManager));
+            }
         }
 
         // Remove me from the list of instances, if I'm in them:

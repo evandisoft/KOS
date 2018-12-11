@@ -23,6 +23,24 @@ namespace kOS.Suffixed.Widget
         protected Box parent;
 
         /// <summary>
+        /// Returns the ProcessManager needed to run or schedule callbacks.
+        /// Finds the root "GUIWidgets", and returns its ProcessManager
+        /// reference.
+        /// </summary>
+        /// <returns>The process manager.</returns>
+        protected ProcessManager GetProcessManager()
+        {
+            var currentWidget = this;
+            while (currentWidget.parent!=null) {
+                currentWidget=currentWidget.parent;
+            }
+            if(currentWidget is GUIWidgets gUIWidgets) {
+                return gUIWidgets.processManager;
+            }
+            throw new Exception("This widget has no GUIWidgets ancestor");
+        }
+
+        /// <summary>
         /// Temporarily set to "true" to tell the widget that any state changes
         /// are happening because of a gui activity (rather than because of a script
         /// deliberately changing a value for example).

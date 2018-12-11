@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using kOS.Safe.Persistence;
 using kOS.Safe.Encapsulation;
 using System;
+using kOS.Safe.Execution;
 
 namespace kOS.Safe.Compilation.KS
 {
@@ -26,9 +27,12 @@ namespace kOS.Safe.Compilation.KS
         {
             Procedure procedure;
 
-            if (compiledPrograms.TryGetValue(filePath,out procedure)) {
-                return procedure;
+            if(!(filePath is InternalPath)) {
+                if (compiledPrograms.TryGetValue(filePath, out procedure)) {
+                    return procedure;
+                }
             }
+
             Deb.RawLog("Compiling new program "+filePath);
 
             var parts = new List<CodePart>();
@@ -62,7 +66,10 @@ namespace kOS.Safe.Compilation.KS
                 AssignSourceId(parts, filePath);
                 try {
                     procedure = ProgramBuilder2.BuildProgram(parts);
-                    compiledPrograms[filePath] = procedure;
+                    if(!(filePath is InternalPath)) {
+                        compiledPrograms[filePath] = procedure;
+                    }
+
                 }
                 catch(Exception e) {
                     Deb.EnqueueCompile(e);

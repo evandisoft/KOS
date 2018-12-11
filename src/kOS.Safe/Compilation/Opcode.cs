@@ -973,20 +973,17 @@ namespace kOS.Safe.Compilation
         protected override string Name { get { return "setindex"; } }
         public override ByteCode Code { get { return ByteCode.SETINDEX; } }
 
-        public override void Execute(ICpu cpu)
-        {
-            Structure value = cpu.PopStructureEncapsulatedArgument();
-            Structure index = cpu.PopStructureEncapsulatedArgument();
-            Structure list = cpu.PopStructureEncapsulatedArgument();
+        public override void Execute(IExec exec) {
+            Structure value = PopStructureAssertEncapsulated(exec);
+            Structure index = PopStructureAssertEncapsulated(exec);
+            Structure list = PopStructureAssertEncapsulated(exec);
 
-            if (index == null || value == null)
-            {
+            if (index == null || value == null) {
                 throw new KOSException("Neither the key nor the index of a collection may be null");
             }
 
             var indexable = list as IIndexable;
-            if (indexable == null)
-            {
+            if (indexable == null) {
                 throw new KOSException(string.Format("Can't set indexed elements on an object of type {0}", list.GetType()));
             }
             indexable.SetIndex(index, value);
@@ -1387,6 +1384,28 @@ namespace kOS.Safe.Compilation
                 throw new KOSUnaryOperandTypeException("negate", value);
 
         }
+        public override void Execute(IExec exec) {
+            Structure value = PopStructureAssertEncapsulated(exec);
+
+            var scalarValue = value as ScalarValue;
+
+            if (scalarValue != null && scalarValue.IsValid) {
+                exec.Stack.Push(-scalarValue);
+                return;
+            }
+
+            // Generic last-ditch to catch any sort of object that has
+            // overloaded the unary negate operator '-'.
+            // (For example, kOS.Suffixed.Vector and kOS.Suffixed.Direction)
+            Type t = value.GetType();
+            MethodInfo negateMe = t.GetMethod("op_UnaryNegation", BindingFlags.FlattenHierarchy | BindingFlags.Static | BindingFlags.Public);
+            if (negateMe != null) {
+                object result = negateMe.Invoke(null, new[] { value });
+                exec.Stack.Push(result);
+            } else
+                throw new KOSUnaryOperandTypeException("negate", value);
+
+        }
     }
 
     /// <summary>
@@ -1777,7 +1796,9 @@ namespace kOS.Safe.Compilation
                             }
                             return;
                         }
-                        throw new Exception("Did not find callable object during Indirect call.");
+                        Deb.EnqueueExec("Assuming this value on the stack is an array");
+                        exec.Stack.ClearArgs();
+                        return;
                     }
                     if(stackItem is KOSArgMarkerType) {
                         foundArgMarker=true;
