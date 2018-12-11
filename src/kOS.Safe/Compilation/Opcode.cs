@@ -1756,7 +1756,7 @@ namespace kOS.Safe.Compilation
             // Pop off arg marker, then pop off this suffix.
             // then push it's value.
             if (suffix.HasValue) {
-                exec.Stack.ClearArgs();
+                exec.Stack.AssertArgBottomAndConsume();
                 exec.Stack.Pop();
                 exec.Stack.Push(suffix.Value);
             } else {
@@ -1766,7 +1766,7 @@ namespace kOS.Safe.Compilation
                 // proc.mustCall is a flag set only for if this return value
                 // is the result of a :call suffix on a procedure. In this case
                 // the procedure should have had all its arguments bound
-                // So we call it with no arguments.
+                // so we call it with no arguments.
                 if (suffix.Value is Procedure proc && proc.mustCall) {
                     exec.Stack.Push(new KOSArgMarkerType());
                     CallProcedure(exec, proc);
@@ -1800,8 +1800,9 @@ namespace kOS.Safe.Compilation
             else{
                 // We look through the stack for something to call. If we find a procedure or an ISuffixResult
                 // after the first argmarker then we deal with it properly. If we do not find either of those
-                // we just clear argmarker off the stack. (This last bit makes implicit array access work)
+                // we just clear the argmarker off the stack. (This last bit makes implicit array access work)
                 bool foundArgMarker = false;
+
                 foreach(var stackItem in exec.Stack){
                     Deb.EnqueueExec("looking through arguments in stack for object to call");
                     Deb.EnqueueExec("Stack is ",exec.Stack);
