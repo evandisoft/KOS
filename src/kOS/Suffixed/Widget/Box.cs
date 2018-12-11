@@ -78,9 +78,9 @@ namespace kOS.Suffixed.Widget
             if (UserOnRadioChange != null)
             {
                 if (guiCaused)
-                    GetProcessManager().AddToCurrentTriggers(UserOnRadioChange);
+                    GetProcessManager().AddToCurrentTriggers(UserOnRadioChange.Bind(b));
                 else
-                    GetProcessManager().InterruptCurrentThread(UserOnRadioChange);
+                    GetProcessManager().InterruptCurrentThread(UserOnRadioChange.Bind(b));
             }
         }
 

@@ -83,9 +83,9 @@ namespace kOS.Suffixed.Widget
             if (UserOnConfirm != null)
             {
                 if (guiCaused)
-                    GetProcessManager().AddToCurrentTriggers(UserOnConfirm);
+                    GetProcessManager().AddToCurrentTriggers(UserOnConfirm.Bind(new StringValue(Text)));
                 else
-                    GetProcessManager().InterruptCurrentThread(UserOnConfirm);
+                    GetProcessManager().InterruptCurrentThread(UserOnConfirm.Bind(new StringValue(Text)));
                 Confirmed = false;
             }
         }
@@ -95,9 +95,9 @@ namespace kOS.Suffixed.Widget
             if (UserOnChange != null)
             {
                 if (guiCaused)
-                    GetProcessManager().AddToCurrentTriggers(UserOnChange);
+                    GetProcessManager().AddToCurrentTriggers(UserOnChange.Bind(new StringValue(Text)));
                 else
-                    GetProcessManager().InterruptCurrentThread(UserOnChange);
+                    GetProcessManager().InterruptCurrentThread(UserOnChange.Bind(new StringValue(Text)));
                 Changed = false;
             }
         }

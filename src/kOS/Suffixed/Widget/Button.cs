@@ -82,9 +82,9 @@ namespace kOS.Suffixed.Widget
             if (UserOnToggle != null)
             {
                 if (guiCaused)
-                    GetProcessManager().AddToCurrentTriggers(UserOnToggle);
+                    GetProcessManager().AddToCurrentTriggers(UserOnToggle.Bind(new BooleanValue(pressed)));
                 else
-                    GetProcessManager().InterruptCurrentThread(UserOnToggle);
+                    GetProcessManager().InterruptCurrentThread(UserOnToggle.Bind(new BooleanValue(pressed)));
             }
 
             if (parent != null && parent.UserOnRadioChange != null)

@@ -75,7 +75,7 @@ namespace kOS.Safe.Encapsulation
         public Procedure Bind(params Structure[] args) {
             var newProcedure = Clone();
             foreach(var arg in args) {
-                newProcedure.preBoundArgs.Add(FromPrimitiveWithAssert(arg));
+                newProcedure.preBoundArgs.Add(arg);
             }
             return newProcedure;
         }

@@ -69,9 +69,9 @@ namespace kOS.Suffixed.Widget
             if (UserOnChange != null)
             {
                 if (guiCaused)
-                    GetProcessManager().AddToCurrentTriggers(UserOnChange);
+                    GetProcessManager().AddToCurrentTriggers(UserOnChange.Bind(new ScalarDoubleValue((double)val)));
                 else
-                    GetProcessManager().InterruptCurrentThread(UserOnChange);
+                    GetProcessManager().InterruptCurrentThread(UserOnChange.Bind(new ScalarDoubleValue((double)val)));
             }
         }
 
