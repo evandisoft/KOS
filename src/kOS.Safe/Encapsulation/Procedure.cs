@@ -34,6 +34,7 @@ namespace kOS.Safe.Encapsulation
         /// </summary>
         internal IReadOnlyOpcodeList Opcodes { get;}
         internal List<Mapping> Closure { get; } = new List<Mapping>();
+        internal List<Structure> preBoundArgs = new List<Structure>();
 
         public Procedure(IReadOnlyOpcodeList opcodes,VariableStore closure=null)
         {
@@ -46,29 +47,41 @@ namespace kOS.Safe.Encapsulation
             Deb.EnqueueExec("closure in Procedure constructor is", closure);
         }
 
+        private Procedure(IReadOnlyOpcodeList opcodes, List<Mapping> closure) {
+            Opcodes = opcodes;
+            if (closure != null) {
+                foreach (var level in closure) {
+                    Closure.Add(level);
+                }
+            }
+            Deb.EnqueueExec("closure in Procedure constructor is", closure);
+        }
+
         private void InitializeSuffixes() {
-            AddSuffix("CALL", new VarArgsSuffix<Structure, Structure>(CallPassingArgs));
-            AddSuffix("BIND", new VarArgsSuffix<Procedure, Structure>(Bind));
-            AddSuffix("ISDEAD", new NoArgsSuffix<BooleanValue>(() => (BooleanValue)IsDead()));
+            //AddSuffix("CALL", new VarArgsSuffix<Structure, Structure>(CallPassingArgs));
+            AddSuffix("BIND", new VarArgsSuffix<Procedure, Procedure>(Bind));
+            AddSuffix("ISDEAD", new NoArgsSuffix<BooleanValue>(() => false));
+        }
+
+        public Procedure Clone() {
+            return new Procedure(Opcodes, Closure);
+        }
+
+        public Procedure Bind(params object[] args) {
+            var newProcedure = Clone();
+            foreach(var arg in args) {
+                preBoundArgs.Add(FromPrimitiveWithAssert(arg));
+            }
+            return newProcedure;
         }
 
         public ProcedureCall Call(KOSThread thread){
+            foreach(var arg in preBoundArgs) {
+                thread.Stack.Push(arg);
+            }
             return new ProcedureCall(thread,this);
         }
 
-        public Structure CallPassingArgs(params Structure[] args) {
-            if (Cpu == null)
-                throw new KOSCannotCallException();
-            PushUnderArgs();
-            Cpu.PushArgumentStack(new KOSArgMarkerType());
-            foreach (Structure arg in PreBoundArgs) {
-                Cpu.PushArgumentStack(arg);
-            }
-            foreach (Structure arg in args) {
-                Cpu.PushArgumentStack(arg);
-            }
-            return CallWithArgsPushedAlready();
-        }
 
         static public Procedure Empty => new Procedure(new OpcodeList());
     }
