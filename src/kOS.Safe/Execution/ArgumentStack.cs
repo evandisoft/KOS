@@ -43,11 +43,15 @@ namespace kOS.Safe.Execution {
         }
 
         public void ClearArgs() {
+            int numOfPops = 0;
             foreach(var arg in this) {
-                Pop();
+                numOfPops++;
                 if(arg is KOSArgMarkerType) {
-                    return;
+                    break;
                 }
+            }
+            for(int i = 0;i < numOfPops;i++) {
+                Pop();
             }
         }
 

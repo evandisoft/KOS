@@ -58,11 +58,13 @@ namespace kOS.Safe.Execution
             Deb.RawLog("Initializing ProcessManager");
             foreach (var process in processes) {
                 process.PrepareForDisposal();
+
             }
             processes.Clear();
             var newProcess = new InterpreterProcess(this);
             processes.Push(newProcess);
             InterpreterProcess = newProcess;
+            RemoveProgramSettings();
         }
 
 
@@ -96,13 +98,20 @@ namespace kOS.Safe.Execution
             Deb.EnqueueExec("Process has status", CurrentProcess.Status);
         }
 
+        void RemoveProgramSettings() {
+            if (!InterpreterIsCurrent()) {
+                shared.ScriptHandler.ResetProgramDict();
+                RestorePointers();
+                ranPrograms.Clear();
+            }
+        }
+
         void PopIfCurrentProcessNotInterpreter() {
             if (!InterpreterIsCurrent()) {
                 CurrentProcess.PrepareForDisposal();
                 Deb.EnqueueExec("Removing process", CurrentProcess.ID);
                 processes.Pop();
-                RestorePointers();
-                shared.ScriptHandler.ResetProgramDict();
+                RemoveProgramSettings();
                 CurrentProcess.FlyByWire.EnableActiveFlyByWire();
             } 
         }
@@ -110,7 +119,7 @@ namespace kOS.Safe.Execution
         /// <summary>
         /// Adds the given procedure into the current process' triggerSet.
         /// </summary>
-        /// <returns>The to current triggers.</returns>
+        /// <returns>A "cell" that may receive a return value.</returns>
         /// <param name="procedure">Procedure.</param>
         public ReturnCell AddToCurrentTriggers(Procedure procedure) {
             ReturnCell cell = new ReturnCell();
@@ -125,7 +134,7 @@ namespace kOS.Safe.Execution
         /// Sets the given procedure up to be ran on the next opcode, interrupting
         /// the currently executing thread in the current process.
         /// </summary>
-        /// <returns>The current thread.</returns>
+        /// <returns>A "cell" that may receive a return value.</returns>
         /// <param name="procedure">Procedure.</param>
         public ReturnCell InterruptCurrentThread(Procedure procedure) {
             ReturnCell cell = new ReturnCell();
@@ -167,8 +176,9 @@ namespace kOS.Safe.Execution
         }
 
         /// <summary>
-        /// Evandisoft. This is not necessary anymore with the new version, but 
-        /// users might depend on it.
+        /// Evandisoft. This is not necessary anymore with the new version. User defined
+        /// Procedures are now just a list of opcodes that can be moved anywhere. But 
+        /// users might rely on functions not being redefined.
         /// This saves all global function variables ($function_name*) in a dictionary
         /// to be restored next time the interpreter process is running.
         /// </summary>
@@ -184,14 +194,13 @@ namespace kOS.Safe.Execution
         }
 
         /// <summary>
-        /// Evandisoft: This is not necessary anymore in the new version, 
-        /// but users might depend on it.
+        /// Evandisoft. This is not necessary anymore with the new version. User defined
+        /// Procedures are now just a list of opcodes that can be moved anywhere. But 
+        /// users might rely on functions not being redefined.
         /// This restores previously saved global function variables ($function_name*)
         /// on return to the interpreter process.
         /// </summary>
         private void RestorePointers() {
-
-
             var restoredPointers = 0;
             var deletedPointers = 0;
 
@@ -236,6 +245,7 @@ namespace kOS.Safe.Execution
         /// <param name="manual">If set to <c>true</c> manual.</param>
         public override void BreakExecution(bool manual) {
             Deb.RawLog("Execution Broken");
+
             Init();
             if (manual) {
                 Deb.RawLog("Manual Break.");

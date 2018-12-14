@@ -123,6 +123,7 @@ namespace kOS.Safe {
                     // cause an error if you attempt to access it again.
                     CurrentProcedureCall.ExecuteNextInstruction();
                 } catch (Exception e) {
+                    Deb.EnqueueOpcode(e);
                     Deb.EnqueueExec(e);
                     Deb.EnqueueException(e);
                     Process.ProcessManager.BreakExecution(false);
